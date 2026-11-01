@@ -1,0 +1,108 @@
+.task-tracker {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+.task-tracker h2 {
+  margin-top: 0;
+}
+
+/* Form */
+.task-form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.task-form-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.task-form-row input {
+  flex: 1;
+  min-width: 0; /* lets the input shrink on narrow screens */
+  font: inherit;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.task-form-row button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+/* Filter */
+.task-filter {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.task-filter button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+/* List */
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.task-item:last-child {
+  border-bottom: none;
+}
+
+.task-item input[type='checkbox'] {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+}
+
+.task-item label {
+  flex: 1;
+  overflow-wrap: anywhere; /* long words won't break the layout */
+  cursor: pointer;
+}
+
+.task-item.completed label {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.delete-button {
+  color: var(--danger);
+  padding: 0.25rem 0.6rem;
+}
+
+.empty-message {
+  color: var(--muted);
+  text-align: center;
+  margin: 1.5rem 0 0.5rem;
+}
+
+/* Small screens: stack the form and let filter buttons share the width. */
+@media (max-width: 480px) {
+  .task-form-row {
+    flex-direction: column;
+  }
+
+  .task-filter button {
+    flex: 1;
+  }
+}
