@@ -28,6 +28,8 @@
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
 }
 
 .task-form-row button {
@@ -123,6 +125,8 @@
   padding: 0.3rem 0.5rem;
   border: 1px solid var(--accent);
   border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
 }
 
 .delete-button {
@@ -139,6 +143,7 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--card);
+  color: var(--text);
 }
 
 .task-form-row select {
@@ -157,13 +162,13 @@
 }
 
 .priority-medium {
-  color: #b45309;
-  border-color: #b45309;
+  color: var(--warning);
+  border-color: var(--warning);
 }
 
 .priority-low {
-  color: #15803d;
-  border-color: #15803d;
+  color: var(--success);
+  border-color: var(--success);
 }
 
 .empty-message {

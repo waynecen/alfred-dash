@@ -8,6 +8,24 @@
   --accent: #2563eb;
   --accent-text: #ffffff;
   --danger: #b91c1c;
+  --warning: #b45309;
+  --success: #15803d;
+  color-scheme: light; /* makes native controls (dropdowns, checkboxes) match */
+}
+
+/* Dark theme: App.jsx sets data-theme="dark" on <html>. */
+:root[data-theme='dark'] {
+  --bg: #111827;
+  --card: #1f2937;
+  --text: #f3f4f6;
+  --muted: #9ca3af;
+  --border: #374151;
+  --accent: #3b82f6;
+  --accent-text: #ffffff;
+  --danger: #f87171;
+  --warning: #fbbf24;
+  --success: #4ade80;
+  color-scheme: dark;
 }
 
 * {
@@ -28,8 +46,16 @@ body {
   padding: 1.5rem 1rem;
 }
 
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 h1 {
-  margin-top: 0;
+  margin: 0;
 }
 
 /* Widgets sit in a responsive grid above the task list. */

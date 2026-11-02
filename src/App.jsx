@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import TaskForm from './components/TaskTracker/TaskForm';
 import TaskFilter from './components/TaskTracker/TaskFilter';
@@ -11,6 +11,16 @@ function App() {
   const [tasks, setTasks] = useLocalStorage('tasks', []);
   // The filter is temporary UI state, so plain useState is enough (no need to save it).
   const [filter, setFilter] = useState('all');
+  // First visit follows the operating system's setting; after that the saved choice wins.
+  const [theme, setTheme] = useLocalStorage(
+    'theme',
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  );
+
+  // The CSS variables are switched by an attribute on <html>.
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
 
   function addTask(text, priority) {
     const newTask = {
@@ -63,7 +73,16 @@ function App() {
 
   return (
     <main className="app">
-      <h1>My Dashboard</h1>
+      <header className="app-header">
+        <h1>My Dashboard</h1>
+        <button
+          type="button"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          aria-pressed={theme === 'dark'}
+        >
+          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        </button>
+      </header>
       {/* A grid so more widgets can be added alongside the summary later. */}
       <div className="widget-grid">
         <SummaryWidget active={counts.active} completed={counts.completed} />
