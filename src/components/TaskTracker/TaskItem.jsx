@@ -1,7 +1,20 @@
 import { useState, useRef } from 'react';
 import formatCreatedDate from '../../utils/formatCreatedDate';
 
-function TaskItem({ task, onToggle, onEdit, onPriorityChange, onDelete }) {
+function TaskItem({
+  task,
+  onToggle,
+  onEdit,
+  onPriorityChange,
+  onDelete,
+  isDragging,
+  isOver,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  onStep,
+}) {
   // Tasks saved before priorities existed have none, so treat them as medium.
   const priority = task.priority ?? 'medium';
 
@@ -41,8 +54,50 @@ function TaskItem({ task, onToggle, onEdit, onPriorityChange, onDelete }) {
     if (!cancelled.current) finishEditing();
   }
 
+  function handleHandleKeyDown(event) {
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      onStep(event.key === 'ArrowUp' ? -1 : 1);
+    }
+  }
+
+  const rowClass = ['task-row', task.completed && 'completed', isDragging && 'dragging', isOver && 'drag-over']
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <tr className={task.completed ? 'task-row completed' : 'task-row'}>
+    <tr
+      className={rowClass}
+      onDragOver={(event) => {
+        event.preventDefault(); // lets this row accept a drop
+        onDragOver();
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        onDrop();
+      }}
+    >
+      <td className="col-drag">
+        <button
+          type="button"
+          className="drag-handle"
+          draggable
+          aria-label={`Reorder task: ${task.text}`}
+          title="Drag to reorder (or use the up and down arrow keys)"
+          onKeyDown={handleHandleKeyDown}
+          onDragStart={(event) => {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', String(task.id));
+            // Drag the whole row, not just the small handle.
+            const row = event.currentTarget.closest('tr');
+            if (row) event.dataTransfer.setDragImage(row, 0, 0);
+            onDragStart();
+          }}
+          onDragEnd={onDragEnd}
+        >
+          <span aria-hidden="true">⠿</span>
+        </button>
+      </td>
       <td className="col-done">
         <input
           type="checkbox"

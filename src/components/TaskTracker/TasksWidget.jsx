@@ -5,10 +5,11 @@ import TaskList from './TaskList';
 import countTasks from '../../utils/countTasks';
 import filterTasks from '../../utils/filterTasks';
 import sortTasks from '../../utils/sortTasks';
+import moveTask from '../../utils/moveTask';
 import './TaskTracker.css';
 
 // The content of the Tasks widget. The card and title come from <Widget>.
-function TasksWidget({ tasks, onAdd, onToggle, onEdit, onPriorityChange, onDelete }) {
+function TasksWidget({ tasks, onAdd, onToggle, onEdit, onPriorityChange, onDelete, onReorder }) {
   // The filter and sort are temporary UI state, so plain useState is enough (no need to save them).
   const [status, setStatus] = useState('all');
   // null means "the order tasks were added in"; otherwise { key, direction }.
@@ -21,6 +22,12 @@ function TasksWidget({ tasks, onAdd, onToggle, onEdit, onPriorityChange, onDelet
         ? { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
         : { key, direction: 'asc' }
     );
+  }
+
+  // Moving a task makes the order on screen the real order, so any column sort is cleared.
+  function handleMove(fromId, toId) {
+    onReorder(moveTask(sortTasks(tasks, sort), fromId, toId));
+    setSort(null);
   }
 
   // Work out which tasks to show. We don't store this, we calculate it each render.
@@ -40,6 +47,7 @@ function TasksWidget({ tasks, onAdd, onToggle, onEdit, onPriorityChange, onDelet
         onEdit={onEdit}
         onPriorityChange={onPriorityChange}
         onDelete={onDelete}
+        onMove={handleMove}
       />
     </div>
   );

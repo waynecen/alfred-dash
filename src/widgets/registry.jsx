@@ -29,6 +29,7 @@ export const WIDGETS = {
         onEdit={actions.editTask}
         onPriorityChange={actions.changePriority}
         onDelete={actions.deleteTask}
+        onReorder={actions.reorderTasks}
       />
     ),
   },

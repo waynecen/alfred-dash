@@ -64,6 +64,10 @@ function App() {
     setTasks(tasks.filter((task) => task.id !== id));
   }
 
+  function reorderTasks(newTasks) {
+    setTasks(newTasks);
+  }
+
   function addWidget(id) {
     if (!widgetIds.includes(id)) setWidgetIds([...widgetIds, id]);
   }
@@ -79,7 +83,7 @@ function App() {
   const context = {
     tasks,
     counts: countTasks(tasks),
-    actions: { addTask, toggleTask, editTask, changePriority, deleteTask },
+    actions: { addTask, toggleTask, editTask, changePriority, deleteTask, reorderTasks },
   };
 
   return (

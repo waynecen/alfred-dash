@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 
@@ -131,6 +131,55 @@ describe('App', () => {
       render(<App />);
       expect(screen.queryByLabelText('Filter by description')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Filter by priority')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('reordering tasks', () => {
+    const shownOrder = () =>
+      [...document.querySelectorAll('.task-text')].map((el) => el.textContent);
+    const handle = (text) => screen.getByRole('button', { name: `Reorder task: ${text}` });
+
+    it('moves a task with the arrow keys on its handle', async () => {
+      render(<App />);
+      await addTask('One');
+      await addTask('Two');
+      await addTask('Three');
+
+      handle('Three').focus();
+      await userEvent.keyboard('{ArrowUp}{ArrowUp}');
+      expect(shownOrder()).toEqual(['Three', 'One', 'Two']);
+      expect(JSON.parse(localStorage.getItem('tasks')).map((t) => t.text)).toEqual(['Three', 'One', 'Two']);
+
+      await userEvent.keyboard('{ArrowDown}');
+      expect(shownOrder()).toEqual(['One', 'Three', 'Two']);
+    });
+
+    it('moves a task by dragging its handle onto another row', () => {
+      render(<App />);
+      return addTask('One')
+        .then(() => addTask('Two'))
+        .then(() => addTask('Three'))
+        .then(() => {
+          const dataTransfer = { setData() {}, setDragImage() {}, effectAllowed: '' };
+          fireEvent.dragStart(handle('One'), { dataTransfer });
+          fireEvent.dragOver(handle('Three').closest('tr'), { dataTransfer });
+          fireEvent.drop(handle('Three').closest('tr'), { dataTransfer });
+          expect(shownOrder()).toEqual(['Two', 'Three', 'One']);
+        });
+    });
+
+    it('clears the column sort and keeps the sorted order as the starting point', async () => {
+      render(<App />);
+      await addTask('C');
+      await addTask('A');
+      await addTask('B');
+      await userEvent.click(screen.getByRole('button', { name: 'Sort by description' }));
+      expect(shownOrder()).toEqual(['A', 'B', 'C']);
+
+      handle('A').focus();
+      await userEvent.keyboard('{ArrowDown}');
+      expect(shownOrder()).toEqual(['B', 'A', 'C']);
+      expect(screen.getByRole('columnheader', { name: /Description/ })).toHaveAttribute('aria-sort', 'none');
     });
   });
 

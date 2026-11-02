@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import TaskItem from './TaskItem';
 
 const ARROWS = { asc: '▲', desc: '▼' };
@@ -35,16 +36,31 @@ function TaskList({
   onEdit,
   onPriorityChange,
   onDelete,
+  onMove,
 }) {
   const emptyMessage =
     totalCount === 0 ? 'No tasks yet. Add one above!' : 'No tasks match this filter.';
   const sortProps = { sort, onSort };
+  // The task being dragged and the row it is currently over, for the highlight.
+  const [dragId, setDragId] = useState(null);
+  const [overId, setOverId] = useState(null);
+
+  function endDrag() {
+    setDragId(null);
+    setOverId(null);
+  }
+
+  function handleDrop(targetId) {
+    if (dragId !== null) onMove(dragId, targetId);
+    endDrag();
+  }
 
   return (
     <div className="table-wrap">
       <table className="task-table">
         <thead>
           <tr>
+            <th scope="col" className="col-drag"><span className="visually-hidden">Reorder</span></th>
             <th scope="col" className="col-done">Done</th>
             <SortableHeader label="Description" columnKey="description" className="col-description" {...sortProps} />
             <SortableHeader label="Priority" columnKey="priority" className="col-priority" {...sortProps} />
@@ -53,7 +69,7 @@ function TaskList({
           </tr>
         </thead>
         <tbody>
-          {tasks.map((task) => (
+          {tasks.map((task, index) => (
             // key helps React track which row is which when the list changes.
             <TaskItem
               key={task.id}
@@ -62,11 +78,22 @@ function TaskList({
               onEdit={onEdit}
               onPriorityChange={onPriorityChange}
               onDelete={onDelete}
+              isDragging={dragId === task.id}
+              isOver={overId === task.id && dragId !== task.id}
+              onDragStart={() => setDragId(task.id)}
+              onDragOver={() => dragId !== null && setOverId(task.id)}
+              onDrop={() => handleDrop(task.id)}
+              onDragEnd={endDrag}
+              // Keyboard users move a task one place among the rows they can see.
+              onStep={(offset) => {
+                const neighbour = tasks[index + offset];
+                if (neighbour) onMove(task.id, neighbour.id);
+              }}
             />
           ))}
           {tasks.length === 0 && (
             <tr>
-              <td colSpan={5} className="empty-message">
+              <td colSpan={6} className="empty-message">
                 {emptyMessage}
               </td>
             </tr>
