@@ -16,24 +16,29 @@ function TaskForm({ onAdd }) {
   // Using a <form> means pressing Enter submits, with no extra key handling.
   return (
     <form className="task-form" onSubmit={handleSubmit}>
-      <label htmlFor="new-task">New task</label>
       <div className="task-form-row">
-        <input
-          id="new-task"
-          type="text"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          placeholder="What needs doing?"
-        />
-        <select
-          value={priority}
-          onChange={(event) => setPriority(event.target.value)}
-          aria-label="Priority"
-        >
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
+        <div className="task-form-field task-form-text">
+          <label htmlFor="new-task">New task</label>
+          <input
+            id="new-task"
+            type="text"
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            placeholder="What needs doing?"
+          />
+        </div>
+        <div className="task-form-field">
+          <label htmlFor="new-task-priority">Priority</label>
+          <select
+            id="new-task-priority"
+            value={priority}
+            onChange={(event) => setPriority(event.target.value)}
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
         <button type="submit">Add</button>
       </div>
     </form>

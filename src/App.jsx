@@ -89,8 +89,8 @@ function App() {
       </div>
       <section className="task-tracker" aria-labelledby="tasks-heading">
         <h2 id="tasks-heading">Tasks</h2>
-        <TaskForm onAdd={addTask} />
         <TaskFilter filter={filter} counts={counts} onChange={setFilter} />
+        <TaskForm onAdd={addTask} />
         <TaskList
           tasks={visibleTasks}
           filter={filter}
