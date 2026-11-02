@@ -146,6 +146,8 @@
 
 /* Lighter secondary text; nowrap keeps "45m ago" on one line. */
 .task-date {
+  min-width: 4.5rem; /* "just now" and "45m ago" take the same space, so columns stay aligned */
+  text-align: right;
   color: var(--muted);
   font-size: 0.8rem;
   white-space: nowrap;
@@ -184,7 +186,10 @@
   padding: 0.5rem;
 }
 
+/* Fixed width so every task's dropdown lines up, whatever its label. */
 .priority-select {
+  width: 5.25rem;
+  flex-shrink: 0;
   padding: 0.2rem 0.3rem;
   font-size: 0.85rem;
   font-weight: 600;
