@@ -8,6 +8,7 @@ React + Vite dashboard. Remote: https://github.com/waynecen/alfred-dash.git (bra
 - Subject: imperative mood, about 50 characters, no trailing period.
 - Add a body only when needed, and explain why rather than what.
 - One logical change per commit; do not mix features, refactors, and docs.
+- Always prefer splitting commits: when changes cover more than one concern, make separate commits, even if they touch the same file (stage by hunk).
 - Do not add a "Committed:" date line; git already records the timestamp.
 
 ## Workflow
