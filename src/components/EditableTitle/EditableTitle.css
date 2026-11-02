@@ -1,0 +1,45 @@
+.editable-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The pencil sits to the right of the text and only shows on hover or keyboard focus. */
+.editable-title-edit {
+  display: inline-flex;
+  padding: 0.2rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.editable-title:hover .editable-title-edit,
+.editable-title-edit:focus-visible {
+  opacity: 1;
+}
+
+.editable-title-edit:hover {
+  color: var(--accent);
+}
+
+/* Touch screens have no hover, so keep the pencil visible there. */
+@media (hover: none) {
+  .editable-title-edit {
+    opacity: 1;
+  }
+}
+
+.editable-title-input {
+  min-width: 0;
+  width: min(100%, 20rem);
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+}
