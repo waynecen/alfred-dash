@@ -11,7 +11,7 @@
 - [x] Delete tasks
 - [x] Persist tasks in the browser with `useLocalStorage`
 - [x] Edit tasks
-- [ ] Mark tasks complete, with due dates and priorities
+- [x] Mark tasks complete, with due dates and priorities
 
 ### Phase 2: Dashboard Shell
 
