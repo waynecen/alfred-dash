@@ -5,10 +5,6 @@
   padding: 1.25rem;
 }
 
-.task-tracker h2 {
-  margin-top: 0;
-}
-
 /* Form */
 .task-form label {
   display: block;
@@ -100,34 +96,90 @@
   color: var(--accent-text);
 }
 
-/* List */
-.task-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* Table */
+.table-wrap {
+  margin-top: 1rem;
+  overflow-x: auto; /* a narrow screen scrolls the table instead of squashing it */
 }
 
-.task-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0;
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.task-table th {
+  padding: 0.25rem 0.5rem;
   border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  text-align: left;
+  text-transform: uppercase;
+  vertical-align: middle;
 }
 
-.task-item:last-child {
+/* Label and sort button on one centred line, so headings with and without a button match. */
+.th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.task-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.task-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.task-item input[type='checkbox'] {
+/* Fixed column widths keep every row lined up. */
+.col-done {
+  width: 3.5rem;
+  text-align: center !important;
+}
+
+.col-priority {
+  width: 7rem;
+}
+
+.col-created {
+  width: 6rem;
+}
+
+.col-actions {
+  width: 4.5rem;
+  text-align: right !important;
+}
+
+/* The small button beside a column label that sorts by that column. */
+.sort-button {
+  padding: 0 0.25rem;
+  border: 0; /* no border, so the button adds no height to the heading row */
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.sort-button.active {
+  color: var(--accent);
+}
+
+.task-row input[type='checkbox'] {
   width: 1.15rem;
   height: 1.15rem;
-  flex-shrink: 0;
 }
 
 /* The task text is a button (so keyboards can use it) made to look like plain text. */
 .task-text {
-  flex: 1;
+  width: 100%;
   text-align: left;
   padding: 0.3rem 0.5rem;
   border: 1px solid transparent; /* reserves space so the hover outline doesn't shift the layout */
@@ -139,15 +191,13 @@
   border-color: var(--accent);
 }
 
-.task-item.completed .task-text {
+.task-row.completed .task-text {
   text-decoration: line-through;
   color: var(--muted);
 }
 
 /* Lighter secondary text; nowrap keeps "45m ago" on one line. */
 .task-date {
-  min-width: 4.5rem; /* "just now" and "45m ago" take the same space, so columns stay aligned */
-  text-align: right;
   color: var(--muted);
   font-size: 0.8rem;
   white-space: nowrap;
@@ -155,7 +205,7 @@
 
 /* Edit mode: the input takes the place of the text. */
 .task-edit-input {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   font: inherit;
   padding: 0.3rem 0.5rem;
@@ -186,10 +236,9 @@
   padding: 0.5rem;
 }
 
-/* Fixed width so every task's dropdown lines up, whatever its label. */
+/* Full width of its column, so every task's dropdown lines up whatever its label. */
 .priority-select {
-  width: 5.25rem;
-  flex-shrink: 0;
+  width: 100%;
   padding: 0.2rem 0.3rem;
   font-size: 0.85rem;
   font-weight: 600;
@@ -210,14 +259,14 @@
   border-color: var(--success);
 }
 
-.empty-message {
+.task-table .empty-message {
+  padding: 1.5rem 0.5rem 0.5rem;
   color: var(--muted);
   text-align: center;
-  margin: 1.5rem 0 0.5rem;
 }
 
-/* Small screens: stack the form and let filter buttons share the width. */
-@media (max-width: 480px) {
+/* Small screens: stack the form, share the filter width, hide the Created column. */
+@media (max-width: 560px) {
   .task-form-row {
     flex-direction: column;
     align-items: stretch;
@@ -225,5 +274,9 @@
 
   .task-filter button {
     flex: 1;
+  }
+
+  .col-created {
+    display: none;
   }
 }

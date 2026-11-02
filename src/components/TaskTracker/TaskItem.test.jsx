@@ -13,9 +13,11 @@ function setup(overrides = {}) {
     onDelete: vi.fn(),
   };
   render(
-    <ul>
-      <TaskItem task={{ ...task, ...overrides }} {...handlers} />
-    </ul>
+    <table>
+      <tbody>
+        <TaskItem task={{ ...task, ...overrides }} {...handlers} />
+      </tbody>
+    </table>
   );
   return handlers;
 }

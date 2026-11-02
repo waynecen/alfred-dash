@@ -42,73 +42,83 @@ function TaskItem({ task, onToggle, onEdit, onPriorityChange, onDelete }) {
   }
 
   return (
-    <li className={task.completed ? 'task-item completed' : 'task-item'}>
-      <input
-        type="checkbox"
-        checked={task.completed}
-        onChange={() => onToggle(task.id)}
-        aria-label={`Mark complete: ${task.text}`}
-      />
-      {isEditing ? (
+    <tr className={task.completed ? 'task-row completed' : 'task-row'}>
+      <td className="col-done">
         <input
-          className="task-edit-input"
-          type="text"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={handleBlur}
-          aria-label="Edit task"
-          autoFocus
+          type="checkbox"
+          checked={task.completed}
+          onChange={() => onToggle(task.id)}
+          aria-label={`Mark complete: ${task.text}`}
         />
-      ) : (
+      </td>
+      <td className="col-description">
+        {isEditing ? (
+          <input
+            className="task-edit-input"
+            type="text"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            aria-label="Edit task"
+            autoFocus
+          />
+        ) : (
+          <button
+            type="button"
+            className="task-text"
+            onClick={startEditing}
+            title="Click to edit"
+          >
+            {task.text}
+          </button>
+        )}
+      </td>
+      <td className="col-priority">
+        <select
+          className={`priority-select priority-${priority}`}
+          value={priority}
+          onChange={(event) => onPriorityChange(task.id, event.target.value)}
+          aria-label={`Priority: ${task.text}`}
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </td>
+      <td className="col-created">
+        {/* Tasks saved before this feature have no createdAt, but their id is a timestamp too. */}
+        <time className="task-date" dateTime={new Date(task.createdAt ?? task.id).toISOString()}>
+          {formatCreatedDate(task.createdAt ?? task.id)}
+        </time>
+      </td>
+      <td className="col-actions">
         <button
           type="button"
-          className="task-text"
-          onClick={startEditing}
-          title="Click to edit"
+          className="delete-button"
+          onClick={() => onDelete(task.id)}
+          // Screen readers would just hear "Delete" for every task without this.
+          aria-label={`Delete task: ${task.text}`}
         >
-          {task.text}
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 6h18" />
+            <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            <path d="M10 11v6M14 11v6" />
+          </svg>
         </button>
-      )}
-      <select
-        className={`priority-select priority-${priority}`}
-        value={priority}
-        onChange={(event) => onPriorityChange(task.id, event.target.value)}
-        aria-label={`Priority: ${task.text}`}
-      >
-        <option value="low">Low</option>
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
-      </select>
-      {/* Tasks saved before this feature have no createdAt, but their id is a timestamp too. */}
-      <time className="task-date" dateTime={new Date(task.createdAt ?? task.id).toISOString()}>
-        {formatCreatedDate(task.createdAt ?? task.id)}
-      </time>
-      <button
-        type="button"
-        className="delete-button"
-        onClick={() => onDelete(task.id)}
-        // Screen readers would just hear "Delete" for every task without this.
-        aria-label={`Delete task: ${task.text}`}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M3 6h18" />
-          <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-          <path d="M10 11v6M14 11v6" />
-        </svg>
-      </button>
-    </li>
+      </td>
+    </tr>
   );
 }
 
