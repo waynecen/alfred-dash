@@ -44,7 +44,19 @@ function AddWidgetMenu({ widgets, added, onAdd }) {
         aria-controls={open ? listId : undefined}
         onClick={() => setOpen(!open)}
       >
-        <span aria-hidden="true">+</span>
+        {/* Drawn as a shape, not a text "+", so it sits exactly in the middle of the button. */}
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
       </button>
       {open && (
         <ul id={listId} className="add-widget-list" aria-label="Available widgets">
