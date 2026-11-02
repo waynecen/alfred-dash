@@ -78,8 +78,9 @@ function TaskItem({
       }}
     >
       <td className="col-drag">
-        <button
-          type="button"
+        <span
+          role="button"
+          tabIndex={0}
           className="drag-handle"
           draggable
           aria-label={`Reorder task: ${task.text}`}
@@ -96,7 +97,7 @@ function TaskItem({
           onDragEnd={onDragEnd}
         >
           <span aria-hidden="true">⠿</span>
-        </button>
+        </span>
       </td>
       <td className="col-done">
         <input
