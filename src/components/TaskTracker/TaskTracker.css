@@ -126,8 +126,44 @@
 }
 
 .delete-button {
+  display: inline-flex;
+  align-items: center;
   color: var(--danger);
-  padding: 0.25rem 0.6rem;
+  padding: 0.3rem;
+}
+
+/* Priority picker, tinted by level. */
+.task-form-row select,
+.priority-select {
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+}
+
+.task-form-row select {
+  padding: 0.5rem;
+}
+
+.priority-select {
+  padding: 0.2rem 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.priority-high {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.priority-medium {
+  color: #b45309;
+  border-color: #b45309;
+}
+
+.priority-low {
+  color: #15803d;
+  border-color: #15803d;
 }
 
 .empty-message {

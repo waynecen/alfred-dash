@@ -11,10 +11,11 @@ function App() {
   // The filter is temporary UI state, so plain useState is enough (no need to save it).
   const [filter, setFilter] = useState('all');
 
-  function addTask(text) {
+  function addTask(text, priority) {
     const newTask = {
       id: Date.now(), // simple unique id; fine for a personal app
       text,
+      priority, // 'low' | 'medium' | 'high'
       completed: false,
       createdAt: Date.now(), // when the task was created, in milliseconds
     };
@@ -33,6 +34,12 @@ function App() {
   function editTask(id, newText) {
     setTasks(
       tasks.map((task) => (task.id === id ? { ...task, text: newText } : task))
+    );
+  }
+
+  function changePriority(id, priority) {
+    setTasks(
+      tasks.map((task) => (task.id === id ? { ...task, priority } : task))
     );
   }
 
@@ -65,6 +72,7 @@ function App() {
           filter={filter}
           onToggle={toggleTask}
           onEdit={editTask}
+          onPriorityChange={changePriority}
           onDelete={deleteTask}
         />
       </section>
