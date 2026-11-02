@@ -21,7 +21,7 @@
 
 ### Phase 3: Polish & Ship
 
-- [ ] Unit tests for components and hooks
+- [x] Unit tests for components and hooks
 - [ ] Accessibility and responsive pass
 - [ ] Deploy (e.g. GitHub Pages or Netlify)
 
