@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import TaskItem from './TaskItem';
+import moveTask from '../../utils/moveTask';
 
 const ARROWS = { asc: '▲', desc: '▼' };
 const ARIA_SORT = { asc: 'ascending', desc: 'descending' };
@@ -41,17 +42,31 @@ function TaskList({
   const emptyMessage =
     totalCount === 0 ? 'No tasks yet. Add one above!' : 'No tasks match this filter.';
   const sortProps = { sort, onSort };
-  // The task being dragged and the row it is currently over, for the highlight.
+  // The task being dragged, and the rows in the order they are shown while it is dragged.
   const [dragId, setDragId] = useState(null);
-  const [overId, setOverId] = useState(null);
+  const [liveTasks, setLiveTasks] = useState(null);
+
+  // While dragging, the rows are already in their new order so the others make way in real time.
+  // Each row passed over swaps places with the dragged one, starting from the order on screen,
+  // so dragging back over a row undoes the move. The order is only saved on drop.
+  const shownTasks = liveTasks ?? tasks;
+
+  function startDrag(id) {
+    setDragId(id);
+    setLiveTasks(tasks);
+  }
 
   function endDrag() {
     setDragId(null);
-    setOverId(null);
+    setLiveTasks(null);
   }
 
-  function handleDrop(targetId) {
-    if (dragId !== null) onMove(dragId, targetId);
+  // Drop saves the order on screen: the dragged task goes to the place it is shown in.
+  function handleDrop() {
+    if (dragId !== null && liveTasks) {
+      const target = tasks[liveTasks.findIndex((task) => task.id === dragId)];
+      if (target) onMove(dragId, target.id);
+    }
     endDrag();
   }
 
@@ -69,7 +84,7 @@ function TaskList({
           </tr>
         </thead>
         <tbody>
-          {tasks.map((task, index) => (
+          {shownTasks.map((task, index) => (
             // key helps React track which row is which when the list changes.
             <TaskItem
               key={task.id}
@@ -79,10 +94,12 @@ function TaskList({
               onPriorityChange={onPriorityChange}
               onDelete={onDelete}
               isDragging={dragId === task.id}
-              isOver={overId === task.id && dragId !== task.id}
-              onDragStart={() => setDragId(task.id)}
-              onDragOver={() => dragId !== null && setOverId(task.id)}
-              onDrop={() => handleDrop(task.id)}
+              onDragStart={() => startDrag(task.id)}
+              // The dragged row passing under the pointer is ignored; any other row swaps with it.
+              onDragOver={() =>
+                dragId !== null && dragId !== task.id && setLiveTasks((rows) => moveTask(rows, dragId, task.id))
+              }
+              onDrop={handleDrop}
               onDragEnd={endDrag}
               // Keyboard users move a task one place among the rows they can see.
               onStep={(offset) => {

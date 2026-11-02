@@ -298,11 +298,6 @@
   opacity: 0.4;
 }
 
-/* A line above the row shows where the dragged task will land. */
-.task-row.drag-over td {
-  box-shadow: inset 0 2px 0 var(--accent);
-}
-
 .visually-hidden {
   position: absolute;
   width: 1px;

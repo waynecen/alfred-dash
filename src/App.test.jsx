@@ -168,6 +168,49 @@ describe('App', () => {
         });
     });
 
+    it('shows the other rows moving aside while a task is dragged, and puts them back if dropped elsewhere', async () => {
+      render(<App />);
+      await addTask('One');
+      await addTask('Two');
+      await addTask('Three');
+      const dataTransfer = { setData() {}, setDragImage() {}, effectAllowed: '' };
+
+      fireEvent.dragStart(handle('One'), { dataTransfer });
+      fireEvent.dragOver(handle('Two').closest('tr'), { dataTransfer });
+      // Nothing is saved yet, but the second task has already moved up into first place.
+      expect(shownOrder()).toEqual(['Two', 'One', 'Three']);
+      expect(JSON.parse(localStorage.getItem('tasks')).map((t) => t.text)).toEqual(['One', 'Two', 'Three']);
+
+      fireEvent.dragOver(handle('Three').closest('tr'), { dataTransfer });
+      expect(shownOrder()).toEqual(['Two', 'Three', 'One']);
+
+      fireEvent.dragEnd(handle('One'));
+      expect(shownOrder()).toEqual(['One', 'Two', 'Three']);
+    });
+
+    it('returns to the original position when dragged down and back up', () => {
+      render(<App />);
+      return addTask('One')
+        .then(() => addTask('Two'))
+        .then(() => addTask('Three'))
+        .then(() => {
+          const dataTransfer = { setData() {}, setDragImage() {}, effectAllowed: '' };
+          const row = (text) => handle(text).closest('tr');
+
+          fireEvent.dragStart(handle('One'), { dataTransfer });
+          fireEvent.dragOver(row('Two'), { dataTransfer });
+          expect(shownOrder()).toEqual(['Two', 'One', 'Three']);
+
+          // Back over the row that moved up: it is first on screen, so One goes back there.
+          fireEvent.dragOver(row('Two'), { dataTransfer });
+          expect(shownOrder()).toEqual(['One', 'Two', 'Three']);
+
+          fireEvent.drop(row('One'), { dataTransfer });
+          expect(shownOrder()).toEqual(['One', 'Two', 'Three']);
+          expect(JSON.parse(localStorage.getItem('tasks')).map((t) => t.text)).toEqual(['One', 'Two', 'Three']);
+        });
+    });
+
     it('clears the column sort and keeps the sorted order as the starting point', async () => {
       render(<App />);
       await addTask('C');

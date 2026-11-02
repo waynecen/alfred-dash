@@ -8,7 +8,6 @@ function TaskItem({
   onPriorityChange,
   onDelete,
   isDragging,
-  isOver,
   onDragStart,
   onDragOver,
   onDrop,
@@ -61,7 +60,7 @@ function TaskItem({
     }
   }
 
-  const rowClass = ['task-row', task.completed && 'completed', isDragging && 'dragging', isOver && 'drag-over']
+  const rowClass = ['task-row', task.completed && 'completed', isDragging && 'dragging']
     .filter(Boolean)
     .join(' ');
 
