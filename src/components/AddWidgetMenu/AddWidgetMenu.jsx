@@ -37,11 +37,14 @@ function AddWidgetMenu({ widgets, added, onAdd }) {
     <div className="add-widget" ref={containerRef}>
       <button
         type="button"
+        className="icon-button"
+        aria-label="Add widget"
+        title="Add widget"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         onClick={() => setOpen(!open)}
       >
-        Add widget
+        <span aria-hidden="true">+</span>
       </button>
       {open && (
         <ul id={listId} className="add-widget-list" aria-label="Available widgets">
