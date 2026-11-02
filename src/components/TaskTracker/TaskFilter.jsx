@@ -12,6 +12,7 @@ function TaskFilter({ filter, counts, onChange }) {
         <button
           key={item.value}
           type="button"
+          data-filter={item.value} // lets the CSS style "All" differently from the rest
           // aria-pressed tells screen readers which button is currently on.
           aria-pressed={filter === item.value}
           className={filter === item.value ? 'active' : ''}

@@ -52,8 +52,31 @@
 /* Filter */
 .task-filter {
   display: flex;
-  gap: 0.5rem;
-  margin: 0 0 1rem;
+  gap: 0.25rem;
+  margin: 0 0 0.75rem;
+}
+
+/* Compact pills. */
+.task-filter button {
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+/* "All" is the primary filter, so it keeps the stronger text and border. */
+.task-filter button[data-filter='all'] {
+  font-weight: 600;
+}
+
+/* Active and Completed are secondary: quiet until hovered or selected. */
+.task-filter button:not(.active):not([data-filter='all']) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.task-filter button:not(.active):not([data-filter='all']):hover {
+  border-color: var(--border);
 }
 
 .task-filter button.active {
@@ -64,12 +87,12 @@
 
 /* Small count badge next to a filter name */
 .task-count {
-  margin-left: 0.5rem;
-  padding: 0 0.45rem;
+  margin-left: 0.35rem;
+  padding: 0 0.35rem;
   border-radius: 999px;
   background: var(--bg);
   color: var(--muted);
-  font-size: 0.85em;
+  font-size: 0.75em;
 }
 
 .task-filter button.active .task-count {
