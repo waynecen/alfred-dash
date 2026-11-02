@@ -1,4 +1,4 @@
-import { render, screen, within, fireEvent } from '@testing-library/react';
+import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 
@@ -206,6 +206,81 @@ describe('App', () => {
     // Deleting a task removes it.
     await userEvent.click(screen.getByRole('button', { name: 'Delete task: C' }));
     expect(counts()).toHaveTextContent('0 low open');
+  });
+
+  describe('customising the dashboard', () => {
+    const titles = () => [...document.querySelectorAll('.widget h2')].map((el) => el.textContent);
+
+    it('adds a Notes widget that keeps what you type, even after it is removed', async () => {
+      render(<App />);
+      await userEvent.click(screen.getByRole('button', { name: 'Add widget' }));
+      await userEvent.click(screen.getByRole('button', { name: /^Notes/ }));
+      await userEvent.type(screen.getByRole('textbox', { name: 'Notes' }), 'Buy milk');
+      expect(JSON.parse(localStorage.getItem('notes'))).toBe('Buy milk');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Remove Notes widget' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Add widget' }));
+      await userEvent.click(screen.getByRole('button', { name: /^Notes/ }));
+      expect(screen.getByRole('textbox', { name: 'Notes' })).toHaveValue('Buy milk');
+    });
+
+    it('reorders widgets with the arrow keys and remembers the order', async () => {
+      render(<App />);
+      expect(titles()).toEqual(['Summary', 'Tasks']);
+      screen.getByRole('button', { name: 'Move Tasks widget' }).focus();
+      await userEvent.keyboard('{ArrowUp}');
+      expect(titles()).toEqual(['Tasks', 'Summary']);
+      expect(JSON.parse(localStorage.getItem('widgets'))).toEqual(['tasks', 'summary']);
+    });
+
+    it('reorders widgets by dragging one card onto another', async () => {
+      render(<App />);
+      const dataTransfer = { setData() {}, setDragImage() {}, effectAllowed: '' };
+      const target = screen.getByRole('region', { name: 'Tasks' });
+      fireEvent.dragStart(screen.getByRole('button', { name: 'Move Summary widget' }), { dataTransfer });
+      await waitFor(() => expect(document.querySelector('.widget-placeholder')).not.toBeNull());
+      fireEvent.dragOver(target, { dataTransfer });
+      fireEvent.drop(target, { dataTransfer });
+      expect(titles()).toEqual(['Tasks', 'Summary']);
+    });
+
+    it('shows a placeholder the size of the dragged widget where it will land', async () => {
+      render(<App />);
+      const dataTransfer = { setData() {}, setDragImage() {}, effectAllowed: '' };
+      const placeholder = () => document.querySelector('.widget-placeholder');
+      expect(placeholder()).toBeNull();
+
+      fireEvent.dragStart(screen.getByRole('button', { name: 'Move Summary widget' }), { dataTransfer });
+      await waitFor(() => expect(placeholder()).toHaveAttribute('data-span', '4'));
+
+      fireEvent.dragOver(screen.getByRole('region', { name: 'Tasks' }), { dataTransfer });
+      // Moving down puts it after the card it is over.
+      expect(placeholder().previousElementSibling).toBe(screen.getByRole('region', { name: 'Tasks' }));
+
+      fireEvent.dragEnd(screen.getByRole('button', { name: 'Move Summary widget' }));
+      expect(placeholder()).toBeNull();
+    });
+
+    it('resizes a widget in whole columns and remembers the size', async () => {
+      render(<App />);
+      const summary = screen.getByRole('region', { name: 'Summary' });
+      expect(summary).toHaveAttribute('data-span', '4');
+
+      screen.getByRole('button', { name: 'Resize Summary widget' }).focus();
+      await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+      expect(summary).toHaveAttribute('data-span', '6');
+      expect(JSON.parse(localStorage.getItem('widgetSpans'))).toEqual({ summary: 6 });
+    });
+  });
+
+  it('renames the dashboard and remembers the name', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByRole('button', { name: 'Edit dashboard title' }));
+    const input = screen.getByLabelText('Dashboard title');
+    await userEvent.clear(input);
+    await userEvent.type(input, 'Home base{Enter}');
+    expect(screen.getByRole('heading', { level: 1, name: 'Home base' })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('dashboardTitle'))).toBe('Home base');
   });
 
   it('shows the Summary and Tasks widgets by default', () => {

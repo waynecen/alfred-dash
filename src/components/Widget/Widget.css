@@ -1,26 +1,45 @@
 .widget {
+  position: relative;
   min-width: 0; /* lets wide content (the task table) scroll instead of stretching the grid */
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 0.75rem 1rem 1rem;
+  padding: 1.4rem 1rem 1rem; /* extra room on top for the centred drag handle */
 }
 
-/* Wide widgets take a whole row of the grid. */
-.widget-wide {
-  grid-column: 1 / -1;
+/* While being dragged the card leaves the grid; the placeholder shows where it will land.
+   It stays in the page (just hidden) so the browser still sends the drag-end event. */
+.widget.dragging {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .widget-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.25rem;
   margin-bottom: 0.5rem;
 }
 
 .widget-header h2 {
+  flex: 1;
   margin: 0;
   font-size: 1rem;
+}
+
+/* Centred along the top edge: two rows of three dots. */
+.widget-handle {
+  position: absolute;
+  top: 0.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  padding: 0.2rem 0.6rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--icon-subtle);
+  cursor: grab;
 }
 
 .widget-remove {
@@ -35,4 +54,19 @@
 .widget-remove:hover {
   border-color: var(--danger);
   color: var(--danger);
+}
+
+/* Bottom-right corner grip for resizing. */
+.widget-resize {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  padding: 0 0.25rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--icon-subtle);
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: nwse-resize;
+  touch-action: none;
 }
