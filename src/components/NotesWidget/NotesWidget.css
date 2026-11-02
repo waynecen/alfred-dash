@@ -1,0 +1,19 @@
+.notes-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 7rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+
+.notes-hint {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
