@@ -3,6 +3,7 @@ import useLocalStorage from './hooks/useLocalStorage';
 import TaskForm from './components/TaskTracker/TaskForm';
 import TaskFilter from './components/TaskTracker/TaskFilter';
 import TaskList from './components/TaskTracker/TaskList';
+import SummaryWidget from './components/SummaryWidget/SummaryWidget';
 import './components/TaskTracker/TaskTracker.css';
 
 function App() {
@@ -63,6 +64,10 @@ function App() {
   return (
     <main className="app">
       <h1>My Dashboard</h1>
+      {/* A grid so more widgets can be added alongside the summary later. */}
+      <div className="widget-grid">
+        <SummaryWidget active={counts.active} completed={counts.completed} />
+      </div>
       <section className="task-tracker" aria-labelledby="tasks-heading">
         <h2 id="tasks-heading">Tasks</h2>
         <TaskForm onAdd={addTask} />

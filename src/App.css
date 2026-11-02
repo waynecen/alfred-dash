@@ -32,6 +32,14 @@ h1 {
   margin-top: 0;
 }
 
+/* Widgets sit in a responsive grid above the task list. */
+.widget-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 /* Shared button look; specific buttons tweak it in TaskTracker.css. */
 button {
   font: inherit;
