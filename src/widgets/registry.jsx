@@ -8,9 +8,13 @@ import TasksWidget from '../components/TaskTracker/TasksWidget';
 export const WIDGETS = {
   summary: {
     title: 'Summary',
-    description: 'Active and completed task counts with a progress bar',
+    description: 'Active and completed counts, open tasks by priority, and a progress bar',
     render: ({ counts }) => (
-      <SummaryWidget active={counts.active} completed={counts.completed} />
+      <SummaryWidget
+        active={counts.active}
+        completed={counts.completed}
+        openByPriority={counts.openByPriority}
+      />
     ),
   },
   tasks: {

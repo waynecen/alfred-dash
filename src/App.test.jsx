@@ -134,6 +134,31 @@ describe('App', () => {
     });
   });
 
+  it('keeps the Summary priority counts in sync as tasks change', async () => {
+    render(<App />);
+    const counts = () => screen.getByRole('list', { name: 'Open tasks by priority' });
+
+    await addTask('A', 'high');
+    await addTask('B', 'high');
+    await addTask('C', 'low');
+    expect(counts()).toHaveTextContent('2 high open');
+    expect(counts()).toHaveTextContent('0 medium open');
+    expect(counts()).toHaveTextContent('1 low open');
+
+    // Completing a task takes it out of the open counts.
+    await userEvent.click(screen.getByLabelText('Mark complete: A'));
+    expect(counts()).toHaveTextContent('1 high open');
+
+    // Changing a priority moves it between counts.
+    await userEvent.selectOptions(screen.getByLabelText('Priority: B'), 'medium');
+    expect(counts()).toHaveTextContent('0 high open');
+    expect(counts()).toHaveTextContent('1 medium open');
+
+    // Deleting a task removes it.
+    await userEvent.click(screen.getByRole('button', { name: 'Delete task: C' }));
+    expect(counts()).toHaveTextContent('0 low open');
+  });
+
   it('shows the Summary and Tasks widgets by default', () => {
     render(<App />);
     expect(screen.getByRole('region', { name: 'Summary' })).toBeInTheDocument();

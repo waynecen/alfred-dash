@@ -26,6 +26,33 @@
   font-weight: 700;
 }
 
+/* One short line, e.g. "2 high open  1 medium open  0 low open". */
+.summary-priorities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+}
+
+.summary-priority {
+  color: var(--muted);
+}
+
+.summary-priority-high {
+  color: var(--danger);
+}
+
+.summary-priority-medium {
+  color: var(--warning);
+}
+
+.summary-priority-low {
+  color: var(--success);
+}
+
 /* The bar and its caption share one row to keep the widget short. */
 .summary-progress-row {
   display: flex;
