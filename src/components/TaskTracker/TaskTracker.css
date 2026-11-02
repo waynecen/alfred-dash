@@ -1,10 +1,3 @@
-.task-tracker {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1.25rem;
-}
-
 /* Form */
 .task-form label {
   display: block;

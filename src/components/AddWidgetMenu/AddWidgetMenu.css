@@ -1,0 +1,55 @@
+.add-widget {
+  position: relative;
+}
+
+.add-widget-list {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 10;
+  width: min(18rem, 80vw);
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.add-widget-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  width: 100%;
+  text-align: left;
+  border-color: transparent;
+}
+
+.add-widget-option:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.add-widget-option:disabled:hover {
+  border-color: transparent;
+}
+
+.add-widget-title {
+  font-weight: 600;
+}
+
+.add-widget-badge {
+  margin-left: 0.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.add-widget-description {
+  color: var(--muted);
+  font-size: 0.8rem;
+}

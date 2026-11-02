@@ -1,18 +1,13 @@
 import './SummaryWidget.css';
 
+// The content of the Summary widget. The card and title come from <Widget>.
 function SummaryWidget({ active, completed }) {
   const total = active + completed;
   // Avoid dividing by zero when there are no tasks yet.
   const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
 
   return (
-    <section className="summary-widget" aria-labelledby="summary-heading">
-      <header className="summary-header">
-        <h2 id="summary-heading">Summary</h2>
-        <p className="summary-caption">
-          {completed} of {total} done ({percent}%)
-        </p>
-      </header>
+    <div className="summary-widget">
       <dl className="summary-stats">
         <div className="summary-stat">
           <dt>Active</dt>
@@ -23,17 +18,22 @@ function SummaryWidget({ active, completed }) {
           <dd>{completed}</dd>
         </div>
       </dl>
-      <div
-        className="summary-progress"
-        role="progressbar"
-        aria-label="Tasks completed"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-      >
-        <div className="summary-progress-fill" style={{ width: `${percent}%` }} />
+      <div className="summary-progress-row">
+        <div
+          className="summary-progress"
+          role="progressbar"
+          aria-label="Tasks completed"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={percent}
+        >
+          <div className="summary-progress-fill" style={{ width: `${percent}%` }} />
+        </div>
+        <p className="summary-caption">
+          {completed} of {total} done ({percent}%)
+        </p>
       </div>
-    </section>
+    </div>
   );
 }
 

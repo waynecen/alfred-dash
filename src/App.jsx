@@ -1,12 +1,22 @@
 import { useEffect } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
-import TasksWidget from './components/TaskTracker/TasksWidget';
-import SummaryWidget from './components/SummaryWidget/SummaryWidget';
+import Widget from './components/Widget/Widget';
+import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
+import { WIDGETS, DEFAULT_WIDGETS } from './widgets/registry';
 import countTasks from './utils/countTasks';
 
+// What the Add widget list needs to know about each widget.
+const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
+  id,
+  title: widget.title,
+  description: widget.description,
+}));
+
 function App() {
-  // The tasks live here, so every child component shares one source of truth.
+  // The tasks live here, so every widget shares one source of truth.
   const [tasks, setTasks] = useLocalStorage('tasks', []);
+  // Which widgets are on the dashboard, in order. Saved so the layout survives a reload.
+  const [widgetIds, setWidgetIds] = useLocalStorage('widgets', DEFAULT_WIDGETS);
   // First visit follows the operating system's setting; after that the saved choice wins.
   const [theme, setTheme] = useLocalStorage(
     'theme',
@@ -54,35 +64,63 @@ function App() {
     setTasks(tasks.filter((task) => task.id !== id));
   }
 
-  const counts = countTasks(tasks);
+  function addWidget(id) {
+    if (!widgetIds.includes(id)) setWidgetIds([...widgetIds, id]);
+  }
+
+  function removeWidget(id) {
+    setWidgetIds(widgetIds.filter((widgetId) => widgetId !== id));
+  }
+
+  // Ignore saved ids that no longer exist in the registry (e.g. a widget that was renamed).
+  const shownWidgetIds = widgetIds.filter((id) => WIDGETS[id]);
+
+  // Everything a widget might need, handed to each widget's render function.
+  const context = {
+    tasks,
+    counts: countTasks(tasks),
+    actions: { addTask, toggleTask, editTask, changePriority, deleteTask },
+  };
 
   return (
     <main className="app">
       <header className="app-header">
         <h1>My Dashboard</h1>
-        <button
-          type="button"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          aria-pressed={theme === 'dark'}
-        >
-          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-        </button>
+        <div className="app-header-actions">
+          <AddWidgetMenu
+            widgets={WIDGET_OPTIONS}
+            added={shownWidgetIds}
+            onAdd={addWidget}
+          />
+          <button
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            aria-pressed={theme === 'dark'}
+          >
+            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </button>
+        </div>
       </header>
-      {/* A grid so more widgets can be added alongside the summary later. */}
       <div className="widget-grid">
-        <SummaryWidget active={counts.active} completed={counts.completed} />
+        {shownWidgetIds.map((id) => {
+          const widget = WIDGETS[id];
+          return (
+            <Widget
+              key={id}
+              title={widget.title}
+              wide={widget.wide}
+              onRemove={() => removeWidget(id)}
+            >
+              {widget.render(context)}
+            </Widget>
+          );
+        })}
       </div>
-      <section aria-labelledby="tasks-heading">
-        <h2 id="tasks-heading">Tasks</h2>
-        <TasksWidget
-          tasks={tasks}
-          onAdd={addTask}
-          onToggle={toggleTask}
-          onEdit={editTask}
-          onPriorityChange={changePriority}
-          onDelete={deleteTask}
-        />
-      </section>
+      {shownWidgetIds.length === 0 && (
+        <p className="dashboard-empty">
+          No widgets yet. Use “Add widget” to get started.
+        </p>
+      )}
     </main>
   );
 }

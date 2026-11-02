@@ -41,7 +41,7 @@ body {
 }
 
 .app {
-  max-width: 600px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 1.5rem 1rem;
 }
@@ -54,14 +54,28 @@ body {
   margin-bottom: 1rem;
 }
 
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 h1 {
   margin: 0;
+}
+
+.dashboard-empty {
+  color: var(--muted);
+  text-align: center;
+  margin: 2rem 0;
 }
 
 /* Widgets sit in a responsive grid above the task list. */
 .widget-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  /* auto-fill (not auto-fit) keeps a lone small widget from stretching across the row. */
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  align-items: start;
   gap: 1rem;
   margin-bottom: 1rem;
 }

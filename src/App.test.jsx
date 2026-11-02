@@ -134,6 +134,51 @@ describe('App', () => {
     });
   });
 
+  it('shows the Summary and Tasks widgets by default', () => {
+    render(<App />);
+    expect(screen.getByRole('region', { name: 'Summary' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Tasks' })).toBeInTheDocument();
+  });
+
+  it('removes a widget, then adds it back from the Add widget list', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Summary widget' }));
+    expect(screen.queryByRole('region', { name: 'Summary' })).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('widgets'))).toEqual(['tasks']);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add widget' }));
+    await userEvent.click(screen.getByRole('button', { name: /Summary/ }));
+    expect(screen.getByRole('region', { name: 'Summary' })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('widgets'))).toEqual(['tasks', 'summary']);
+  });
+
+  it('keeps the tasks when the Tasks widget is removed and re-added', async () => {
+    render(<App />);
+    await addTask('Keep me');
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Tasks widget' }));
+    expect(screen.queryByRole('button', { name: 'Keep me' })).not.toBeInTheDocument();
+    // The Summary widget still counts the task, because the tasks live in App, not the widget.
+    expect(screen.getByText('0 of 1 done (0%)')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add widget' }));
+    await userEvent.click(screen.getByRole('button', { name: /Tasks/ }));
+    expect(screen.getByRole('button', { name: 'Keep me' })).toBeInTheDocument();
+  });
+
+  it('shows a hint when every widget has been removed', async () => {
+    render(<App />);
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Summary widget' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Tasks widget' }));
+    expect(screen.getByText(/No widgets yet/)).toBeInTheDocument();
+  });
+
+  it('restores the saved widget layout and ignores unknown widgets', () => {
+    localStorage.setItem('widgets', JSON.stringify(['old-widget', 'summary']));
+    render(<App />);
+    expect(screen.getByRole('region', { name: 'Summary' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Tasks' })).not.toBeInTheDocument();
+  });
+
   it('restores saved tasks from localStorage', () => {
     localStorage.setItem(
       'tasks',

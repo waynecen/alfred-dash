@@ -1,0 +1,38 @@
+.widget {
+  min-width: 0; /* lets wide content (the task table) scroll instead of stretching the grid */
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem 1rem;
+}
+
+/* Wide widgets take a whole row of the grid. */
+.widget-wide {
+  grid-column: 1 / -1;
+}
+
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.widget-header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.widget-remove {
+  padding: 0 0.45rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1.4;
+}
+
+.widget-remove:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
