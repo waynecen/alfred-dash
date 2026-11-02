@@ -10,6 +10,8 @@
   --danger: #b91c1c;
   --warning: #b45309;
   --success: #15803d;
+  /* Quiet icons: the lightest grey that still reaches 3:1 against --card (WCAG 1.4.11). */
+  --icon-subtle: #949494;
   color-scheme: light; /* makes native controls (dropdowns, checkboxes) match */
 }
 
@@ -25,6 +27,7 @@
   --danger: #f87171;
   --warning: #fbbf24;
   --success: #4ade80;
+  --icon-subtle: #717171; /* the dimmest grey that still reaches 3:1 against the dark --card */
   color-scheme: dark;
 }
 

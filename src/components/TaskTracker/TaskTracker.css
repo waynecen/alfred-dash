@@ -211,8 +211,14 @@
 .delete-button {
   display: inline-flex;
   align-items: center;
-  color: var(--danger);
+  color: var(--icon-subtle);
   padding: 0.3rem;
+}
+
+/* Red only when the user is about to act on it. */
+.delete-button:hover,
+.delete-button:focus-visible {
+  color: var(--danger);
 }
 
 /* Priority picker, tinted by level. */
@@ -237,19 +243,17 @@
   font-weight: 600;
 }
 
+/* The level is shown by the text colour alone; the outline stays the neutral border. */
 .priority-high {
   color: var(--danger);
-  border-color: var(--danger);
 }
 
 .priority-medium {
   color: var(--warning);
-  border-color: var(--warning);
 }
 
 .priority-low {
   color: var(--success);
-  border-color: var(--success);
 }
 
 .task-table .empty-message {
