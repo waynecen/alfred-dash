@@ -16,6 +16,7 @@ function App() {
       id: Date.now(), // simple unique id; fine for a personal app
       text,
       completed: false,
+      createdAt: Date.now(), // when the task was created, in milliseconds
     };
     // Never change state directly: build a new array instead.
     setTasks([...tasks, newTask]);
@@ -26,6 +27,12 @@ function App() {
       tasks.map((task) =>
         task.id === id ? { ...task, completed: !task.completed } : task
       )
+    );
+  }
+
+  function editTask(id, newText) {
+    setTasks(
+      tasks.map((task) => (task.id === id ? { ...task, text: newText } : task))
     );
   }
 
@@ -40,17 +47,24 @@ function App() {
     return true; // 'all'
   });
 
+  // Counts come from ALL tasks (not visibleTasks), so they stay the same whichever filter is on.
+  const counts = {
+    active: tasks.filter((task) => !task.completed).length,
+    completed: tasks.filter((task) => task.completed).length,
+  };
+
   return (
     <main className="app">
       <h1>My Dashboard</h1>
       <section className="task-tracker" aria-labelledby="tasks-heading">
         <h2 id="tasks-heading">Tasks</h2>
         <TaskForm onAdd={addTask} />
-        <TaskFilter filter={filter} onChange={setFilter} />
+        <TaskFilter filter={filter} counts={counts} onChange={setFilter} />
         <TaskList
           tasks={visibleTasks}
           filter={filter}
           onToggle={toggleTask}
+          onEdit={editTask}
           onDelete={deleteTask}
         />
       </section>

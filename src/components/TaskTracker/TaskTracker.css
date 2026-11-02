@@ -49,6 +49,21 @@
   color: var(--accent-text);
 }
 
+/* Small count badge next to a filter name */
+.task-count {
+  margin-left: 0.5rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.task-filter button.active .task-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--accent-text);
+}
+
 /* List */
 .task-list {
   list-style: none;
@@ -74,15 +89,40 @@
   flex-shrink: 0;
 }
 
-.task-item label {
+/* The task text is a button (so keyboards can use it) made to look like plain text. */
+.task-text {
   flex: 1;
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid transparent; /* reserves space so the hover outline doesn't shift the layout */
+  background: none;
   overflow-wrap: anywhere; /* long words won't break the layout */
-  cursor: pointer;
 }
 
-.task-item.completed label {
+.task-text:hover {
+  border-color: var(--accent);
+}
+
+.task-item.completed .task-text {
   text-decoration: line-through;
   color: var(--muted);
+}
+
+/* Lighter secondary text; nowrap keeps "45m ago" on one line. */
+.task-date {
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Edit mode: the input takes the place of the text. */
+.task-edit-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
 }
 
 .delete-button {

@@ -1,6 +1,6 @@
 import TaskItem from './TaskItem';
 
-function TaskList({ tasks, filter, onToggle, onDelete }) {
+function TaskList({ tasks, filter, onToggle, onEdit, onDelete }) {
   if (tasks.length === 0) {
     const message =
       filter === 'all' ? 'No tasks yet. Add one above!' : `No ${filter} tasks.`;
@@ -15,6 +15,7 @@ function TaskList({ tasks, filter, onToggle, onDelete }) {
           key={task.id}
           task={task}
           onToggle={onToggle}
+          onEdit={onEdit}
           onDelete={onDelete}
         />
       ))}

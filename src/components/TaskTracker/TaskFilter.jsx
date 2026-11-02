@@ -4,7 +4,8 @@ const FILTERS = [
   { value: 'completed', label: 'Completed' },
 ];
 
-function TaskFilter({ filter, onChange }) {
+// counts looks like { active: 2, completed: 1 }. "All" has no count, so it's skipped.
+function TaskFilter({ filter, counts, onChange }) {
   return (
     <div className="task-filter" role="group" aria-label="Filter tasks">
       {FILTERS.map((item) => (
@@ -17,6 +18,9 @@ function TaskFilter({ filter, onChange }) {
           onClick={() => onChange(item.value)}
         >
           {item.label}
+          {counts[item.value] !== undefined && (
+            <span className="task-count">{counts[item.value]}</span>
+          )}
         </button>
       ))}
     </div>

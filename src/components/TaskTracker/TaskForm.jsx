@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 function TaskForm({ onAdd }) {
   // Controlled input: React state is the single source of truth for the text.
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
 
   function handleSubmit(event) {
     event.preventDefault(); // stop the browser from reloading the page
     const trimmed = text.trim();
-    if (trimmed === '') return; // ignore empty (or spaces-only) input
+    if (trimmed === "") return; // ignore empty (or spaces-only) input
     onAdd(trimmed);
-    setText('');
+    setText("");
   }
 
   // Using a <form> means pressing Enter submits, with no extra key handling.
