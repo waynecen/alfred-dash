@@ -1,12 +1,23 @@
-import { useId, useRef } from 'react';
-import snapSpan, { clampSpan } from '../../utils/snapSpan';
+import { useId, useRef, useState } from 'react';
+import snapSpan, {
+  clampSpan,
+  snapRows,
+  clampRows,
+  GRID_COLUMNS,
+  ROW_HEIGHT,
+} from '../../utils/snapSpan';
+
+// A card never gets smaller than this while it is being dragged.
+const MIN_PIXELS = 120;
 import './Widget.css';
 
 // The shared card every widget sits in: a drag handle, a title, a remove button and a resize
-// handle around the widget's content. The card is placed on a 12-column grid by its `span`.
+// handle around the widget's content. The card is placed on a 12-column grid by its `span`,
+// and spans `rows` grid rows tall (or grows with its content when `rows` is not set).
 function Widget({
   title,
   span = 4,
+  rows,
   onRemove,
   onResize,
   isDragging = false,
@@ -19,31 +30,85 @@ function Widget({
 }) {
   const headingId = useId();
   const cardRef = useRef(null);
+  // Set while an edge is being dragged: where it started, and the size the card is drawn at.
+  const resizing = useRef(null);
+  const [box, setBox] = useState(null);
 
-  const className = ['widget', isDragging && 'dragging']
+  const className = ['widget', isDragging && 'dragging', box && 'resizing']
     .filter(Boolean)
     .join(' ');
 
-  // Dragging the corner handle snaps the card's width to whole grid columns.
-  function startResize(event) {
+  // The card's current height in rows, for resizing a widget that is still auto height.
+  function currentRows() {
+    const card = cardRef.current;
+    const grid = card?.parentElement;
+    const gap = grid ? parseFloat(getComputedStyle(grid).rowGap) || 0 : 0;
+    return snapRows(card?.offsetHeight ?? 0, gap);
+  }
+
+  // Resizing by dragging the right edge, the bottom edge or the bottom-right corner.
+  // The card follows the pointer pixel by pixel so it feels smooth, while the grid snaps to whole
+  // columns and rows underneath, and a dashed guide shows the size it will settle at.
+  function startResize(event, edge) {
     const card = cardRef.current;
     const grid = card?.parentElement;
     if (!grid || !onResize) return;
     event.preventDefault();
-    const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
-    const { left } = card.getBoundingClientRect();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const styles = getComputedStyle(grid);
+    const gap = parseFloat(styles.columnGap) || 0;
+    const rowGap = parseFloat(styles.rowGap) || 0;
+    const rect = card.getBoundingClientRect();
     const gridWidth = grid.getBoundingClientRect().width;
-
-    function onMove(moveEvent) {
-      onResize(snapSpan(moveEvent.clientX - left, gridWidth, gap));
-    }
-    function onUp() {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
-    }
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+    const column = (gridWidth - gap * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
+    resizing.current = { edge, rect, gap, rowGap, gridWidth, column, span: null, rows: null };
+    setBox({ width: rect.width, height: rect.height, guideWidth: rect.width, guideHeight: rect.height });
   }
+
+  function moveResize(event) {
+    const r = resizing.current;
+    if (!r) return;
+    const size = {};
+    const next = {
+      width: r.rect.width,
+      height: r.rect.height,
+      guideWidth: r.rect.width,
+      guideHeight: r.rect.height,
+    };
+
+    if (r.edge.includes('e')) {
+      next.width = Math.min(r.gridWidth, Math.max(MIN_PIXELS, event.clientX - r.rect.left));
+      const newSpan = snapSpan(next.width, r.gridWidth, r.gap);
+      next.guideWidth = newSpan * r.column + (newSpan - 1) * r.gap;
+      if (newSpan !== r.span) size.span = newSpan;
+      r.span = newSpan;
+    }
+    if (r.edge.includes('s')) {
+      next.height = Math.max(MIN_PIXELS, event.clientY - r.rect.top);
+      const newRows = snapRows(next.height, r.rowGap);
+      next.guideHeight = newRows * ROW_HEIGHT + (newRows - 1) * r.rowGap;
+      if (newRows !== r.rows) size.rows = newRows;
+      r.rows = newRows;
+    }
+
+    setBox(next);
+    // Only tell the dashboard when the snapped size actually changes.
+    if (Object.keys(size).length > 0) onResize(size);
+  }
+
+  function endResize() {
+    resizing.current = null;
+    setBox(null);
+  }
+
+  // The same handlers work for every edge; only the edge name differs.
+  const edgeProps = (edge) => ({
+    onPointerDown: (event) => startResize(event, edge),
+    onPointerMove: moveResize,
+    onPointerUp: endResize,
+    onPointerCancel: endResize,
+    onDoubleClick: () => onResize({ rows: null }), // back to automatic height
+  });
 
   function handleMoveKey(event) {
     const offset = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[event.key];
@@ -54,10 +119,15 @@ function Widget({
   }
 
   function handleResizeKey(event) {
-    const change = { ArrowLeft: -1, ArrowRight: 1 }[event.key];
-    if (change && onResize) {
+    if (!onResize) return;
+    const widthChange = { ArrowLeft: -1, ArrowRight: 1 }[event.key];
+    const heightChange = { ArrowUp: -1, ArrowDown: 1 }[event.key];
+    if (widthChange) {
       event.preventDefault();
-      onResize(clampSpan(span + change));
+      onResize({ span: clampSpan(span + widthChange) });
+    } else if (heightChange) {
+      event.preventDefault();
+      onResize({ rows: clampRows((rows ?? currentRows()) + heightChange) });
     }
   }
 
@@ -67,7 +137,13 @@ function Widget({
       className={className}
       // The grid reads these in App.css, which can then use fewer columns on small screens.
       data-span={span}
-      style={{ '--span': span }}
+      data-rows={rows}
+      style={{
+        '--span': span,
+        '--rows': rows,
+        // While resizing, the card is drawn at the pointer's size, not the snapped one.
+        ...(box && { width: box.width, height: box.height, justifySelf: 'start' }),
+      }}
       aria-labelledby={headingId}
       onDragOver={(event) => {
         if (!onDragOver) return;
@@ -117,18 +193,28 @@ function Widget({
           ×
         </button>
       </header>
-      {children}
+      <div className="widget-body">{children}</div>
       {onResize && (
-        <button
-          type="button"
-          className="widget-resize"
-          aria-label={`Resize ${title} widget`}
-          title={`Drag to resize, snaps to the grid (or use ← →). Now ${span} of 12 columns.`}
-          onPointerDown={startResize}
-          onKeyDown={handleResizeKey}
-        >
-          <span aria-hidden="true">◢</span>
-        </button>
+        <>
+          {/* Thin zones along the right and bottom borders; hovering one highlights the border. */}
+          <div className="widget-edge widget-edge-e" aria-hidden="true" {...edgeProps('e')} />
+          <div className="widget-edge widget-edge-s" aria-hidden="true" {...edgeProps('s')} />
+          <button
+            type="button"
+            className="widget-edge widget-resize"
+            aria-label={`Resize ${title} widget`}
+            title={`Drag the edge or corner to resize, or use the arrow keys. Double-click for automatic height. Now ${span} of 12 columns${rows ? `, ${rows} rows` : ''}.`}
+            onKeyDown={handleResizeKey}
+            {...edgeProps('se')}
+          />
+        </>
+      )}
+      {box && (
+        <div
+          className="widget-snap-guide"
+          style={{ width: box.guideWidth, height: box.guideHeight }}
+          aria-hidden="true"
+        />
       )}
     </section>
   );

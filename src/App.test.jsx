@@ -304,6 +304,22 @@ describe('App', () => {
       expect(placeholder()).toBeNull();
     });
 
+    it('sets a widget height in rows, and returns to automatic height on double-click', async () => {
+      render(<App />);
+      const summary = screen.getByRole('region', { name: 'Summary' });
+      expect(summary).not.toHaveAttribute('data-rows');
+
+      screen.getByRole('button', { name: 'Resize Summary widget' }).focus();
+      await userEvent.keyboard('{ArrowDown}');
+      // An automatic-height widget measures 0px in the test browser, so it starts from the minimum.
+      expect(summary).toHaveAttribute('data-rows', '3');
+      expect(JSON.parse(localStorage.getItem('widgetRows'))).toEqual({ summary: 3 });
+
+      await userEvent.dblClick(screen.getByRole('button', { name: 'Resize Summary widget' }));
+      expect(summary).not.toHaveAttribute('data-rows');
+      expect(JSON.parse(localStorage.getItem('widgetRows'))).toEqual({});
+    });
+
     it('resizes a widget in whole columns and remembers the size', async () => {
       render(<App />);
       const summary = screen.getByRole('region', { name: 'Summary' });

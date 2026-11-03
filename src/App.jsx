@@ -6,7 +6,7 @@ import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
 import { WIDGETS, DEFAULT_WIDGETS } from './widgets/registry';
 import countTasks from './utils/countTasks';
 import moveWidget from './utils/moveWidget';
-import { clampSpan } from './utils/snapSpan';
+import { clampSpan, clampRows, ROW_HEIGHT } from './utils/snapSpan';
 
 // What the Add widget list needs to know about each widget.
 const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
@@ -22,6 +22,8 @@ function App() {
   const [widgetIds, setWidgetIds] = useLocalStorage('widgets', DEFAULT_WIDGETS);
   // How many grid columns each widget spans, by id. Widgets not in here use their default.
   const [spans, setSpans] = useLocalStorage('widgetSpans', {});
+  // How many grid rows tall each widget is, by id. No entry means it grows with its content.
+  const [rowCounts, setRowCounts] = useLocalStorage('widgetRows', {});
   // The notepad text lives here too, so it survives removing and re-adding the widget.
   const [notes, setNotes] = useLocalStorage('notes', '');
   // The widget being dragged and the one it is over, for the highlight.
@@ -89,8 +91,15 @@ function App() {
     setWidgetIds(moveWidget(widgetIds, fromId, toId));
   }
 
-  function resizeWidget(id, span) {
-    setSpans({ ...spans, [id]: clampSpan(span) });
+  // size can hold a new span, a new row count, or rows: null to go back to automatic height.
+  function resizeWidget(id, size) {
+    if (size.span !== undefined) setSpans({ ...spans, [id]: clampSpan(size.span) });
+    if (size.rows === null) {
+      const { [id]: _removed, ...rest } = rowCounts;
+      setRowCounts(rest);
+    } else if (size.rows !== undefined) {
+      setRowCounts({ ...rowCounts, [id]: clampRows(size.rows) });
+    }
   }
 
   function endWidgetDrag() {
@@ -124,9 +133,12 @@ function App() {
       key="placeholder"
       className="widget-placeholder"
       data-span={clampSpan(spans[dragId] ?? WIDGETS[dragId].defaultSpan)}
+      data-rows={rowCounts[dragId]}
       style={{
         '--span': clampSpan(spans[dragId] ?? WIDGETS[dragId].defaultSpan),
-        minHeight: dragHeight,
+        '--rows': rowCounts[dragId],
+        // A widget with no set height leaves a gap as tall as the card was.
+        minHeight: rowCounts[dragId] ? undefined : dragHeight,
       }}
       // The placeholder is also a drop target, so the layout shifting under the pointer is harmless.
       onDragOver={(event) => event.preventDefault()}
@@ -149,7 +161,8 @@ function App() {
         title={widget.title}
         span={clampSpan(spans[id] ?? widget.defaultSpan)}
         onRemove={() => removeWidget(id)}
-        onResize={(span) => resizeWidget(id, span)}
+        rows={rowCounts[id]}
+        onResize={(size) => resizeWidget(id, size)}
         isDragging={dragId === id}
         onDragStart={(height) => {
           setDragHeight(height);
@@ -214,7 +227,7 @@ function App() {
           </button>
         </div>
       </header>
-      <div className="widget-grid">
+      <div className="widget-grid" style={{ '--row-unit': `${ROW_HEIGHT}px` }}>
         {gridItems}
       </div>
       {shownWidgetIds.length === 0 && (

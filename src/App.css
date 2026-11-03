@@ -79,6 +79,8 @@ h1 {
   position: relative; /* the dragged card is positioned against the grid */
   display: grid;
   grid-auto-flow: row dense; /* smaller widgets fill gaps in a row */
+  /* Rows are a fixed height, but still grow for a widget that has no set height. */
+  grid-auto-rows: minmax(var(--row-unit), auto);
   /* 12 columns; each widget spans some of them, so sizes snap to the grid. */
   grid-template-columns: repeat(12, minmax(0, 1fr));
   align-items: start;
@@ -113,6 +115,11 @@ input:focus-visible {
   grid-column: span var(--span);
 }
 
+/* A widget with a set height spans that many rows. */
+.widget-grid > [data-rows] {
+  grid-row: span var(--rows);
+}
+
 /* Where a dragged widget will snap to. */
 .widget-placeholder {
   box-sizing: border-box;
@@ -123,8 +130,13 @@ input:focus-visible {
 
 /* Phones: one column. */
 @media (max-width: 600px) {
-  .widget-resize {
+  .widget-edge {
     display: none;
+  }
+
+  /* Stacked widgets size themselves. */
+  .widget-grid > [data-rows][data-rows] {
+    grid-row: auto;
   }
 
   .widget-grid > [data-span][data-span] {
