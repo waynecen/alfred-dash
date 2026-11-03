@@ -3,101 +3,86 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import Widget from './Widget';
 
+const position = { x: 2, y: 1, w: 4, h: 3 };
+
+function setup(props = {}) {
+  const handlers = {
+    onRemove: vi.fn(),
+    onMoveStart: vi.fn(),
+    onResizeStart: vi.fn(),
+    onNudge: vi.fn(),
+    onStretch: vi.fn(),
+  };
+  const view = render(
+    <Widget title="Notes" position={position} {...handlers} {...props}>
+      <p>Hello</p>
+    </Widget>
+  );
+  return { ...handlers, ...view };
+}
+
 describe('Widget', () => {
   it('shows the title and its content in a labelled region', () => {
-    render(
-      <Widget title="Notes" onRemove={() => {}}>
-        <p>Hello</p>
-      </Widget>
-    );
+    setup();
     expect(screen.getByRole('region', { name: 'Notes' })).toBeInTheDocument();
     expect(screen.getByText('Hello')).toBeInTheDocument();
   });
 
   it('calls onRemove from the labelled remove button', async () => {
-    const onRemove = vi.fn();
-    render(<Widget title="Notes" onRemove={onRemove} />);
+    const { onRemove } = setup();
     await userEvent.click(screen.getByRole('button', { name: 'Remove Notes widget' }));
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
 
-  it('places the card on the grid by its span', () => {
-    render(<Widget title="A" span={6} onRemove={() => {}} />);
-    expect(screen.getByRole('region')).toHaveAttribute('data-span', '6');
+  it('sits on the grid cells it is given (the grid counts from 1)', () => {
+    setup();
+    const card = screen.getByRole('region');
+    expect(card.style.gridColumn).toBe('3 / span 4');
+    expect(card.style.gridRow).toBe('2 / span 3');
   });
 
-  it('resizes one column at a time with the arrow keys, within the limits', async () => {
-    const onResize = vi.fn();
-    render(<Widget title="A" span={12} onRemove={() => {}} onResize={onResize} />);
-    screen.getByRole('button', { name: 'Resize A widget' }).focus();
-    await userEvent.keyboard('{ArrowRight}{ArrowLeft}');
-    expect(onResize).toHaveBeenNthCalledWith(1, { span: 12 });
-    expect(onResize).toHaveBeenNthCalledWith(2, { span: 11 });
+  it('moves one cell at a time with the arrow keys on the handle', async () => {
+    const { onNudge } = setup();
+    screen.getByRole('button', { name: 'Move Notes widget' }).focus();
+    await userEvent.keyboard('{ArrowLeft}{ArrowDown}{ArrowRight}{ArrowUp}');
+    expect(onNudge.mock.calls).toEqual([[-1, 0], [0, 1], [1, 0], [0, -1]]);
   });
 
-  it('changes the height one row at a time with the up and down arrows', async () => {
-    const onResize = vi.fn();
-    render(<Widget title="A" rows={5} onRemove={() => {}} onResize={onResize} />);
-    expect(screen.getByRole('region')).toHaveAttribute('data-rows', '5');
-    screen.getByRole('button', { name: 'Resize A widget' }).focus();
-    await userEvent.keyboard('{ArrowDown}{ArrowUp}');
-    expect(onResize).toHaveBeenNthCalledWith(1, { rows: 6 });
-    expect(onResize).toHaveBeenNthCalledWith(2, { rows: 4 });
+  it('resizes one cell at a time: left and right change the width, up and down the height', async () => {
+    const { onStretch } = setup();
+    screen.getByRole('button', { name: 'Resize Notes widget' }).focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowLeft}{ArrowDown}{ArrowUp}');
+    expect(onStretch.mock.calls).toEqual([[1, 0], [-1, 0], [0, 1], [0, -1]]);
   });
 
-  it('goes back to automatic height on double-click', async () => {
-    const onResize = vi.fn();
-    render(<Widget title="A" rows={5} onRemove={() => {}} onResize={onResize} />);
-    await userEvent.dblClick(screen.getByRole('button', { name: 'Resize A widget' }));
-    expect(onResize).toHaveBeenLastCalledWith({ rows: null });
+  it('reports a press on the handle and on each resize edge', () => {
+    const { onMoveStart, onResizeStart, container } = setup();
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Move Notes widget' }));
+    expect(onMoveStart).toHaveBeenCalledTimes(1);
+
+    fireEvent.pointerDown(container.querySelector('.widget-edge-e'));
+    fireEvent.pointerDown(container.querySelector('.widget-edge-s'));
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Resize Notes widget' }));
+    expect(onResizeStart.mock.calls.map(([, edge]) => edge)).toEqual(['e', 's', 'se']);
   });
 
-  it('resizes from the right edge (width only) and the bottom edge (height only)', () => {
-    const onResize = vi.fn();
-    const { container } = render(<Widget title="A" onRemove={() => {}} onResize={onResize} />);
-    const east = container.querySelector('.widget-edge-e');
-    const south = container.querySelector('.widget-edge-s');
-
-    fireEvent.pointerDown(east, { clientX: 100, clientY: 50, pointerId: 1 });
-    fireEvent.pointerMove(east, { clientX: 400, clientY: 50, pointerId: 1 });
-    expect(onResize).toHaveBeenCalledTimes(1);
-    expect(Object.keys(onResize.mock.calls[0][0])).toEqual(['span']);
-    fireEvent.pointerUp(east, { pointerId: 1 });
-
-    fireEvent.pointerDown(south, { clientX: 100, clientY: 50, pointerId: 1 });
-    fireEvent.pointerMove(south, { clientX: 100, clientY: 400, pointerId: 1 });
-    expect(Object.keys(onResize.mock.calls[1][0])).toEqual(['rows']);
+  it('has no resize edges unless it can be resized', () => {
+    const { container } = setup({ onResizeStart: undefined });
+    expect(container.querySelector('.widget-edge')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Resize Notes widget' })).not.toBeInTheDocument();
   });
 
-  it('shows a snap guide only while an edge is being dragged', () => {
-    const { container } = render(<Widget title="A" onRemove={() => {}} onResize={() => {}} />);
-    const east = container.querySelector('.widget-edge-e');
-    expect(container.querySelector('.widget-snap-guide')).toBeNull();
-
-    fireEvent.pointerDown(east, { clientX: 100, clientY: 50, pointerId: 1 });
-    expect(container.querySelector('.widget-snap-guide')).not.toBeNull();
-    expect(screen.getByRole('region')).toHaveClass('resizing');
-
-    fireEvent.pointerUp(east, { pointerId: 1 });
-    expect(container.querySelector('.widget-snap-guide')).toBeNull();
+  it('floats and follows the pointer while it is being moved', () => {
+    setup({ state: 'moving', shift: { x: 12, y: -8 } });
+    const card = screen.getByRole('region');
+    expect(card).toHaveClass('is-moving');
+    expect(card.style.transform).toBe('translate(12px, -8px)');
   });
 
-  it('has no set height by default', () => {
-    render(<Widget title="A" onRemove={() => {}} />);
-    expect(screen.getByRole('region')).not.toHaveAttribute('data-rows');
-  });
-
-  it('steps to a neighbour with the arrow keys on the move handle', async () => {
-    const onStep = vi.fn();
-    render(<Widget title="A" onRemove={() => {}} onStep={onStep} />);
-    screen.getByRole('button', { name: 'Move A widget' }).focus();
-    await userEvent.keyboard('{ArrowDown}{ArrowLeft}');
-    expect(onStep).toHaveBeenNthCalledWith(1, 1);
-    expect(onStep).toHaveBeenNthCalledWith(2, -1);
-  });
-
-  it('has no resize handle unless it can be resized', () => {
-    render(<Widget title="A" onRemove={() => {}} />);
-    expect(screen.queryByRole('button', { name: 'Resize A widget' })).not.toBeInTheDocument();
+  it('is not offset when it is only being resized', () => {
+    setup({ state: 'resizing', shift: { x: 12, y: -8 } });
+    const card = screen.getByRole('region');
+    expect(card).toHaveClass('is-resizing');
+    expect(card.style.transform).toBe('');
   });
 });

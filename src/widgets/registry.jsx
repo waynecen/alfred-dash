@@ -4,12 +4,12 @@ import NotesWidget from '../components/NotesWidget/NotesWidget';
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list
-//   defaultSpan: how many of the grid's 12 columns it starts with (the user can resize it)
+//   defaultSize: { w, h } in grid cells (12 columns, rows 48px tall) it starts with; the user can resize it
 //   render: builds the widget's content from the dashboard's shared data (ctx)
 export const WIDGETS = {
   summary: {
     title: 'Summary',
-    defaultSpan: 4,
+    defaultSize: { w: 4, h: 4 },
     description: 'Active and completed counts, open tasks by priority, and a progress bar',
     render: ({ counts }) => (
       <SummaryWidget
@@ -22,7 +22,7 @@ export const WIDGETS = {
   tasks: {
     title: 'Tasks',
     description: 'A table to add, edit, filter and complete tasks',
-    defaultSpan: 8, // leaves room for the 4-column Summary beside it
+    defaultSize: { w: 8, h: 9 }, // leaves room for the 4-column Summary beside it
     render: ({ tasks, actions }) => (
       <TasksWidget
         tasks={tasks}
@@ -38,7 +38,7 @@ export const WIDGETS = {
   notes: {
     title: 'Notes',
     description: 'A notepad that saves as you type',
-    defaultSpan: 4,
+    defaultSize: { w: 4, h: 5 },
     render: ({ notes, actions }) => <NotesWidget value={notes} onChange={actions.setNotes} />,
   },
 };

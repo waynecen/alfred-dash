@@ -1,5 +1,6 @@
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import App from './App';
 
 async function addTask(text, priority) {
@@ -253,6 +254,26 @@ describe('App', () => {
 
   describe('customising the dashboard', () => {
     const titles = () => [...document.querySelectorAll('.widget h2')].map((el) => el.textContent);
+    const savedLayout = () => JSON.parse(localStorage.getItem('layout'));
+    const handle = (name) => screen.getByRole('button', { name: `Move ${name} widget` });
+    const resizer = (name) => screen.getByRole('button', { name: `Resize ${name} widget` });
+    const cardOf = (name) => screen.getByRole('region', { name });
+
+    // jsdom has no layout, so give the grid a width: 12 columns of 100px, with rows of 48px.
+    beforeEach(() => {
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+        const width = this.classList.contains('widget-grid') ? 1200 : 100;
+        return { width, height: 0, left: 0, top: 0, right: width, bottom: 0, x: 0, y: 0 };
+      });
+    });
+    afterEach(() => vi.restoreAllMocks());
+
+    // A pointer drag: press on an element, move the pointer, optionally let go.
+    function drag(element, { dx = 0, dy = 0, release = true } = {}) {
+      fireEvent.pointerDown(element, { clientX: 500, clientY: 300, button: 0 });
+      fireEvent.pointerMove(window, { clientX: 500 + dx, clientY: 300 + dy });
+      if (release) fireEvent.pointerUp(window, { clientX: 500 + dx, clientY: 300 + dy });
+    }
 
     it('adds a Notes widget that keeps what you type, even after it is removed', async () => {
       render(<App />);
@@ -267,68 +288,122 @@ describe('App', () => {
       expect(screen.getByRole('textbox', { name: 'Notes' })).toHaveValue('Buy milk');
     });
 
-    it('reorders widgets with the arrow keys and remembers the order', async () => {
+    it('starts with the Summary beside the Tasks, and puts a new widget in the free space under the Summary', async () => {
+      render(<App />);
+      expect(cardOf('Summary').style.gridColumn).toBe('1 / span 4');
+      expect(cardOf('Tasks').style.gridColumn).toBe('5 / span 8');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Add widget' }));
+      await userEvent.click(screen.getByRole('button', { name: /^Notes/ }));
+      expect(cardOf('Notes').style.gridColumn).toBe('1 / span 4');
+      expect(cardOf('Notes').style.gridRow).toBe('5 / span 5');
+    });
+
+    it('moves a widget with the arrow keys, the others make way, and the layout is remembered', async () => {
       render(<App />);
       expect(titles()).toEqual(['Summary', 'Tasks']);
-      screen.getByRole('button', { name: 'Move Tasks widget' }).focus();
-      await userEvent.keyboard('{ArrowUp}');
+
+      handle('Tasks').focus();
+      await userEvent.keyboard('{ArrowLeft}');
+      // Tasks now overlaps the Summary's columns, so the Summary drops underneath it.
       expect(titles()).toEqual(['Tasks', 'Summary']);
-      expect(JSON.parse(localStorage.getItem('widgets'))).toEqual(['tasks', 'summary']);
+      expect(savedLayout().tasks).toEqual({ x: 3, y: 0, w: 8, h: 9 });
+      expect(savedLayout().summary.y).toBe(9);
     });
 
-    it('reorders widgets by dragging one card onto another', async () => {
+    it('resizes a widget one column or row at a time, pushing its neighbour out of the way', async () => {
       render(<App />);
-      const dataTransfer = { setData() {}, setDragImage() {}, effectAllowed: '' };
-      const target = screen.getByRole('region', { name: 'Tasks' });
-      fireEvent.dragStart(screen.getByRole('button', { name: 'Move Summary widget' }), { dataTransfer });
-      await waitFor(() => expect(document.querySelector('.widget-placeholder')).not.toBeNull());
-      fireEvent.dragOver(target, { dataTransfer });
-      fireEvent.drop(target, { dataTransfer });
+      resizer('Summary').focus();
+      await userEvent.keyboard('{ArrowRight}{ArrowDown}');
+
+      expect(cardOf('Summary').style.gridColumn).toBe('1 / span 5');
+      expect(cardOf('Summary').style.gridRow).toBe('1 / span 5');
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 5 });
+      // The Tasks' first column is now taken, so it moves down below the Summary.
+      expect(savedLayout().tasks.y).toBe(5);
+    });
+
+    it('moves a widget by dragging its handle, snapping to whole cells', () => {
+      render(<App />);
+      // 140px left is 1.4 columns: it snaps to 1 column left.
+      drag(handle('Tasks'), { dx: -140 });
+      expect(savedLayout().tasks).toEqual({ x: 3, y: 0, w: 8, h: 9 });
       expect(titles()).toEqual(['Tasks', 'Summary']);
     });
 
-    it('shows a placeholder the size of the dragged widget where it will land', async () => {
+    it('shows where a dragged widget will land, and lets the card follow the pointer', () => {
       render(<App />);
-      const dataTransfer = { setData() {}, setDragImage() {}, effectAllowed: '' };
-      const placeholder = () => document.querySelector('.widget-placeholder');
-      expect(placeholder()).toBeNull();
+      drag(handle('Tasks'), { dx: -140, release: false });
 
-      fireEvent.dragStart(screen.getByRole('button', { name: 'Move Summary widget' }), { dataTransfer });
-      await waitFor(() => expect(placeholder()).toHaveAttribute('data-span', '4'));
+      const ghost = document.querySelector('.widget-ghost');
+      expect(ghost.style.gridColumn).toBe('4 / span 8');
+      expect(cardOf('Tasks')).toHaveClass('is-moving');
+      // The card is drawn 40px right of the snapped cell: 140px dragged, 100px of it snapped.
+      expect(cardOf('Tasks').style.transform).toBe('translate(-40px, 0px)');
 
-      fireEvent.dragOver(screen.getByRole('region', { name: 'Tasks' }), { dataTransfer });
-      // Moving down puts it after the card it is over.
-      expect(placeholder().previousElementSibling).toBe(screen.getByRole('region', { name: 'Tasks' }));
-
-      fireEvent.dragEnd(screen.getByRole('button', { name: 'Move Summary widget' }));
-      expect(placeholder()).toBeNull();
+      fireEvent.pointerUp(window);
+      expect(document.querySelector('.widget-ghost')).toBeNull();
+      expect(cardOf('Tasks')).not.toHaveClass('is-moving');
     });
 
-    it('sets a widget height in rows, and returns to automatic height on double-click', async () => {
+    it('returns a widget to where it was when it is dragged away and back', () => {
       render(<App />);
-      const summary = screen.getByRole('region', { name: 'Summary' });
-      expect(summary).not.toHaveAttribute('data-rows');
-
-      screen.getByRole('button', { name: 'Resize Summary widget' }).focus();
-      await userEvent.keyboard('{ArrowDown}');
-      // An automatic-height widget measures 0px in the test browser, so it starts from the minimum.
-      expect(summary).toHaveAttribute('data-rows', '3');
-      expect(JSON.parse(localStorage.getItem('widgetRows'))).toEqual({ summary: 3 });
-
-      await userEvent.dblClick(screen.getByRole('button', { name: 'Resize Summary widget' }));
-      expect(summary).not.toHaveAttribute('data-rows');
-      expect(JSON.parse(localStorage.getItem('widgetRows'))).toEqual({});
+      fireEvent.pointerDown(handle('Tasks'), { clientX: 500, clientY: 300, button: 0 });
+      fireEvent.pointerMove(window, { clientX: 200, clientY: 300 });
+      fireEvent.pointerMove(window, { clientX: 500, clientY: 300 });
+      fireEvent.pointerUp(window);
+      expect(titles()).toEqual(['Summary', 'Tasks']);
+      expect(savedLayout()).toEqual({});
     });
 
-    it('resizes a widget in whole columns and remembers the size', async () => {
+    it('cancels a drag with Escape', () => {
       render(<App />);
-      const summary = screen.getByRole('region', { name: 'Summary' });
-      expect(summary).toHaveAttribute('data-span', '4');
+      drag(handle('Tasks'), { dx: -300, release: false });
+      fireEvent.keyDown(window, { key: 'Escape' });
+      fireEvent.pointerUp(window);
+      expect(titles()).toEqual(['Summary', 'Tasks']);
+      expect(savedLayout()).toEqual({});
+    });
 
-      screen.getByRole('button', { name: 'Resize Summary widget' }).focus();
-      await userEvent.keyboard('{ArrowRight}{ArrowRight}');
-      expect(summary).toHaveAttribute('data-span', '6');
-      expect(JSON.parse(localStorage.getItem('widgetSpans'))).toEqual({ summary: 6 });
+    it('resizes a widget by dragging its bottom edge and its right edge', () => {
+      const { container } = render(<App />);
+      const summary = cardOf('Summary');
+
+      // Two rows down (96px) on the bottom edge: taller, same width.
+      drag(summary.querySelector('.widget-edge-s'), { dy: 96 });
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 4, h: 6 });
+
+      // One column right on the right edge: wider, same height.
+      drag(container.querySelector('.widget-edge-e'), { dx: 100 });
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 6 });
+    });
+
+    it('lets the card itself take the new size while it is being resized', () => {
+      render(<App />);
+      drag(resizer('Summary'), { dx: 200, dy: 96, release: false });
+      expect(cardOf('Summary')).toHaveClass('is-resizing');
+      expect(cardOf('Summary').style.gridColumn).toBe('1 / span 6');
+      expect(cardOf('Summary').style.gridRow).toBe('1 / span 6');
+      fireEvent.pointerUp(window);
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 6, h: 6 });
+    });
+
+    it('never makes a widget smaller than its minimum or wider than the grid', () => {
+      render(<App />);
+      drag(resizer('Summary'), { dx: -900, dy: -900 });
+      expect(savedLayout().summary).toMatchObject({ w: 3, h: 2 });
+
+      drag(resizer('Tasks'), { dx: 5000 });
+      expect(savedLayout().tasks.w).toBe(8); // it starts at column 5 of 12, so 8 is the most
+    });
+
+    it('forgets a removed widget spot, so adding it back finds a free one', async () => {
+      render(<App />);
+      drag(resizer('Summary'), { dx: 100 });
+      expect(savedLayout().summary).toBeDefined();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Remove Summary widget' }));
+      expect(savedLayout().summary).toBeUndefined();
     });
   });
 

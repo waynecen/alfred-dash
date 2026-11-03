@@ -74,20 +74,6 @@ h1 {
   margin: 2rem 0;
 }
 
-/* Widgets sit in a responsive grid above the task list. */
-.widget-grid {
-  position: relative; /* the dragged card is positioned against the grid */
-  display: grid;
-  grid-auto-flow: row dense; /* smaller widgets fill gaps in a row */
-  /* Rows are a fixed height, but still grow for a widget that has no set height. */
-  grid-auto-rows: minmax(var(--row-unit), auto);
-  /* 12 columns; each widget spans some of them, so sizes snap to the grid. */
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  align-items: start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
 /* Shared button look; specific buttons tweak it in TaskTracker.css. */
 button {
   font: inherit;
@@ -110,39 +96,8 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-/* Each widget says how many of the 12 columns it wants in --span. */
-.widget-grid > [data-span] {
-  grid-column: span var(--span);
-}
-
-/* A widget with a set height spans that many rows. */
-.widget-grid > [data-rows] {
-  grid-row: span var(--rows);
-}
-
-/* Where a dragged widget will snap to. */
-.widget-placeholder {
-  box-sizing: border-box;
-  border: 2px dashed var(--accent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-}
-
 /* Phones: one column. */
 @media (max-width: 600px) {
-  .widget-edge {
-    display: none;
-  }
-
-  /* Stacked widgets size themselves. */
-  .widget-grid > [data-rows][data-rows] {
-    grid-row: auto;
-  }
-
-  .widget-grid > [data-span][data-span] {
-    grid-column: 1 / -1;
-  }
-
   .app-header-actions {
     flex-wrap: wrap;
   }

@@ -1,34 +1,24 @@
+/* The card fills the grid cells it is placed on. The content scrolls inside instead of growing. */
 .widget {
   position: relative;
-  min-width: 0; /* lets wide content (the task table) scroll instead of stretching the grid */
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1.4rem 1rem 1rem; /* extra room on top for the centred drag handle */
-}
-
-/* While being dragged the card leaves the grid; the placeholder shows where it will land.
-   It stays in the page (just hidden) so the browser still sends the drag-end event. */
-/* A widget with a set height keeps it and scrolls its content instead of growing. */
-.widget[data-rows] {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  /* After a move, the card glides into its cell. */
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.15s ease;
 }
 
 .widget-body {
   flex: 1;
   min-height: 0;
-}
-
-.widget[data-rows] .widget-body {
   overflow: auto;
-}
-
-.widget.dragging {
-  position: absolute;
-  visibility: hidden;
-  pointer-events: none;
 }
 
 .widget-header {
@@ -52,10 +42,14 @@
   transform: translateX(-50%);
   display: flex;
   padding: 0.2rem 0.6rem;
-  border-color: transparent;
-  background: transparent;
   color: var(--icon-subtle);
   cursor: grab;
+  touch-action: none;
+  border-radius: 6px;
+}
+
+.widget-handle:focus-visible {
+  outline: 3px solid var(--accent);
 }
 
 .widget-remove {
@@ -72,7 +66,28 @@
   color: var(--danger);
 }
 
-/* Resizing: thin zones inside the right and bottom borders and the bottom-right corner. */
+/* While it is dragged the card floats above the others and follows the pointer exactly. */
+.widget.is-moving {
+  z-index: 5;
+  border-color: var(--accent);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  cursor: grabbing;
+  user-select: none;
+  transition: none;
+}
+
+.widget.is-moving .widget-handle {
+  cursor: grabbing;
+}
+
+.widget.is-resizing {
+  border-color: var(--accent);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+  user-select: none;
+  transition: none;
+}
+
+/* Resizing: thin zones inside the right and bottom borders, and the bottom-right corner. */
 .widget-edge {
   position: absolute;
   z-index: 2;
@@ -111,9 +126,8 @@
   outline: 2px solid var(--accent);
 }
 
-/* The border lights up while the pointer is on any resize zone, or while resizing. */
-.widget:has(.widget-edge:hover),
-.widget.resizing {
+/* The border lights up while the pointer is on any resize zone. */
+.widget:has(.widget-edge:hover) {
   border-color: var(--accent);
 }
 
@@ -143,24 +157,4 @@
 .widget-edge-e:hover::after,
 .widget-edge-s:hover::after {
   background: var(--accent);
-}
-
-.widget.resizing {
-  z-index: 5;
-  overflow: visible;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-  user-select: none;
-}
-
-/* Dashed outline of the size the card will snap to. */
-.widget-snap-guide {
-  position: absolute;
-  top: -1px;
-  left: -1px;
-  box-sizing: border-box;
-  border: 2px dashed var(--accent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-  pointer-events: none;
-  transition: width 0.12s ease, height 0.12s ease;
 }

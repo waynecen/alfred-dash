@@ -1,0 +1,36 @@
+/* 12 columns of fixed-height rows. Each widget is placed on explicit cells (inline, from Dashboard). */
+.widget-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: var(--row-unit);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Where the card being dragged will snap to. */
+.widget-ghost {
+  box-sizing: border-box;
+  border: 2px dashed var(--accent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  pointer-events: none;
+}
+
+/* Phones: one column, in reading order. Each widget keeps its height; moving and resizing are off. */
+@media (max-width: 600px) {
+  .widget-grid {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .widget-grid > .widget {
+    flex: none;
+    height: calc(var(--h) * var(--row-unit) + (var(--h) - 1) * 1rem);
+  }
+
+  .widget-handle,
+  .widget-edge {
+    display: none;
+  }
+}
