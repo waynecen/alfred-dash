@@ -28,3 +28,13 @@ beforeEach(() => {
   localStorage.clear();
   delete document.documentElement.dataset.theme;
 });
+
+// jsdom has no PointerEvent. This stand-in keeps the pointer position that the drag tests send.
+if (!window.PointerEvent) {
+  window.PointerEvent = class PointerEvent extends MouseEvent {
+    constructor(type, init = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 1;
+    }
+  };
+}
