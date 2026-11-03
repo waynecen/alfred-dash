@@ -12,6 +12,18 @@
   resize: vertical;
 }
 
+/* In a widget with a set height the notepad fills the space. */
+.widget[data-rows] .notes-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.widget[data-rows] .notes-input {
+  flex: 1;
+  resize: none;
+}
+
 .notes-hint {
   margin: 0.4rem 0 0;
   color: var(--muted);
