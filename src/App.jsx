@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
+import { useAIHealth } from './hooks/useAI';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import Dashboard from './components/Dashboard/Dashboard';
 import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
@@ -58,6 +59,8 @@ function App() {
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
   const { toasts, notify, dismiss } = useToasts();
+  // Checked each time Settings opens, so the AI status there is current.
+  const aiHealth = useAIHealth(settingsOpen);
 
   // The CSS variables are switched by an attribute on <html>.
   useEffect(() => {
@@ -327,6 +330,7 @@ function App() {
           onThemeChange={setTheme}
           onResetLayout={resetLayout}
           onClose={() => setSettingsOpen(false)}
+          ai={aiHealth}
         />
       )}
       <ToastRegion toasts={toasts} onDismiss={dismiss} />

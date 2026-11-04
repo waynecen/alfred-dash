@@ -80,6 +80,11 @@
   font-weight: 400;
 }
 
+.drawer-badge-connected {
+  border-color: var(--success);
+  color: var(--success);
+}
+
 @keyframes drawer-in {
   from {
     transform: translateX(100%);

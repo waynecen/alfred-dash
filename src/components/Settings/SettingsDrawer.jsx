@@ -9,13 +9,29 @@ const THEMES = [
   { value: 'system', label: 'Match system' },
 ];
 
+// What the AI section says for each useAIHealth status.
+const AI_STATUS = {
+  checking: { label: 'Checking…', note: 'Looking for the local AI proxy.' },
+  connected: { label: 'Connected', note: 'Your API key stays in the local proxy and never reaches this page.' },
+  'not-configured': {
+    label: 'Not connected',
+    note: 'Add ANTHROPIC_API_KEY to a .env file (see .env.example), then restart npm run dev.',
+  },
+  offline: {
+    label: 'Proxy not running',
+    note: 'The AI proxy runs with npm run dev. Start it, then check again.',
+  },
+};
+
 // A panel that slides in from the right with the dashboard's preferences. It is a modal dialog:
 // focus stays inside while it is open, Escape or a click outside closes it, and focus goes back
 // to the Settings button.
 //   theme: 'light' | 'dark' | 'system'     onThemeChange(theme)
 //   onResetLayout(): put every widget back at its default size and place (it offers Undo)
 //   onClose()
-function SettingsDrawer({ theme, onThemeChange, onResetLayout, onClose }) {
+//   ai: { status, model, recheck } from useAIHealth
+function SettingsDrawer({ theme, onThemeChange, onResetLayout, onClose, ai = { status: 'not-configured' } }) {
+  const aiStatus = AI_STATUS[ai.status] ?? AI_STATUS['not-configured'];
   const panelRef = useRef(null);
   const headingId = useId();
 
@@ -64,12 +80,20 @@ function SettingsDrawer({ theme, onThemeChange, onResetLayout, onClose }) {
 
         <section className="drawer-section">
           <h3>
-            AI assistant <span className="drawer-badge">Not connected</span>
+            AI assistant{' '}
+            <span className={`drawer-badge drawer-badge-${ai.status}`} role="status">
+              {aiStatus.label}
+            </span>
           </h3>
           <p className="drawer-note">
-            AI widgets will talk to a small local server that keeps your Anthropic API key off this
-            page. Once it is running, its status and model choice will show here.
+            {ai.status === 'connected' ? `Using ${ai.model}. ` : ''}
+            {aiStatus.note}
           </p>
+          {ai.recheck && ai.status !== 'connected' && ai.status !== 'checking' && (
+            <button type="button" onClick={ai.recheck}>
+              Check again
+            </button>
+          )}
         </section>
 
         <section className="drawer-section">
