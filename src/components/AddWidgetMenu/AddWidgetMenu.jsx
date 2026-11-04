@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useId } from 'react';
+import { useState, useRef, useId } from 'react';
+import useDismiss from '../../hooks/useDismiss';
 import './AddWidgetMenu.css';
 
 // widgets: [{ id, title, description }]   added: ids already on the dashboard
@@ -8,25 +9,7 @@ function AddWidgetMenu({ widgets, added, onAdd }) {
   const listId = useId();
 
   // While the list is open, clicking elsewhere or pressing Escape closes it.
-  useEffect(() => {
-    if (!open) return;
-
-    function handleMouseDown(event) {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setOpen(false);
-      }
-    }
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') setOpen(false);
-    }
-
-    document.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [open]);
+  useDismiss(containerRef, () => setOpen(false), open);
 
   function choose(id) {
     onAdd(id);
