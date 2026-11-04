@@ -177,6 +177,24 @@
   text-align: center;
 }
 
+/* The shared empty, loading and error states, in white on the sky. */
+.weather-note.widget-state,
+.weather-note .widget-state-message {
+  color: inherit;
+  padding: 0;
+}
+
+.weather-note .widget-state-spinner {
+  border-color: var(--glass-line);
+  border-top-color: #fff;
+}
+
+.weather-note .widget-state-actions button {
+  background: var(--glass);
+  border-color: var(--glass-line);
+  color: inherit;
+}
+
 /* The forecast: one column, sections appear as there is room for them */
 .weather-forecast {
   display: flex;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { compassPoint, describeWeather, fetchForecast, searchPlaces, uvLevel } from '../../utils/weather';
+import WidgetState from '../WidgetState/WidgetState';
 import WeatherIcon from './WeatherIcon';
 import './WeatherWidget.css';
 
@@ -119,8 +120,14 @@ function PlaceSearch({ onPick, onCancel }) {
           </button>
         )}
       </form>
-      {status === 'error' && <p className="weather-note">Search failed. Check your connection and try again.</p>}
-      {results?.length === 0 && <p className="weather-note">No places found.</p>}
+      {status === 'error' && (
+        <WidgetState
+          status="error"
+          className="weather-note"
+          message="Search failed. Check your connection and try again."
+        />
+      )}
+      {results?.length === 0 && <WidgetState status="empty" className="weather-note" message="No places found." />}
       {results?.length > 0 && (
         <ul className="weather-results">
           {results.map((place) => (
@@ -133,7 +140,9 @@ function PlaceSearch({ onPick, onCancel }) {
           ))}
         </ul>
       )}
-      {!results && status === 'idle' && <p className="weather-note">Add a city to see its forecast.</p>}
+      {!results && status === 'idle' && (
+        <WidgetState status="empty" className="weather-note" message="Add a city to see its forecast." />
+      )}
     </div>
   );
 }
@@ -141,19 +150,30 @@ function PlaceSearch({ onPick, onCancel }) {
 function Forecast({ place }) {
   const [forecast, setForecast] = useState(null);
   const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0); // bumped by Retry to fetch again
 
   useEffect(() => {
     let ignore = false;
+    setError(false);
     fetchForecast(place)
       .then((data) => !ignore && setForecast(data))
       .catch(() => !ignore && setError(true));
     return () => {
       ignore = true;
     };
-  }, [place]);
+  }, [place, attempt]);
 
-  if (error) return <p className="weather-note">Could not load the forecast for {place.name}.</p>;
-  if (!forecast) return <p className="weather-note" aria-busy="true">Loading forecast…</p>;
+  if (error) {
+    return (
+      <WidgetState
+        status="error"
+        className="weather-note"
+        message={`Could not load the forecast for ${place.name}.`}
+        onRetry={() => setAttempt(attempt + 1)}
+      />
+    );
+  }
+  if (!forecast) return <WidgetState status="loading" className="weather-note" message="Loading forecast…" />;
 
   const { current, hours, days } = forecast;
   const sky = describeWeather(current.code);
