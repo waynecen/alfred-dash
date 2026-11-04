@@ -13,6 +13,8 @@ function useDismiss(ref, onClose, active = true) {
     if (!active) return undefined;
 
     function handleMouseDown(event) {
+      // Clicks on toasts (e.g. Undo) never count as "outside": they float above everything.
+      if (event.target.closest?.('[data-keep-overlays]')) return;
       if (ref.current && !ref.current.contains(event.target)) close.current('outside');
     }
     function handleKeyDown(event) {

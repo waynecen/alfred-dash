@@ -480,4 +480,29 @@ describe('App', () => {
     expect(JSON.parse(localStorage.getItem('theme'))).toBe('dark');
     expect(screen.getByRole('button', { name: 'Light mode' })).toBeInTheDocument();
   });
+
+  describe('undo', () => {
+    it('brings a removed widget back to the same place and focuses it', async () => {
+      render(<App />);
+      await userEvent.click(screen.getByRole('button', { name: 'Remove Summary widget' }));
+      expect(screen.getByText('Summary removed')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      expect(JSON.parse(localStorage.getItem('widgets'))).toEqual(['summary', 'tasks']);
+      expect(screen.getByRole('button', { name: 'Move Summary widget' })).toHaveFocus();
+      expect(screen.queryByText('Summary removed')).not.toBeInTheDocument();
+    });
+
+    it('brings a deleted task back at the same position', async () => {
+      render(<App />);
+      await addTask('One');
+      await addTask('Two');
+      await userEvent.click(screen.getByRole('button', { name: 'Delete task: One' }));
+      expect(screen.getByText('Deleted “One”')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      expect(JSON.parse(localStorage.getItem('tasks')).map((t) => t.text)).toEqual(['One', 'Two']);
+    });
+  });
+
 });

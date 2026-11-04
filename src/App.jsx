@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
+import useToasts from './hooks/useToasts';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import Dashboard from './components/Dashboard/Dashboard';
 import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
+import ToastRegion from './components/Toast/ToastRegion';
 import { WIDGETS, DEFAULT_WIDGETS } from './widgets/registry';
 import countTasks from './utils/countTasks';
 
@@ -13,6 +15,9 @@ const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
   description: widget.description,
   category: widget.category,
 }));
+
+// Puts an item back at the index it was taken from (or at the end, if the list got shorter).
+const insertAt = (list, index, item) => [...list.slice(0, index), item, ...list.slice(index)];
 
 function App() {
   // The tasks live here, so every widget shares one source of truth.
@@ -33,6 +38,7 @@ function App() {
 
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
+  const { toasts, notify, dismiss } = useToasts();
 
   // The CSS variables are switched by an attribute on <html>.
   useEffect(() => {
@@ -76,7 +82,17 @@ function App() {
   }
 
   function deleteTask(id) {
-    setTasks(tasks.filter((task) => task.id !== id));
+    const index = tasks.findIndex((task) => task.id === id);
+    if (index === -1) return;
+    const task = tasks[index];
+    setTasks(tasks.filter((t) => t.id !== id));
+    notify({
+      message: `Deleted “${task.text}”`,
+      actionLabel: 'Undo',
+      // Functional updates, so anything done since the delete is kept.
+      onAction: () =>
+        setTasks((current) => (current.some((t) => t.id === id) ? current : insertAt(current, index, task))),
+    });
   }
 
   function reorderTasks(newTasks) {
@@ -90,10 +106,22 @@ function App() {
   }
 
   function removeWidget(id) {
+    const index = widgetIds.indexOf(id);
+    const spot = layout[id];
     setWidgetIds(widgetIds.filter((widgetId) => widgetId !== id));
     // Forget its spot, so adding it back later places it in a free one.
     const { [id]: _removed, ...rest } = layout;
     setLayout(rest);
+    notify({
+      message: `${WIDGETS[id]?.title ?? 'Widget'} removed`,
+      actionLabel: 'Undo',
+      onAction: () => {
+        // Undo puts it back where it was, at the same size.
+        setWidgetIds((current) => (current.includes(id) ? current : insertAt(current, index, id)));
+        if (spot) setLayout((current) => ({ ...current, [id]: spot }));
+        focusWidget(id);
+      },
+    });
   }
 
   // Ignore saved ids that no longer exist in the registry (e.g. a widget that was renamed).
@@ -104,7 +132,7 @@ function App() {
     tasks,
     notes,
     counts: countTasks(tasks),
-    actions: { addTask, toggleTask, editTask, changePriority, deleteTask, reorderTasks, setNotes },
+    actions: { addTask, toggleTask, editTask, changePriority, deleteTask, reorderTasks, setNotes, notify },
   };
 
   return (
@@ -163,6 +191,7 @@ function App() {
           No widgets yet. Use “Add widget” to get started.
         </p>
       )}
+      <ToastRegion toasts={toasts} onDismiss={dismiss} />
     </main>
   );
 }
