@@ -1,33 +1,41 @@
-/* Colors are defined once as variables so they're easy to change later. */
+/* Swiss broadsheet (see DESIGN.md): ink on warm bone, one typeface, square corners, no shadows.
+   Structure comes only from hairline rules, so --border is the full ink colour, not a pale grey. */
 :root {
-  --bg: #f4f5f7;
-  --card: #ffffff;
-  --text: #1f2933;
-  --muted: #6b7280;
-  --border: #d9dde3;
-  --accent: #2563eb;
-  --accent-text: #ffffff;
-  --danger: #b91c1c;
-  --warning: #b45309;
-  --success: #15803d;
-  /* Quiet icons: the lightest grey that still reaches 3:1 against --card (WCAG 1.4.11). */
-  --icon-subtle: #949494;
+  --bg: #dbd7d3; /* Bone: the one page surface */
+  --card: #dbd7d3; /* widgets sit on the page itself; rules, not fills, mark them out */
+  --surface: #e5d5c3; /* Sand: inputs, hover and the selected row */
+  --text: #2b2b2b; /* Inkstone */
+  --muted: #535251; /* Graphite: labels and metadata (5.4:1 on Bone) */
+  --border: #2b2b2b; /* the heavy hairline */
+  --rule-soft: color-mix(in srgb, var(--text) 28%, var(--bg)); /* rows inside a widget */
+  --accent: #2b2b2b; /* no chromatic accent: emphasis is ink */
+  --accent-text: #dbd7d3;
+  /* Status colours stay, for meaning only, darkened to read on Bone (all ≥ 4.5:1). */
+  --danger: #8f1d1d;
+  --warning: #7a4600;
+  --success: #2f5a32;
+  --icon-subtle: #535251;
+
+  --font: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --gutter: clamp(1rem, 2vw, 1.5rem); /* 16px on phones, up to 24px on wide screens */
+  --header-h: 2.5rem; /* one widget header band */
   color-scheme: light; /* makes native controls (dropdowns, checkboxes) match */
 }
 
-/* Dark theme: App.jsx sets data-theme="dark" on <html>. */
+/* Dark theme: App.jsx sets data-theme="dark" on <html>. The same broadsheet, inverted. */
 :root[data-theme='dark'] {
-  --bg: #111827;
-  --card: #1f2937;
-  --text: #f3f4f6;
-  --muted: #9ca3af;
-  --border: #374151;
-  --accent: #3b82f6;
-  --accent-text: #ffffff;
-  --danger: #f87171;
-  --warning: #fbbf24;
-  --success: #4ade80;
-  --icon-subtle: #717171; /* the dimmest grey that still reaches 3:1 against the dark --card */
+  --bg: #1d1c1b;
+  --card: #1d1c1b;
+  --surface: #2b2926;
+  --text: #dbd7d3;
+  --muted: #a29d97;
+  --border: #9c968f;
+  --accent: #dbd7d3;
+  --accent-text: #1d1c1b;
+  --danger: #f0907f;
+  --warning: #e3b56a;
+  --success: #9fc28f;
+  --icon-subtle: #8f8a84;
   color-scheme: dark;
 }
 
@@ -37,79 +45,179 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: -0.011em; /* Inter's own advice for text sizes */
+  font-feature-settings: 'cv11', 'ss01'; /* single-storey a, open digits */
   background: var(--bg);
   color: var(--text);
-  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* Numbers line up in columns everywhere (counts, dates, temperatures). */
+dd,
+td,
+time,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 700;
+}
+
+/* Full bleed: no centred column, the page is the grid. */
 .app {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 1.5rem 1rem;
+  min-height: 100vh;
+  padding: 0 var(--gutter) var(--gutter);
 }
 
+/* Masthead: an index line on top, then the title set large, closed by a rule. */
 .app-header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.5rem var(--gutter);
+  padding: var(--gutter) 0 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header::before {
+  content: 'Dashboard';
+  grid-column: 1 / -1;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 2;
+  text-transform: uppercase;
+}
+
+.app-header h1,
+.app-header .editable-title-input {
+  margin: 0;
+  font-size: clamp(2.25rem, 7vw, 6rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.05em;
 }
 
 .app-header-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0;
+}
+
+/* The header buttons share their edges, like cells in one row. */
+.app-header-actions > * + * {
+  margin-left: -1px;
 }
 
 h1 {
   margin: 0;
 }
 
+/* Empty dashboard: the message and the starter layouts, set flush left. */
 .dashboard-empty {
-  margin: 2rem 0;
+  align-items: flex-start !important;
+  padding: 2.5rem 0 !important;
+  text-align: left !important;
+}
+
+.dashboard-empty .widget-state-message {
+  max-width: 40rem;
+  color: var(--text);
+  font-size: clamp(1.25rem, 2.5vw, 1.7rem);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
 }
 
 .starter-layouts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 0.75rem;
-  width: min(36rem, 100%);
-  margin-top: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  width: 100%;
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
 }
 
 .starter-layout {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.15rem;
-  padding: 0.75rem 1rem;
+  gap: 0.25rem;
+  min-height: 7rem;
+  padding: 1rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
   text-align: left;
+  counter-increment: starter;
+}
+
+.starter-layout::before {
+  content: counter(starter, decimal-leading-zero);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.starter-layouts {
+  counter-reset: starter;
+}
+
+.starter-layout strong {
+  font-size: 1.25rem;
+  letter-spacing: -0.025em;
 }
 
 .starter-layout span {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+}
+
+.starter-layout:hover {
+  background: transparent;
+}
+
+.starter-layout:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Side by side on wider screens, each layout in its own ruled column. */
+@media (min-width: 640px) {
+  .starter-layout {
+    padding: 1rem var(--gutter) 1rem 0;
+  }
+
+  .starter-layout + .starter-layout {
+    padding-left: var(--gutter);
+    border-left: 1px solid var(--border);
+  }
 }
 
 /* A key, as in "press Ctrl + K". */
 kbd {
   padding: 0 0.3rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg);
+  border: 1px solid currentColor;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .palette-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  height: 2.25rem;
-  padding: 0 0.6rem 0 0.75rem;
+  height: 2.5rem;
+  padding: 0 0.75rem;
   color: var(--muted);
 }
 
@@ -120,33 +228,40 @@ kbd {
   }
 }
 
-/* Shared button look; specific buttons tweak it in TaskTracker.css. */
+/* Shared button look: a ruled rectangle that fills with ink on hover. */
 button {
   font: inherit;
+  letter-spacing: inherit;
   padding: 0.5rem 1rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
+  border-radius: 0;
+  background: transparent;
   color: var(--text);
   cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
 button:hover {
-  border-color: var(--accent);
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* Inputs: square, ruled, on the warm surface. */
+input,
+select,
+textarea {
+  border-radius: 0;
+  letter-spacing: inherit;
 }
 
 /* Visible focus ring for keyboard users. */
 button:focus-visible,
-input:focus-visible {
-  outline: 3px solid var(--accent);
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--text);
   outline-offset: 2px;
-}
-
-/* Phones: one column. */
-@media (max-width: 600px) {
-  .app-header-actions {
-    flex-wrap: wrap;
-  }
 }
 
 /* Square header buttons that hold just an icon or a symbol. */
@@ -154,9 +269,30 @@ input:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
   padding: 0;
   font-size: 1.4rem;
   line-height: 1;
+}
+
+/* Phones: the title takes the full width, the actions sit in a ruled row under it. */
+@media (max-width: 600px) {
+  .app-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-header-actions {
+    justify-content: flex-start;
+  }
+
+  .app-header-actions .palette-button {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
 }

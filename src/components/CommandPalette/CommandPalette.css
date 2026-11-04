@@ -5,28 +5,34 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 12vh 1rem 1rem;
-  background: rgba(0, 0, 0, 0.35);
+  padding: 12vh var(--gutter) var(--gutter);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
 }
 
+/* A ruled sheet: the field, a rule, the list, a rule, the hint. */
 .palette {
-  width: min(36rem, 100%);
+  width: min(40rem, 100%);
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+  background: var(--bg);
 }
 
 .palette-input {
   width: 100%;
-  padding: 0.9rem 1rem;
+  padding: 1rem;
   border: 0;
   border-bottom: 1px solid var(--border);
   background: transparent;
   color: var(--text);
   font: inherit;
-  font-size: 1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.palette-input::placeholder {
+  color: var(--muted);
+  font-weight: 400;
 }
 
 /* The whole palette is the focus target; the ring would only fight the bottom border. */
@@ -35,9 +41,9 @@
 }
 
 .palette-list {
-  max-height: min(22rem, 50vh);
+  max-height: min(24rem, 55vh);
   margin: 0;
-  padding: 0.25rem;
+  padding: 0;
   overflow-y: auto;
   list-style: none;
 }
@@ -45,33 +51,41 @@
 .palette-option {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   gap: 1rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--rule-soft);
   cursor: pointer;
 }
 
+.palette-option:last-child {
+  border-bottom: 0;
+}
+
 .palette-option[aria-selected='true'] {
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--text);
+  color: var(--bg);
 }
 
 .palette-group {
+  flex: none;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .palette-option[aria-selected='true'] .palette-group {
   color: inherit;
-  opacity: 0.85;
 }
 
 .palette-empty,
 .palette-hint {
   margin: 0;
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1rem;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .palette-hint {

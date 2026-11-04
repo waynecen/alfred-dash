@@ -1,19 +1,21 @@
-/* 12 columns of fixed-height rows. Each widget is placed on explicit cells (inline, from Dashboard). */
+/* 12 columns of fixed-height rows. Each widget is placed on explicit cells (inline, from Dashboard).
+   No gap: neighbouring widgets share one hairline, so the dashboard reads as a single ruled sheet.
+   (useGridInteraction reads the gap from the computed style, so 0 needs no change there.) */
 .widget-grid {
   position: relative;
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   grid-auto-rows: var(--row-unit);
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 0;
+  margin-top: var(--gutter);
 }
 
-/* Where the card being dragged will snap to. */
+/* Where the widget being dragged will snap to. */
 .widget-ghost {
   box-sizing: border-box;
-  border: 2px dashed var(--accent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  margin: 0 -1px -1px 0;
+  border: 1px dashed var(--border);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
   pointer-events: none;
 }
 
@@ -26,11 +28,16 @@
 
   .widget-grid > .widget {
     flex: none;
-    height: calc(var(--h) * var(--row-unit) + (var(--h) - 1) * 1rem);
+    height: calc(var(--h) * var(--row-unit));
+    margin: 0 0 -1px;
   }
 
   .widget-handle,
   .widget-edge {
     display: none;
+  }
+
+  .widget-header {
+    padding-left: 1rem !important;
   }
 }

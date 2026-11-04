@@ -1,15 +1,23 @@
 /* Form */
 .task-form label {
   display: block;
-  font-weight: 600;
   margin-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-/* align-items: flex-end lines the controls up on one baseline under their labels. */
+/* align-items: flex-end lines the controls up on one baseline under their labels.
+   The controls touch, sharing their edges like cells in one row. */
 .task-form-row {
   display: flex;
   align-items: flex-end;
-  gap: 0.5rem;
+}
+
+.task-form-row > * + * {
+  margin-left: -1px;
 }
 
 .task-form-field {
@@ -22,71 +30,67 @@
   min-width: 0; /* lets the input shrink on narrow screens */
 }
 
-.task-form-row input {
+.task-form-row input,
+.task-form-row select {
   min-width: 0;
+  height: 2.5rem;
   font: inherit;
-  padding: 0.5rem 0.75rem;
+  padding: 0 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
+  background: var(--surface);
   color: var(--text);
 }
 
 .task-form-row button {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
+  height: 2.5rem;
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+  font-weight: 700;
 }
 
-/* Filter */
+.task-form-row button:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+/* Filter: a row of ruled tabs; the chosen one is filled with ink. */
 .task-filter {
   display: flex;
-  gap: 0.25rem;
-  margin: 0 0 0.75rem;
+  margin: 0 0 1rem;
 }
 
-/* Compact pills. */
 .task-filter button {
-  padding: 0.15rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
-/* "All" is the primary filter, so it keeps the stronger text and border. */
-.task-filter button[data-filter='all'] {
-  font-weight: 600;
+.task-filter button + button {
+  margin-left: -1px;
 }
 
-/* Active and Completed are secondary: quiet until hovered or selected. */
-.task-filter button:not(.active):not([data-filter='all']) {
-  background: transparent;
-  border-color: transparent;
+.task-filter button:not(.active) {
   color: var(--muted);
 }
 
-.task-filter button:not(.active):not([data-filter='all']):hover {
-  border-color: var(--border);
+.task-filter button:not(.active):hover {
+  color: var(--bg);
 }
 
 .task-filter button.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
 }
 
-/* Small count badge next to a filter name */
+/* Small count next to a filter name */
 .task-count {
-  margin-left: 0.35rem;
-  padding: 0 0.35rem;
-  border-radius: 999px;
-  background: var(--bg);
-  color: var(--muted);
-  font-size: 0.75em;
-}
-
-.task-filter button.active .task-count {
-  background: rgba(255, 255, 255, 0.25);
-  color: var(--accent-text);
+  margin-left: 0.4rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  opacity: 0.8;
 }
 
 /* Table */
@@ -101,12 +105,13 @@
 }
 
 .task-table th {
-  padding: 0.25rem 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   line-height: 1.2;
   text-align: left;
   text-transform: uppercase;
@@ -121,13 +126,13 @@
 }
 
 .task-table td {
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--border);
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--rule-soft);
   vertical-align: middle;
 }
 
 .task-table tbody tr:last-child td {
-  border-bottom: none;
+  border-bottom: 1px solid var(--border);
 }
 
 /* Fixed column widths keep every row lined up. */
@@ -153,7 +158,6 @@
 .sort-button {
   padding: 0 0.25rem;
   border: 0; /* no border, so the button adds no height to the heading row */
-  background: transparent;
   color: var(--muted);
   font-size: 0.7rem;
   line-height: 1;
@@ -161,13 +165,23 @@
   text-transform: none;
 }
 
+.sort-button:hover {
+  background: transparent;
+  color: var(--text);
+}
+
 .sort-button.active {
-  color: var(--accent);
+  color: var(--text);
+}
+
+.task-row:hover td {
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
 }
 
 .task-row input[type='checkbox'] {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--text);
 }
 
 /* The task text is a button (so keyboards can use it) made to look like plain text. */
@@ -176,12 +190,13 @@
   text-align: left;
   padding: 0.3rem 0.5rem;
   border: 1px solid transparent; /* reserves space so the hover outline doesn't shift the layout */
-  background: none;
   overflow-wrap: anywhere; /* long words won't break the layout */
 }
 
 .task-text:hover {
-  border-color: var(--accent);
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
 }
 
 .task-row.completed .task-text {
@@ -192,7 +207,7 @@
 /* Lighter secondary text; nowrap keeps "45m ago" on one line. */
 .task-date {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 
@@ -202,48 +217,44 @@
   min-width: 0;
   font: inherit;
   padding: 0.3rem 0.5rem;
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  background: var(--card);
+  border: 1px solid var(--border);
+  background: var(--surface);
   color: var(--text);
 }
 
 .delete-button {
   display: inline-flex;
   align-items: center;
-  color: var(--icon-subtle);
   padding: 0.3rem;
+  border-color: transparent;
+  color: var(--icon-subtle);
 }
 
 /* Red only when the user is about to act on it. */
 .delete-button:hover,
 .delete-button:focus-visible {
-  color: var(--danger);
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg);
 }
 
-/* Priority picker, tinted by level. */
-.task-form-row select,
-.priority-select {
-  font: inherit;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--text);
-}
-
-.task-form-row select {
-  padding: 0.5rem;
-}
-
-/* Full width of its column, so every task's dropdown lines up whatever its label. */
+/* Priority picker: full width of its column, so every task's dropdown lines up. */
 .priority-select {
   width: 100%;
   padding: 0.2rem 0.3rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  border: 1px solid var(--rule-soft);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
-/* The level is shown by the text colour alone; the outline stays the neutral border. */
+.priority-select:hover {
+  border-color: var(--border);
+}
+
+/* The level is shown by the text colour alone; the outline stays the neutral rule. */
 .priority-high {
   color: var(--danger);
 }
@@ -257,9 +268,9 @@
 }
 
 .task-table .empty-message {
-  padding: 1.5rem 0.5rem 0.5rem;
+  padding: 1.5rem 0.5rem;
   color: var(--muted);
-  text-align: center;
+  text-align: left;
 }
 
 /* Small screens: stack the form, share the filter width, hide the Created column. */
@@ -267,6 +278,11 @@
   .task-form-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .task-form-row > * + * {
+    margin-left: 0;
+    margin-top: -1px;
   }
 
   .task-filter button {
@@ -285,13 +301,17 @@
 }
 
 .drag-handle {
-  background: none;
-  border: none;
   padding: 0.1rem 0.25rem;
+  border: none;
   color: var(--icon-subtle);
   cursor: grab;
   font-size: 1rem;
   line-height: 1;
+}
+
+.drag-handle:hover {
+  background: transparent;
+  color: var(--text);
 }
 
 .task-row.dragging {

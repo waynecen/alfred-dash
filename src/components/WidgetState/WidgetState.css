@@ -1,11 +1,10 @@
 .widget-state {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 1rem 0.5rem;
-  text-align: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
   color: var(--muted);
 }
 
@@ -21,28 +20,38 @@
 .widget-state-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 0.5rem;
 }
 
+/* Loading: a short ink bar sweeping along a hairline, in place of a round spinner. */
 .widget-state-spinner {
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: widget-state-spin 0.8s linear infinite;
+  position: relative;
+  width: 4rem;
+  height: 1px;
+  overflow: hidden;
+  background: var(--rule-soft);
 }
 
-@keyframes widget-state-spin {
+.widget-state-spinner::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 40%;
+  height: 3px;
+  background: var(--text);
+  animation: widget-state-sweep 1s ease-in-out infinite alternate;
+}
+
+@keyframes widget-state-sweep {
   to {
-    transform: rotate(360deg);
+    transform: translateX(150%);
   }
 }
 
-/* No spinning for people who asked for less motion: the ring and the text still say "loading". */
+/* No motion for people who asked for less: the bar holds still and the text still says "loading". */
 @media (prefers-reduced-motion: reduce) {
-  .widget-state-spinner {
+  .widget-state-spinner::after {
     animation: none;
   }
 }

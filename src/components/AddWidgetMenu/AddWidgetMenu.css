@@ -2,19 +2,22 @@
   position: relative;
 }
 
+.add-widget > button {
+  height: 2.5rem;
+}
+
+/* The list drops from the button as a ruled panel, square and flat. */
 .add-widget-list {
   position: absolute;
-  top: calc(100% + 0.25rem);
+  top: calc(100% - 1px);
   right: 0;
   z-index: 10;
-  width: min(18rem, 80vw);
+  width: min(20rem, calc(100vw - 2 * var(--gutter)));
   margin: 0;
-  padding: 0.25rem;
+  padding: 0;
   list-style: none;
-  background: var(--card);
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
 .add-widget-group ul {
@@ -24,17 +27,16 @@
 }
 
 .add-widget-group + .add-widget-group {
-  margin-top: 0.25rem;
   border-top: 1px solid var(--border);
 }
 
 .add-widget-heading {
   display: block;
-  padding: 0.5rem 1rem 0.15rem;
+  padding: 0.75rem 1rem 0.25rem;
   color: var(--muted);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -43,34 +45,44 @@
   flex-direction: column;
   gap: 0.1rem;
   width: 100%;
+  padding: 0.6rem 1rem;
+  border: 0;
   text-align: left;
-  border-color: transparent;
+}
+
+.add-widget-option:focus-visible {
+  outline-offset: -2px;
 }
 
 .add-widget-option:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: default;
 }
 
 .add-widget-option:disabled:hover {
-  border-color: transparent;
+  background: transparent;
+  color: var(--text);
 }
 
 .add-widget-title {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .add-widget-badge {
   margin-left: 0.5rem;
-  padding: 0 0.4rem;
-  border-radius: 999px;
-  background: var(--bg);
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 400;
+  padding: 0 0.35rem;
+  border: 1px solid currentColor;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .add-widget-description {
   color: var(--muted);
   font-size: 0.8rem;
+}
+
+.add-widget-option:hover .add-widget-description {
+  color: inherit;
 }

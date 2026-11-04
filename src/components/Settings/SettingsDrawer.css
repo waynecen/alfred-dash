@@ -4,20 +4,18 @@
   z-index: 40;
   display: flex;
   justify-content: flex-end;
-  background: rgba(0, 0, 0, 0.35);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
 }
 
+/* A full-height column ruled off from the page; each section is a band between rules. */
 .drawer {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  width: min(22rem, 100%);
+  width: min(24rem, 100%);
   height: 100%;
-  padding: 1rem 1.25rem;
   overflow-y: auto;
   border-left: 1px solid var(--border);
-  background: var(--card);
-  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.2);
+  background: var(--bg);
   animation: drawer-in 0.2s ease-out;
 }
 
@@ -25,11 +23,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: var(--gutter);
+  border-bottom: 1px solid var(--border);
 }
 
 .drawer-header h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 2rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
 }
 
 .drawer-section {
@@ -38,19 +40,35 @@
   align-items: flex-start;
   gap: 0.5rem;
   margin: 0;
-  padding: 0;
+  padding: 1.25rem var(--gutter);
   border: 0;
+  border-bottom: 1px solid var(--border);
+  min-width: 0;
+}
+
+/* fieldset's legend does not take padding from its parent, so place it like the h3s. */
+.drawer-section legend {
+  float: left;
+  width: 100%;
+}
+
+.drawer-section legend + * {
+  clear: both;
 }
 
 .drawer-section h3,
 .drawer-section legend {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
+  width: 100%;
   margin: 0 0 0.25rem;
   padding: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .drawer-radio {
@@ -61,8 +79,10 @@
 }
 
 .drawer-radio input {
+  width: 1rem;
+  height: 1rem;
   margin: 0;
-  accent-color: var(--accent);
+  accent-color: var(--text);
 }
 
 .drawer-note {
@@ -72,17 +92,18 @@
 }
 
 .drawer-badge {
-  padding: 0 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid currentColor;
   color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 400;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
 .drawer-badge-connected {
+  background: var(--success);
   border-color: var(--success);
-  color: var(--success);
+  color: var(--bg);
 }
 
 @keyframes drawer-in {

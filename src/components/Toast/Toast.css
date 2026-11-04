@@ -1,60 +1,67 @@
 .toast-region {
   position: fixed;
-  right: 1rem;
-  bottom: 1rem;
+  right: var(--gutter);
+  bottom: var(--gutter);
   z-index: 50;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.5rem;
-  max-width: calc(100vw - 2rem);
+  max-width: calc(100vw - 2 * var(--gutter));
   pointer-events: none; /* the empty corner never blocks clicks on the page */
 }
 
+/* Ink slabs, stacked edge to edge. */
 .toast {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: min(18rem, 100%);
-  padding: 0.5rem 0.5rem 0.5rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  align-items: stretch;
+  min-width: min(20rem, 100%);
+  margin-top: -1px;
+  border: 1px solid var(--text);
   background: var(--text);
   color: var(--bg);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
   pointer-events: auto;
   animation: toast-in 0.18s ease-out;
 }
 
 .toast-message {
   flex: 1;
+  align-self: center;
   margin: 0;
-  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
 }
 
 .toast-action,
 .toast-close {
-  border-color: transparent;
-  background: transparent;
+  border: 0;
+  border-left: 1px solid color-mix(in srgb, var(--bg) 35%, transparent);
   color: inherit;
 }
 
 .toast-action {
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  padding: 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .toast-close {
-  padding: 0.25rem 0.5rem;
+  width: 2.75rem;
+  padding: 0;
   font-size: 1.2rem;
   line-height: 1;
-  opacity: 0.8;
 }
 
 .toast-action:hover,
 .toast-close:hover {
-  border-color: currentColor;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.toast :focus-visible {
+  outline-color: var(--bg);
+  outline-offset: -4px;
 }
 
 @keyframes toast-in {
@@ -72,7 +79,7 @@
 
 @media (max-width: 600px) {
   .toast-region {
-    left: 1rem;
+    left: var(--gutter);
     align-items: stretch;
   }
 }
