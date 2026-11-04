@@ -60,4 +60,45 @@ describe('AddWidgetMenu', () => {
     await userEvent.click(document.body);
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
+
+  it('focuses the first widget that can be added, and moves with the arrow keys', async () => {
+    setup(['summary']);
+    await userEvent.click(openButton());
+    // Summary is already added, so focus starts on Tasks, and arrows skip the disabled Summary.
+    expect(screen.getByRole('button', { name: /Tasks/ })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(screen.getByRole('button', { name: /Tasks/ })).toHaveFocus();
+  });
+
+  it('wraps around with the arrow keys and adds on Enter', async () => {
+    const onAdd = setup();
+    await userEvent.click(openButton());
+    await userEvent.keyboard('{ArrowUp}');
+    expect(screen.getByRole('button', { name: /Tasks/ })).toHaveFocus();
+    await userEvent.keyboard('{Home}{Enter}');
+    expect(onAdd).toHaveBeenCalledWith('summary');
+  });
+
+  it('returns focus to the button when closed with Escape', async () => {
+    setup();
+    await userEvent.click(openButton());
+    await userEvent.keyboard('{Escape}');
+    expect(openButton()).toHaveFocus();
+  });
+
+  it('groups widgets under headings when they have more than one category', async () => {
+    render(
+      <AddWidgetMenu
+        widgets={[
+          { id: 'tasks', title: 'Tasks', description: 'A table', category: 'Productivity' },
+          { id: 'weather', title: 'Weather', description: 'Forecast', category: 'Info' },
+        ]}
+        added={[]}
+        onAdd={() => {}}
+      />
+    );
+    await userEvent.click(openButton());
+    expect(screen.getByRole('list', { name: 'Productivity' })).toHaveTextContent('Tasks');
+    expect(screen.getByRole('list', { name: 'Info' })).toHaveTextContent('Weather');
+  });
 });

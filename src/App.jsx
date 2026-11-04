@@ -11,6 +11,7 @@ const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
   id,
   title: widget.title,
   description: widget.description,
+  category: widget.category,
 }));
 
 function App() {
