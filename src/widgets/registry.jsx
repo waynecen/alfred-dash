@@ -57,3 +57,25 @@ export const WIDGETS = {
 
 // Shown the first time the dashboard opens.
 export const DEFAULT_WIDGETS = ['summary', 'tasks'];
+
+// Ready-made sets offered when the dashboard is empty, so nobody starts from a blank page.
+export const STARTER_LAYOUTS = [
+  {
+    id: 'planner',
+    title: 'Planner',
+    description: 'Tasks, a summary and notes',
+    widgets: ['summary', 'tasks', 'notes'],
+  },
+  {
+    id: 'daily',
+    title: 'Daily',
+    description: 'Weather, tasks and a summary',
+    widgets: ['weather', 'summary', 'tasks'],
+  },
+  {
+    id: 'minimal',
+    title: 'Minimal',
+    description: 'Just your tasks',
+    widgets: ['tasks'],
+  },
+];

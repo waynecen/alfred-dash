@@ -558,4 +558,11 @@ describe('App', () => {
     });
   });
 
+  it('offers starter layouts when the dashboard is empty', async () => {
+    localStorage.setItem('widgets', JSON.stringify([]));
+    render(<App />);
+    await userEvent.click(screen.getByRole('button', { name: /Planner/ }));
+    expect(JSON.parse(localStorage.getItem('widgets'))).toEqual(['summary', 'tasks', 'notes']);
+    expect(screen.queryByText(/No widgets yet/)).not.toBeInTheDocument();
+  });
 });

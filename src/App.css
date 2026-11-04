@@ -69,9 +69,29 @@ h1 {
 }
 
 .dashboard-empty {
-  color: var(--muted);
-  text-align: center;
   margin: 2rem 0;
+}
+
+.starter-layouts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+  width: min(36rem, 100%);
+  margin-top: 0.5rem;
+}
+
+.starter-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.starter-layout span {
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 /* A key, as in "press Ctrl + K". */

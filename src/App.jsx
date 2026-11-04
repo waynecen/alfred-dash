@@ -7,7 +7,8 @@ import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
 import CommandPalette from './components/CommandPalette/CommandPalette';
 import SettingsDrawer from './components/Settings/SettingsDrawer';
 import ToastRegion from './components/Toast/ToastRegion';
-import { WIDGETS, DEFAULT_WIDGETS } from './widgets/registry';
+import WidgetState from './components/WidgetState/WidgetState';
+import { WIDGETS, DEFAULT_WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
 import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
 
@@ -164,6 +165,12 @@ function App() {
     });
   }
 
+  function applyStarter(starter) {
+    setWidgetIds(starter.widgets);
+    setLayout({});
+    focusWidget(starter.widgets[0]);
+  }
+
   const toggleTheme = () => setTheme(shownTheme === 'dark' ? 'light' : 'dark');
   const closePalette = useCallback(() => setPaletteOpen(false), []);
 
@@ -293,9 +300,25 @@ function App() {
         focusRequest={focusRequest}
       />
       {shownWidgetIds.length === 0 && (
-        <p className="dashboard-empty">
-          No widgets yet. Use “Add widget” to get started.
-        </p>
+        <WidgetState
+          status="empty"
+          className="dashboard-empty"
+          message="No widgets yet. Pick a starter layout, or use “Add widget” to choose your own."
+        >
+          <div className="starter-layouts">
+            {STARTER_LAYOUTS.map((starter) => (
+              <button
+                key={starter.id}
+                type="button"
+                className="starter-layout"
+                onClick={() => applyStarter(starter)}
+              >
+                <strong>{starter.title}</strong>
+                <span>{starter.description}</span>
+              </button>
+            ))}
+          </div>
+        </WidgetState>
       )}
       {paletteOpen && <CommandPalette getCommands={getCommands} onClose={closePalette} />}
       {settingsOpen && (
