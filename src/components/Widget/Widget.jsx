@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import './Widget.css';
 
 const ARROWS = {
@@ -15,6 +15,8 @@ const ARROWS = {
 //   shift: { x, y } pixel offset of a moving card from the cell it will snap to
 //   onMoveStart(event), onResizeStart(event, edge): pointer presses on the handle and the edges
 //   onNudge(dx, dy), onStretch(dw, dh): one-cell keyboard moves and resizes
+//   focusSignal: each new value moves keyboard focus to the card's handle (and so scrolls the
+//     card into view), e.g. right after the widget is added or chosen in the command palette
 function Widget({
   title,
   position,
@@ -25,10 +27,16 @@ function Widget({
   onResizeStart,
   onNudge,
   onStretch,
+  focusSignal,
   children,
 }) {
   const headingId = useId();
+  const handleRef = useRef(null);
   const { x, y, w, h } = position;
+
+  useEffect(() => {
+    if (focusSignal) handleRef.current?.focus();
+  }, [focusSignal]);
 
   const className = ['widget', state && `is-${state}`].filter(Boolean).join(' ');
 
@@ -58,6 +66,7 @@ function Widget({
       aria-labelledby={headingId}
     >
       <span
+        ref={handleRef}
         role="button"
         tabIndex={0}
         className="widget-handle"

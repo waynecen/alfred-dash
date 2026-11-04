@@ -9,7 +9,8 @@ import './Dashboard.css';
 //   ids: the widgets on the dashboard    widgets: the registry (title, defaultSize, render)
 //   saved: { [id]: { x, y, w, h } }      context: the shared data each widget renders from
 //   onChange(saved): the new layout after the user moves or resizes something
-function Dashboard({ ids, widgets, saved, context, onChange, onRemove }) {
+//   focusRequest: { id, n }: move focus to that widget; a new n asks again
+function Dashboard({ ids, widgets, saved, context, onChange, onRemove, focusRequest }) {
   const gridRef = useRef(null);
 
   const sizes = Object.fromEntries(ids.map((id) => [id, widgets[id].defaultSize]));
@@ -47,6 +48,7 @@ function Dashboard({ ids, widgets, saved, context, onChange, onRemove }) {
             onResizeStart={(event, edge) => grid.startResize(event, item.id, edge)}
             onNudge={(dx, dy) => grid.nudge(item.id, dx, dy)}
             onStretch={(dw, dh) => grid.stretch(item.id, dw, dh)}
+            focusSignal={focusRequest?.id === item.id ? focusRequest.n : undefined}
           >
             {widget.render(context)}
           </Widget>

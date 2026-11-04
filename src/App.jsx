@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -31,10 +31,17 @@ function App() {
     window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   );
 
+  // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
+  const [focusRequest, setFocusRequest] = useState(null);
+
   // The CSS variables are switched by an attribute on <html>.
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  function focusWidget(id) {
+    setFocusRequest((request) => ({ id, n: (request?.n ?? 0) + 1 }));
+  }
 
   function addTask(text, priority) {
     const newTask = {
@@ -78,6 +85,8 @@ function App() {
 
   function addWidget(id) {
     if (!widgetIds.includes(id)) setWidgetIds([...widgetIds, id]);
+    // Take the user to it, so they can see where it landed.
+    focusWidget(id);
   }
 
   function removeWidget(id) {
@@ -147,6 +156,7 @@ function App() {
         context={context}
         onChange={setLayout}
         onRemove={removeWidget}
+        focusRequest={focusRequest}
       />
       {shownWidgetIds.length === 0 && (
         <p className="dashboard-empty">
