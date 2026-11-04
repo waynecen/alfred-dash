@@ -505,6 +505,36 @@ describe('App', () => {
     });
   });
 
+  describe('command palette', () => {
+    const openPalette = () => userEvent.keyboard('{Control>}k{/Control}');
+
+    it('opens with Ctrl+K, adds a widget, and moves focus to it', async () => {
+      render(<App />);
+      await openPalette();
+      await userEvent.type(screen.getByRole('combobox', { name: 'Search commands' }), 'add notes{Enter}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Move Notes widget' })).toHaveFocus();
+    });
+
+    it('adds whatever was typed as a task', async () => {
+      render(<App />);
+      await openPalette();
+      await userEvent.type(screen.getByRole('combobox', { name: 'Search commands' }), 'Water the plants');
+      await userEvent.click(screen.getByRole('option', { name: /Add task “Water the plants”/ }));
+      expect(screen.getByRole('button', { name: 'Water the plants' })).toBeInTheDocument();
+    });
+
+    it('opens from the header button and closes with Escape, giving focus back', async () => {
+      render(<App />);
+      const button = screen.getByRole('button', { name: 'Search commands' });
+      await userEvent.click(button);
+      expect(screen.getByRole('dialog', { name: 'Command palette' })).toBeInTheDocument();
+      await userEvent.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(button).toHaveFocus();
+    });
+  });
+
   describe('settings', () => {
     it('follows the system theme when "Match system" is chosen', async () => {
       render(<App />);

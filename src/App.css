@@ -74,6 +74,32 @@ h1 {
   margin: 2rem 0;
 }
 
+/* A key, as in "press Ctrl + K". */
+kbd {
+  padding: 0 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.palette-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.25rem;
+  padding: 0 0.6rem 0 0.75rem;
+  color: var(--muted);
+}
+
+/* Phones have no keyboard shortcut to show. */
+@media (max-width: 600px) {
+  .palette-button kbd {
+    display: none;
+  }
+}
+
 /* Shared button look; specific buttons tweak it in TaskTracker.css. */
 button {
   font: inherit;

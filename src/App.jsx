@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import Dashboard from './components/Dashboard/Dashboard';
 import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
+import CommandPalette from './components/CommandPalette/CommandPalette';
 import SettingsDrawer from './components/Settings/SettingsDrawer';
 import ToastRegion from './components/Toast/ToastRegion';
 import { WIDGETS, DEFAULT_WIDGETS } from './widgets/registry';
+import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
 
 // What the Add widget list needs to know about each widget.
@@ -50,6 +52,7 @@ function App() {
   const systemDark = useSystemDark();
   const shownTheme = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
 
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
@@ -59,6 +62,18 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = shownTheme;
   }, [shownTheme]);
+
+  // Ctrl+K (Cmd+K on a Mac) opens and closes the command palette from anywhere.
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   function focusWidget(id) {
     setFocusRequest((request) => ({ id, n: (request?.n ?? 0) + 1 }));
@@ -150,6 +165,7 @@ function App() {
   }
 
   const toggleTheme = () => setTheme(shownTheme === 'dark' ? 'light' : 'dark');
+  const closePalette = useCallback(() => setPaletteOpen(false), []);
 
   // Ignore saved ids that no longer exist in the registry (e.g. a widget that was renamed).
   const shownWidgetIds = widgetIds.filter((id) => WIDGETS[id]);
@@ -162,11 +178,51 @@ function App() {
     actions: { addTask, toggleTask, editTask, changePriority, deleteTask, reorderTasks, setNotes, notify },
   };
 
+  const getCommands = (query) =>
+    buildCommands({
+      widgets: WIDGETS,
+      shownIds: shownWidgetIds,
+      query,
+      theme: shownTheme,
+      actions: {
+        addWidget,
+        removeWidget,
+        focusWidget,
+        addTask,
+        toggleTheme,
+        resetLayout,
+        openSettings: () => setSettingsOpen(true),
+      },
+    });
+
   return (
     <main className="app">
       <header className="app-header">
         <EditableTitle value={title} onChange={setTitle} />
         <div className="app-header-actions">
+          <button
+            type="button"
+            className="palette-button"
+            aria-label="Search commands"
+            aria-keyshortcuts="Control+K Meta+K"
+            title="Search commands (Ctrl+K)"
+            onClick={() => setPaletteOpen(true)}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <kbd aria-hidden="true">Ctrl K</kbd>
+          </button>
           <AddWidgetMenu
             widgets={WIDGET_OPTIONS}
             added={shownWidgetIds}
@@ -241,6 +297,7 @@ function App() {
           No widgets yet. Use “Add widget” to get started.
         </p>
       )}
+      {paletteOpen && <CommandPalette getCommands={getCommands} onClose={closePalette} />}
       {settingsOpen && (
         <SettingsDrawer
           theme={theme}

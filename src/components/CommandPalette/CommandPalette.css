@@ -1,0 +1,79 @@
+.palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh 1rem 1rem;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.palette {
+  width: min(36rem, 100%);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+}
+
+.palette-input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+/* The whole palette is the focus target; the ring would only fight the bottom border. */
+.palette-input:focus-visible {
+  outline: none;
+}
+
+.palette-list {
+  max-height: min(22rem, 50vh);
+  margin: 0;
+  padding: 0.25rem;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.palette-option {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.palette-option[aria-selected='true'] {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.palette-group {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.palette-option[aria-selected='true'] .palette-group {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.palette-empty,
+.palette-hint {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.palette-hint {
+  border-top: 1px solid var(--border);
+}

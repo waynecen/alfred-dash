@@ -72,6 +72,14 @@ function SettingsDrawer({ theme, onThemeChange, onResetLayout, onClose }) {
           </p>
         </section>
 
+        <section className="drawer-section">
+          <h3>Keyboard</h3>
+          <p className="drawer-note">
+            <kbd>Ctrl</kbd> + <kbd>K</kbd> (<kbd>⌘</kbd> + <kbd>K</kbd> on a Mac) opens the command
+            palette. Focus a widget&rsquo;s handle and use the arrow keys to move it, or its corner to
+            resize it.
+          </p>
+        </section>
       </aside>
     </div>
   );
