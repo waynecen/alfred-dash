@@ -7,9 +7,9 @@ The AI widgets talk to Claude through a small proxy in [server/aiHandler.js](ser
 1. Copy `.env.example` to `.env`, then set `ANTHROPIC_API_KEY` to a key from the [Anthropic Console](https://console.anthropic.com/settings/keys). `.env` is git-ignored.
 2. Run `npm run dev`. The Vite dev server serves the proxy at `/api/ai/*`, on the same address as the page.
 
-| Endpoint | What it does |
-|---|---|
-| `GET /api/ai/health` | `{ configured, model }`: whether a key is loaded, and which model is used |
+| Endpoint              | What it does                                                                                                           |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/ai/health`  | `{ configured, model }`: whether a key is loaded, and which model is used                                              |
 | `POST /api/ai/stream` | Takes `{ messages, system?, effort? }` and streams the reply as Server-Sent Events (`status`, `text`, `done`, `error`) |
 
 - **Model:** Claude Opus 5.5 by default. To use another model, set `ANTHROPIC_MODEL` in `.env`. The browser can't choose the model or the token limit.
