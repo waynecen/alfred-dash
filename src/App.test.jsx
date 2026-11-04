@@ -505,4 +505,27 @@ describe('App', () => {
     });
   });
 
+  describe('settings', () => {
+    it('follows the system theme when "Match system" is chosen', async () => {
+      render(<App />);
+      await userEvent.click(screen.getByRole('button', { name: 'Dark mode' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
+      await userEvent.click(screen.getByRole('radio', { name: 'Match system' }));
+      expect(JSON.parse(localStorage.getItem('theme'))).toBe('system');
+      // The test environment reports a light system theme.
+      expect(document.documentElement.dataset.theme).toBe('light');
+    });
+
+    it('resets the layout, with Undo', async () => {
+      localStorage.setItem('layout', JSON.stringify({ summary: { x: 0, y: 0, w: 6, h: 6 } }));
+      render(<App />);
+      await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Reset layout' }));
+      expect(JSON.parse(localStorage.getItem('layout'))).toEqual({});
+
+      await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      expect(JSON.parse(localStorage.getItem('layout')).summary).toEqual({ x: 0, y: 0, w: 6, h: 6 });
+    });
+  });
+
 });
