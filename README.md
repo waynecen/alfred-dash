@@ -32,9 +32,9 @@ The AI widgets talk to Claude through a small proxy in [server/aiHandler.js](ser
 
 ### Phase 2: Dashboard Shell
 
-- [ ] Layout with navigation and a widget grid
-- [ ] Summary widget (open vs. completed tasks)
-- [ ] Light/dark theme
+- [x] Layout with navigation and a widget grid
+- [x] Summary widget (open vs. completed tasks)
+- [x] Light/dark theme
 
 ### Phase 3: Polish & Ship
 
