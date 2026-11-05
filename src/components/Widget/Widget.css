@@ -8,7 +8,7 @@
   min-width: 0;
   min-height: 0;
   margin: 0 -1px -1px 0;
-  overflow: hidden;
+  /* No overflow: hidden here: the resize zones reach past the edge, over the shared rule. */
   background: var(--card);
   border: 1px solid var(--border);
   /* After a move, the widget glides into its cell. */
@@ -116,10 +116,12 @@
   transition: none;
 }
 
-/* Resizing: thin zones inside the right and bottom borders, and the bottom-right corner. */
+/* Resizing: zones that straddle the right and bottom rules, and the bottom-right corner.
+   They reach 5px past the widget, so they sit over the hairline it shares with its neighbour, and
+   their z-index keeps them above that neighbour, which is drawn later and would otherwise win. */
 .widget-edge {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   padding: 0;
   border: none;
   background: transparent;
@@ -132,32 +134,35 @@
 
 .widget-edge-e {
   top: var(--header-h);
-  right: 0;
-  bottom: 14px;
-  width: 8px;
+  right: -6px;
+  bottom: 10px;
+  width: 11px;
   cursor: ew-resize;
 }
 
 .widget-edge-s {
-  right: 14px;
-  bottom: 0;
+  right: 10px;
+  bottom: -6px;
   left: 0;
-  height: 8px;
+  height: 11px;
   cursor: ns-resize;
 }
 
-/* The corner shows a small ink triangle, the one visible hint that the widget can be resized. */
+/* The corner: a small ink triangle, the one visible hint that the widget can be resized, with
+   a larger invisible target around it. */
 .widget-resize {
-  right: 0;
-  bottom: 0;
-  width: 14px;
-  height: 14px;
-  background: linear-gradient(135deg, transparent 50%, var(--icon-subtle) 50%);
+  right: -6px;
+  bottom: -6px;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, transparent 50%, var(--icon-subtle) 50%) 0 0 / 14px 14px
+    no-repeat;
   cursor: nwse-resize;
 }
 
-.widget-resize:hover {
-  background: linear-gradient(135deg, transparent 50%, var(--text) 50%);
+.widget-resize:hover,
+.widget.is-resizing .widget-resize {
+  background-image: linear-gradient(135deg, transparent 50%, var(--text) 50%);
 }
 
 .widget-resize:focus-visible {
@@ -165,7 +170,7 @@
   outline-offset: 0;
 }
 
-/* The edge being hovered thickens into a 3px ink bar. */
+/* The hovered edge thickens into a 3px ink bar, centred on the shared rule. */
 .widget-edge-e::after,
 .widget-edge-s::after {
   content: '';
@@ -176,20 +181,21 @@
 
 .widget-edge-e::after {
   top: 0;
-  right: 0;
   bottom: 0;
+  left: 4px;
   width: 3px;
 }
 
 .widget-edge-s::after {
+  top: 4px;
   right: 0;
-  bottom: 0;
   left: 0;
   height: 3px;
 }
 
 .widget-edge-e:hover::after,
-.widget-edge-s:hover::after {
+.widget-edge-s:hover::after,
+.widget.is-resizing .widget-edge::after {
   background: var(--text);
 }
 
