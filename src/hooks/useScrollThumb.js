@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 const MIN_THUMB = 24; // px, so a very long list still has a thumb you can see
+const ACTIVE_MS = 800; // how long the thumb stays after scrolling stops
 
 // The overflowing element that does the scrolling: the area itself, or else the first thing inside
 // it that scrolls on its own (the Notes textarea, for example).
@@ -17,8 +18,8 @@ function findScroller(area) {
 
 // Draws a scroll thumb in place of the native scrollbar, which the dashboard hides.
 //   areaRef: the region whose scrolling is shown (it or something inside it scrolls)
-//   thumbRef: an element laid out as the track; it gets data-scrollable and two CSS variables,
-//     --thumb-top and --thumb-size (px), and draws the thumb from them
+//   thumbRef: an element laid out as the track; it gets data-scrollable, data-active (while
+//     scrolling) and two CSS variables, --thumb-top and --thumb-size (px), to draw the thumb from
 // The styles are written straight onto the element, so scrolling never re-renders React.
 function useScrollThumb(areaRef, thumbRef) {
   useEffect(() => {
@@ -27,6 +28,15 @@ function useScrollThumb(areaRef, thumbRef) {
     if (!area || !thumb) return undefined;
 
     let frame = 0;
+    let idle = 0;
+    // data-active is set while scrolling and cleared a moment after it stops, so the thumb only
+    // shows when it says something (the CSS also shows it on hover).
+    function onScroll() {
+      thumb.setAttribute('data-active', '');
+      clearTimeout(idle);
+      idle = setTimeout(() => thumb.removeAttribute('data-active'), ACTIVE_MS);
+      schedule();
+    }
     function update() {
       frame = 0;
       const scroller = findScroller(area);
@@ -47,7 +57,7 @@ function useScrollThumb(areaRef, thumbRef) {
     };
 
     // Scroll events don't bubble, but they do pass through the area on the way down (capture).
-    area.addEventListener('scroll', schedule, true);
+    area.addEventListener('scroll', onScroll, true);
     area.addEventListener('input', schedule, true);
     const mutations = new MutationObserver(schedule);
     mutations.observe(area, { childList: true, subtree: true, characterData: true });
@@ -58,7 +68,8 @@ function useScrollThumb(areaRef, thumbRef) {
 
     return () => {
       cancelAnimationFrame(frame);
-      area.removeEventListener('scroll', schedule, true);
+      clearTimeout(idle);
+      area.removeEventListener('scroll', onScroll, true);
       area.removeEventListener('input', schedule, true);
       mutations.disconnect();
       resizes?.disconnect();

@@ -208,9 +208,10 @@
 
 /* Scrolling: the native scrollbar is hidden (App.css), so a widget whose content scrolls shows
    where it is with a 3px ink thumb laid on its right-hand rule, thickening the line inwards.
-   The track runs from under the header to just above the resize corner. It is only a gauge
-   (no pointer events), so the resize zone on the same rule keeps working; the wheel, touch and
-   keys do the scrolling. Size and position come from useScrollThumb. */
+   It only appears while the widget is scrolled or hovered, so at rest every widget has the same
+   hairline. The track runs from under the header to just above the resize corner. It is only a
+   gauge (no pointer events), so the resize zone on the same rule keeps working; the wheel, touch
+   and keys do the scrolling. Size and position come from useScrollThumb. */
 .widget-scroll {
   position: absolute;
   top: var(--header-h);
@@ -229,4 +230,17 @@
   left: 0;
   height: var(--thumb-size, 0);
   background: var(--text);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.widget:hover .widget-scroll::before,
+.widget-scroll[data-active]::before {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget-scroll::before {
+    transition: none;
+  }
 }
