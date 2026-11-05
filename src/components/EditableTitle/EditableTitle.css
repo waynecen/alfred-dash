@@ -1,11 +1,12 @@
 .editable-title {
   display: flex;
-  align-items: center;
+  /* The button's baseline is the bottom of its icon, so the pencil sits on the title's baseline. */
+  align-items: baseline;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-/* The pencil sits to the right of the text, centred on it, and only shows on hover or keyboard
+/* The pencil sits to the right of the text, on its baseline, and only shows on hover or keyboard
    focus. The margin keeps it clear of the last letter at every headline size. */
 .editable-title-edit {
   display: inline-flex;
