@@ -118,6 +118,12 @@
   vertical-align: middle;
 }
 
+/* The task text is a button with its own padding and border, so the label is indented by the
+   same amount to start where the text does. */
+.task-table th.col-description {
+  padding-left: calc(1rem + 1px);
+}
+
 /* Label and sort button on one centred line, so headings with and without a button match. */
 .th-content {
   display: inline-flex;
