@@ -11,6 +11,7 @@ import {
   overlaps,
   place,
   resizeBy,
+  resizeTo,
   sameLayout,
   toSaved,
 } from './gridLayout';
@@ -135,6 +136,40 @@ describe('moveBy and resizeBy', () => {
   it('ignores an unknown id', () => {
     expect(moveBy(start, 'x', 1, 1)).toBe(start);
     expect(resizeBy(start, 'x', 1, 1)).toBe(start);
+  });
+});
+
+describe('resizeTo keeps neighbours in columns', () => {
+  const pair = [item('a', 0, 0, 4, 4), item('b', 4, 0, 8, 8)];
+
+  it('shrinks the neighbour on the right when the widget grows into it', () => {
+    const result = resizeTo(pair, 'a', { w: 6, h: 4 });
+    expect(rect(at(result, 'a'))).toEqual([0, 0, 6, 4]);
+    expect(rect(at(result, 'b'))).toEqual([6, 0, 6, 8]);
+    expectValid(result);
+  });
+
+  it('pushes the neighbour down once it would be narrower than the minimum', () => {
+    const result = resizeTo(pair, 'a', { w: 10, h: 4 });
+    expect(rect(at(result, 'b'))).toEqual([4, 4, 8, 8]);
+    expectValid(result);
+  });
+
+  it('widens the neighbour into the columns the widget gives up', () => {
+    const result = resizeTo(pair, 'a', { w: 3, h: 4 });
+    expect(rect(at(result, 'b'))).toEqual([3, 0, 9, 8]);
+  });
+
+  it('does not widen a neighbour into cells another widget uses', () => {
+    const three = [...pair, item('c', 0, 4, 4, 4)];
+    const result = resizeTo(three, 'a', { w: 3, h: 4 });
+    expect(rect(at(result, 'b'))).toEqual([4, 0, 8, 8]);
+    expect(rect(at(result, 'c'))).toEqual([0, 4, 4, 4]);
+  });
+
+  it('leaves widgets in other rows alone', () => {
+    const stacked = [item('a', 0, 0, 4, 2), item('b', 4, 2, 8, 2)];
+    expect(rect(at(resizeTo(stacked, 'a', { w: 6, h: 2 }), 'b'))).toEqual([4, 2, 8, 2]);
   });
 });
 

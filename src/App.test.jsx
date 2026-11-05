@@ -311,7 +311,7 @@ describe('App', () => {
       expect(savedLayout().summary.y).toBe(9);
     });
 
-    it('resizes a widget one column or row at a time, pushing its neighbour out of the way', async () => {
+    it('resizes a widget one column or row at a time, and the neighbour gives up a column', async () => {
       render(<App />);
       resizer('Summary').focus();
       await userEvent.keyboard('{ArrowRight}{ArrowDown}');
@@ -319,8 +319,8 @@ describe('App', () => {
       expect(cardOf('Summary').style.gridColumn).toBe('1 / span 5');
       expect(cardOf('Summary').style.gridRow).toBe('1 / span 5');
       expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 5 });
-      // The Tasks' first column is now taken, so it moves down below the Summary.
-      expect(savedLayout().tasks.y).toBe(5);
+      // The Tasks give up their first column and stay beside the Summary.
+      expect(savedLayout().tasks).toEqual({ x: 5, y: 0, w: 7, h: 9 });
     });
 
     it('moves a widget by dragging its handle, snapping to whole cells', () => {
@@ -393,8 +393,10 @@ describe('App', () => {
       drag(resizer('Summary'), { dx: -900, dy: -900 });
       expect(savedLayout().summary).toMatchObject({ w: 3, h: 2 });
 
+      // The Tasks widened into the columns the Summary gave up: they now start at column 4.
+      expect(savedLayout().tasks).toMatchObject({ x: 3, w: 9 });
       drag(resizer('Tasks'), { dx: 5000 });
-      expect(savedLayout().tasks.w).toBe(8); // it starts at column 5 of 12, so 8 is the most
+      expect(savedLayout().tasks.w).toBe(9); // it starts at column 4 of 12, so 9 is the most
     });
 
     it('forgets a removed widget spot, so adding it back finds a free one', async () => {

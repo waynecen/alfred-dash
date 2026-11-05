@@ -98,10 +98,41 @@ export function moveBy(items, id, dx, dy) {
 
 export function resizeBy(items, id, dw, dh) {
   const item = items.find((i) => i.id === id);
+  return item ? resizeTo(items, id, { w: item.w + dw, h: item.h + dh }) : items;
+}
+
+// Gives a widget a new size, keeping the widgets beside it in columns. When its right edge moves,
+// the neighbours on its right (in the rows it covers) give up or take back those columns, so they
+// stay side by side instead of jumping below:
+//   wider:    a neighbour the edge runs into shrinks from the left, as long as it keeps MIN_W;
+//             one that would get narrower than that is pushed down instead, as before
+//   narrower: a neighbour that touched the old edge widens to the new one, if those cells are free
+// Height changes still push the widgets underneath down.
+export function resizeTo(items, id, { w, h }) {
+  const item = items.find((i) => i.id === id);
   if (!item) return items;
   // Never grow past the right edge of the grid (that would shove the widget left instead).
-  const w = clamp(item.w + dw, MIN_W, COLUMNS - item.x);
-  return change(items, id, { w, h: item.h + dh });
+  const width = clamp(Math.round(w), MIN_W, COLUMNS - item.x);
+  const oldRight = item.x + item.w;
+  const newRight = item.x + width;
+  const besideIt = (other) => other.y < item.y + item.h && other.y + other.h > item.y;
+
+  const next = items.map((other) => {
+    if (other.id === id) return { ...other, w: width, h };
+    if (newRight === oldRight || !besideIt(other)) return other;
+    const right = other.x + other.w;
+
+    if (newRight > oldRight && other.x >= oldRight && other.x < newRight) {
+      return right - newRight >= MIN_W ? { ...other, x: newRight, w: right - newRight } : other;
+    }
+    if (newRight < oldRight && other.x === oldRight) {
+      const wider = { ...other, x: newRight, w: right - newRight };
+      const free = items.every((o) => o.id === id || o.id === other.id || !overlaps(wider, o));
+      return free ? wider : other;
+    }
+    return other;
+  });
+  return arrange(next, id);
 }
 
 // The saved form: { [id]: { x, y, w, h } }.

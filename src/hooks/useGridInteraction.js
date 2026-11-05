@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { COLUMNS, ROW_HEIGHT, change, moveBy, resizeBy, sameLayout } from '../utils/gridLayout';
+import { COLUMNS, ROW_HEIGHT, change, moveBy, resizeBy, resizeTo, sameLayout } from '../utils/gridLayout';
 
 // Moving and resizing widgets with the pointer or the keyboard.
 //   items: the current layout   gridRef: the grid element   onCommit(items): called with the final layout
@@ -43,7 +43,8 @@ function useGridInteraction({ items, gridRef, onCommit }) {
       if (mode === 'move') {
         next = change(items, id, { x: start.x + cols, y: start.y + rows });
       } else {
-        next = change(items, id, {
+        // resizeTo also shrinks or widens the neighbours on the right, so they stay beside it.
+        next = resizeTo(items, id, {
           w: edge.includes('e') ? Math.min(start.w + cols, COLUMNS - start.x) : start.w,
           h: edge.includes('s') ? start.h + rows : start.h,
         });
