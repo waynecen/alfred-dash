@@ -107,7 +107,7 @@
   min-width: 0;
   padding: 0.45rem 0.75rem;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: transparent;
   color: inherit;
   font: inherit;
 }

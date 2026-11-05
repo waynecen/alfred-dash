@@ -37,7 +37,7 @@
   font: inherit;
   padding: 0 0.75rem;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: transparent;
   color: var(--text);
 }
 
@@ -218,7 +218,7 @@
   font: inherit;
   padding: 0.3rem 0.5rem;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: transparent;
   color: var(--text);
 }
 

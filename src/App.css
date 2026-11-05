@@ -246,7 +246,7 @@ button:hover {
   color: var(--bg);
 }
 
-/* Inputs: square, ruled, on the warm surface. */
+/* Inputs: square and ruled, with no fill of their own, so they sit on whatever they are in. */
 input,
 select,
 textarea {
