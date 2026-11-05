@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react';
+import { COLUMNS } from '../../utils/gridLayout';
 import './Widget.css';
 
 const ARROWS = {
@@ -64,6 +65,8 @@ function Widget({
         ...(state === 'moving' && shift && { transform: `translate(${shift.x}px, ${shift.y}px)` }),
       }}
       aria-labelledby={headingId}
+      // On tablets the widgets reflow into two columns; a wide one takes both (see Dashboard.css).
+      data-wide={w > COLUMNS / 2 || undefined}
     >
       <span
         ref={handleRef}

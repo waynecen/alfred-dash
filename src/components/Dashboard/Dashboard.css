@@ -19,17 +19,18 @@
   pointer-events: none;
 }
 
-/* Phones: one column, in reading order. Each widget keeps its height; moving and resizing are off. */
-@media (max-width: 600px) {
+/* Narrower screens: the 12-column layout is too cramped, so the widgets reflow into fewer columns,
+   in reading order, each keeping its height. The saved 12-column layout is untouched and comes back
+   on a wide screen. Moving and resizing are off here, since they work on the 12 columns.
+   !important is needed to win over the 12-column placement Widget sets inline. */
+@media (max-width: 1023px) {
   .widget-grid {
-    display: flex;
-    flex-direction: column;
+    grid-auto-flow: row dense; /* a narrow widget fills a gap left beside a wide one */
   }
 
   .widget-grid > .widget {
-    flex: none;
-    height: calc(var(--h) * var(--row-unit));
-    margin: 0 0 -1px;
+    grid-row: auto / span var(--h) !important;
+    transform: none !important;
   }
 
   .widget-handle,
@@ -39,5 +40,31 @@
 
   .widget-header {
     padding-left: 1rem !important;
+  }
+}
+
+/* Tablets: two columns. A widget wider than half the grid takes both. */
+@media (min-width: 601px) and (max-width: 1023px) {
+  .widget-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .widget-grid > .widget {
+    grid-column: auto / span 1 !important;
+  }
+
+  .widget-grid > .widget[data-wide] {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* Phones: one column. */
+@media (max-width: 600px) {
+  .widget-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .widget-grid > .widget {
+    grid-column: 1 / -1 !important;
   }
 }
