@@ -1,16 +1,16 @@
 .editable-title {
   display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
+  align-items: center;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-/* The pencil sits to the right of the text and only shows on hover or keyboard focus. */
+/* The pencil sits to the right of the text, centred on it, and only shows on hover or keyboard
+   focus. The margin keeps it clear of the last letter at every headline size. */
 .editable-title-edit {
   display: inline-flex;
   flex: none;
-  margin-bottom: 0.4em;
+  margin-left: clamp(0.75rem, 1.5vw, 1.25rem);
   padding: 0.35rem;
   border-color: transparent;
   color: var(--muted);
