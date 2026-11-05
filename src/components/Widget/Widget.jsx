@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react';
+import useScrollThumb from '../../hooks/useScrollThumb';
 import { COLUMNS } from '../../utils/gridLayout';
 import './Widget.css';
 
@@ -33,6 +34,9 @@ function Widget({
 }) {
   const headingId = useId();
   const handleRef = useRef(null);
+  const bodyRef = useRef(null);
+  const thumbRef = useRef(null);
+  useScrollThumb(bodyRef, thumbRef);
   const { x, y, w, h } = position;
 
   useEffect(() => {
@@ -96,7 +100,11 @@ function Widget({
           ×
         </button>
       </header>
-      <div className="widget-body">{children}</div>
+      <div ref={bodyRef} className="widget-body">
+        {children}
+      </div>
+      {/* Where the content is scrolled to, drawn on the right-hand rule (see useScrollThumb). */}
+      <div ref={thumbRef} className="widget-scroll" aria-hidden="true" />
       {onResizeStart && (
         <>
           {/* Hovering any of these lights up the border. */}

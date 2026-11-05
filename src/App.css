@@ -254,6 +254,16 @@ textarea {
   letter-spacing: inherit;
 }
 
+/* No native scrollbars anywhere: they break the hairline grid. Wheel, touch and keyboard still
+   scroll, and widgets draw their own thumb on their right-hand rule (see Widget.css). */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
 /* Visible focus ring for keyboard users. */
 button:focus-visible,
 input:focus-visible,

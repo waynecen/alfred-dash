@@ -254,7 +254,6 @@
   display: flex;
   gap: 0.25rem;
   overflow-x: auto;
-  scrollbar-width: none;
   padding-top: 0.25rem;
 }
 
@@ -295,7 +294,6 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  scrollbar-width: thin;
 }
 
 .wx-daily li {

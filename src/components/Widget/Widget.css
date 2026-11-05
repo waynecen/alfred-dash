@@ -205,3 +205,28 @@
     transition: none;
   }
 }
+
+/* Scrolling: the native scrollbar is hidden (App.css), so a widget whose content scrolls shows
+   where it is with a 3px ink thumb laid on its right-hand rule, thickening the line inwards.
+   The track runs from under the header to just above the resize corner. It is only a gauge
+   (no pointer events), so the resize zone on the same rule keeps working; the wheel, touch and
+   keys do the scrolling. Size and position come from useScrollThumb. */
+.widget-scroll {
+  position: absolute;
+  top: var(--header-h);
+  right: -1px;
+  bottom: 14px;
+  z-index: 2; /* above the neighbour that shares this rule */
+  width: 3px;
+  pointer-events: none;
+}
+
+.widget-scroll[data-scrollable]::before {
+  content: '';
+  position: absolute;
+  top: var(--thumb-top, 0);
+  right: 0;
+  left: 0;
+  height: var(--thumb-size, 0);
+  background: var(--text);
+}
