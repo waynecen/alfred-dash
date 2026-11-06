@@ -3,6 +3,7 @@ import TasksWidget from '../components/TaskTracker/TasksWidget';
 import NotesWidget from '../components/NotesWidget/NotesWidget';
 import WeatherWidget from '../components/WeatherWidget/WeatherWidget';
 import DailyBriefWidget from '../components/DailyBriefWidget/DailyBriefWidget';
+import TaskAssistantWidget from '../components/TaskAssistantWidget/TaskAssistantWidget';
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list
@@ -60,6 +61,20 @@ export const WIDGETS = {
     description: 'A short plan for today from your tasks, notes and weather',
     defaultSize: { w: 4, h: 6 },
     render: ({ tasks, notes }) => <DailyBriefWidget tasks={tasks} notes={notes} />,
+  },
+  taskAssistant: {
+    title: 'Task Assistant',
+    category: 'AI',
+    description: 'Break a task into steps, or turn your notes into tasks',
+    defaultSize: { w: 4, h: 7 },
+    render: ({ tasks, notes, actions }) => (
+      <TaskAssistantWidget
+        tasks={tasks}
+        notes={notes}
+        onAddTasks={actions.addTasks}
+        notify={actions.notify}
+      />
+    ),
   },
 };
 
