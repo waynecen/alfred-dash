@@ -1,0 +1,99 @@
+.task-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 100%;
+}
+
+/* Two ruled halves; the chosen one is filled with ink, like a pressed key. */
+.assistant-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.assistant-modes button {
+  padding: 0.4rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.assistant-modes button + button {
+  border-left: 0;
+}
+
+.assistant-modes button.is-active {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.assistant-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.assistant-controls select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.assistant-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.assistant-controls button:disabled:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+.assistant-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.assistant-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.assistant-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.assistant-item-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.assistant-priority {
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+/* Small square tick and cross; borderless until hovered so the rows stay quiet. */
+.assistant-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border-color: transparent;
+  line-height: 1;
+}
+
+.assistant-add-all {
+  align-self: flex-start;
+}

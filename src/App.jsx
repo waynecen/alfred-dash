@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
 import { useAIHealth } from './hooks/useAI';
@@ -62,9 +62,21 @@ function App() {
   // Checked each time Settings opens, so the AI status there is current.
   const aiHealth = useAIHealth(settingsOpen);
 
-  // The CSS variables are switched by an attribute on <html>.
+  // The CSS variables are switched by an attribute on <html>. After the first paint, the switch
+  // runs as a view transition so the page cross-fades (timing in App.css); browsers without
+  // view transitions just switch.
+  const themeApplied = useRef(false);
   useEffect(() => {
-    document.documentElement.dataset.theme = shownTheme;
+    const apply = () => {
+      document.documentElement.dataset.theme = shownTheme;
+    };
+    if (document.documentElement.dataset.theme === shownTheme) return;
+    if (!themeApplied.current || !document.startViewTransition) {
+      themeApplied.current = true;
+      apply();
+      return;
+    }
+    document.startViewTransition(apply);
   }, [shownTheme]);
 
   // Ctrl+K (Cmd+K on a Mac) opens and closes the command palette from anywhere.
@@ -83,16 +95,28 @@ function App() {
     setFocusRequest((request) => ({ id, n: (request?.n ?? 0) + 1 }));
   }
 
+  // Adds several tasks at once: items is [{ text, priority }]. A functional update, so tasks
+  // added in the same click (or by another widget) are never lost.
+  function addTasks(items) {
+    if (items.length === 0) return;
+    const now = Date.now();
+    setTasks((current) => {
+      // Ids are timestamps; step past any already taken so a batch never repeats one.
+      let nextId = Math.max(now, ...current.map((task) => task.id + 1));
+      const newTasks = items.map(({ text, priority }) => ({
+        id: nextId++,
+        text,
+        priority, // 'low' | 'medium' | 'high'
+        completed: false,
+        createdAt: now, // when the task was created, in milliseconds
+      }));
+      // Never change state directly: build a new array instead.
+      return [...current, ...newTasks];
+    });
+  }
+
   function addTask(text, priority) {
-    const newTask = {
-      id: Date.now(), // simple unique id; fine for a personal app
-      text,
-      priority, // 'low' | 'medium' | 'high'
-      completed: false,
-      createdAt: Date.now(), // when the task was created, in milliseconds
-    };
-    // Never change state directly: build a new array instead.
-    setTasks([...tasks, newTask]);
+    addTasks([{ text, priority }]);
   }
 
   function toggleTask(id) {
@@ -185,7 +209,7 @@ function App() {
     tasks,
     notes,
     counts: countTasks(tasks),
-    actions: { addTask, toggleTask, editTask, changePriority, deleteTask, reorderTasks, setNotes, notify },
+    actions: { addTask, addTasks, toggleTask, editTask, changePriority, deleteTask, reorderTasks, setNotes, notify },
   };
 
   const getCommands = (query) =>
