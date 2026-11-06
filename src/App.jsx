@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
 import { useAIHealth } from './hooks/useAI';
@@ -62,9 +62,21 @@ function App() {
   // Checked each time Settings opens, so the AI status there is current.
   const aiHealth = useAIHealth(settingsOpen);
 
-  // The CSS variables are switched by an attribute on <html>.
+  // The CSS variables are switched by an attribute on <html>. After the first paint, the switch
+  // runs as a view transition so the page cross-fades (timing in App.css); browsers without
+  // view transitions just switch.
+  const themeApplied = useRef(false);
   useEffect(() => {
-    document.documentElement.dataset.theme = shownTheme;
+    const apply = () => {
+      document.documentElement.dataset.theme = shownTheme;
+    };
+    if (document.documentElement.dataset.theme === shownTheme) return;
+    if (!themeApplied.current || !document.startViewTransition) {
+      themeApplied.current = true;
+      apply();
+      return;
+    }
+    document.startViewTransition(apply);
   }, [shownTheme]);
 
   // Ctrl+K (Cmd+K on a Mac) opens and closes the command palette from anywhere.

@@ -301,8 +301,22 @@ textarea:focus-visible,
   }
 }
 
+/* Theme switch: the whole page cross-fades from the old theme to the new one. Material 3 motion
+   tokens: a full-screen change gets a medium duration (medium2, 300ms) on the standard easing
+   curve, which starts quickly and settles gently. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   button {
     transition: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
   }
 }
