@@ -2,6 +2,7 @@ import SummaryWidget from '../components/SummaryWidget/SummaryWidget';
 import TasksWidget from '../components/TaskTracker/TasksWidget';
 import NotesWidget from '../components/NotesWidget/NotesWidget';
 import WeatherWidget from '../components/WeatherWidget/WeatherWidget';
+import DailyBriefWidget from '../components/DailyBriefWidget/DailyBriefWidget';
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list
@@ -52,6 +53,13 @@ export const WIDGETS = {
     description: 'Current conditions, hourly and 10-day forecasts for places you add',
     defaultSize: { w: 4, h: 11 }, // tall enough for the hourly and 10-day forecasts; it shows more as it grows
     render: () => <WeatherWidget />,
+  },
+  brief: {
+    title: 'Daily Brief',
+    category: 'AI',
+    description: 'A short plan for today from your tasks, notes and weather',
+    defaultSize: { w: 4, h: 6 },
+    render: ({ tasks, notes }) => <DailyBriefWidget tasks={tasks} notes={notes} />,
   },
 };
 
