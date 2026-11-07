@@ -8,6 +8,7 @@ export const STORAGE_KEYS = [
   'focusSessions', // [{ taskId, startedAt, minutes }]: each focus session finished
   'habits', // [{ id, name, schedule, createdAt, archived }], see data/habits.js
   'habitLog', // { [habitId]: ['YYYY-MM-DD', …] }: the days each habit was done
+  'goals', // [{ id, title, kind, target, progress, unit, tag, dueDate, createdAt }], see data/goals.js
   'reminders', // { sent: { [key]: true } }: reminders already given today, so none repeats
   'notes', // the Notes widget's text
   'boards', // [{ id, name, widgetIds, layout }], see data/boards.js
