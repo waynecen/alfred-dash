@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import formatCreatedDate from '../../utils/formatCreatedDate';
 import DueDate from './DueDate';
 import TaskDetails from './TaskDetails';
-import { describeRecurrence } from '../../data/tasks';
+import { describeRecurrence, TASK_DRAG_TYPE } from '../../data/tasks';
 
 // A line under the task's text: how far along its steps are, its tags (each one filters the list
 // to it) and how it repeats. Nothing at all when there is none of these, so plain tasks keep a
@@ -150,6 +150,8 @@ function TaskItem({
           onDragStart={(event) => {
             event.dataTransfer.effectAllowed = 'move';
             event.dataTransfer.setData('text/plain', String(task.id));
+            // Lets the Calendar take the task too: dropped on a day, it becomes due then.
+            event.dataTransfer.setData(TASK_DRAG_TYPE, String(task.id));
             // Drag the whole row, not just the small handle.
             const row = event.currentTarget.closest('tr');
             if (row) event.dataTransfer.setDragImage(row, 0, 0);

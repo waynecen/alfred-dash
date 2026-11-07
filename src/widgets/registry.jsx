@@ -58,7 +58,7 @@ export const WIDGETS = {
         tasks={tasks}
         onAddEvent={actions.addEvent}
         onDeleteEvent={actions.deleteEvent}
-        onSetTaskDue={(id, dueDate) => actions.updateTask(id, { dueDate })}
+        onSetTaskDue={actions.rescheduleTask}
         onToggleTask={actions.toggleTask}
       />
     ),

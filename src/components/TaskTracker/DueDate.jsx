@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { isOverdue, parseISODate, relativeDay, toISODate } from '../../utils/dates';
+import { addDays, isOverdue, parseISODate, relativeDay, toISODate } from '../../utils/dates';
 
 // A task's due day, as a short label ("Today", "Fri", "13 Nov") that opens the browser's own date
 // picker. The picker's Clear removes the date. Overdue is set in bold and today in ink, by weight
@@ -20,6 +20,18 @@ function DueDate({ value, today = toISODate(), completed, taskText, onChange }) 
           ? 'today'
           : 'later';
 
+  // The keyboard's way to move a date without the picker (and without dragging it onto the
+  // Calendar): Up a day later, Down a day earlier, starting from today; Delete clears it.
+  function handleKeyDown(event) {
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      onChange(value ? addDays(value, event.key === 'ArrowUp' ? 1 : -1) : today);
+    } else if ((event.key === 'Delete' || event.key === 'Backspace') && value) {
+      event.preventDefault();
+      onChange(null);
+    }
+  }
+
   function openPicker() {
     try {
       input.current.showPicker();
@@ -35,8 +47,10 @@ function DueDate({ value, today = toISODate(), completed, taskText, onChange }) 
         type="button"
         className={`due-date-button due-${state}`}
         onClick={openPicker}
+        onKeyDown={handleKeyDown}
         aria-label={`Due date: ${taskText}, ${value ? label : 'none'}${state === 'overdue' ? ', overdue' : ''}`}
-        title={value ? parseISODate(value).toLocaleDateString(undefined, { dateStyle: 'full' }) : 'Set a due date'}
+        aria-keyshortcuts="ArrowUp ArrowDown Delete"
+        title={`${value ? parseISODate(value).toLocaleDateString(undefined, { dateStyle: 'full' }) : 'Set a due date'} (↑ ↓ to move it a day)`}
       >
         {label}
       </button>

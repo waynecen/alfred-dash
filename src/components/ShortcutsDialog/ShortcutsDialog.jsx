@@ -18,6 +18,7 @@ export const SHORTCUTS = [
 const IN_PLACE = [
   { keys: ['←', '→', '↑', '↓'], label: 'Move a widget (on its handle) or resize it (on its corner)' },
   { keys: ['↑', '↓'], label: 'Reorder a task (on its handle)' },
+  { keys: ['↑', '↓'], label: 'Move a task’s due date a day (on its date)' },
   { keys: ['←', '→'], label: 'Switch board (on the board tabs)' },
   { keys: ['F2'], label: 'Rename the board (on its tab)' },
 ];

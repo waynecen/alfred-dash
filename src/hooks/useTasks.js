@@ -106,6 +106,20 @@ function useTasks(notify) {
     update(id, () => fields);
   }
 
+  // Moves a task to another day from outside the table (a drop on the Calendar), saying where it
+  // went, with Undo: a drop is easy to make by mistake and hard to see from where it was made.
+  function rescheduleTask(id, dueDate) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task || task.dueDate === dueDate) return;
+    const before = task.dueDate;
+    update(id, () => ({ dueDate }));
+    notify({
+      message: `“${task.text}” due ${describeNext(dueDate, toISODate())}`,
+      actionLabel: 'Undo',
+      onAction: () => update(id, () => ({ dueDate: before })),
+    });
+  }
+
   // Sets the same fields on several tasks, e.g. a new due date, with one Undo for all of them.
   function updateTasks(ids, fields) {
     const wanted = new Set(ids);
@@ -170,6 +184,7 @@ function useTasks(notify) {
       changePriority,
       updateTask,
       updateTasks,
+      rescheduleTask,
       deleteTask,
       deleteTasks,
       reorderTasks,

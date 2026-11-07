@@ -3,12 +3,13 @@ import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
 import { hourCycle } from '../../data/settings';
 import { describeEventTime, eventsOn } from '../../data/events';
+import { TASK_DRAG_TYPE } from '../../data/tasks';
 import { addDays, addMonths, parseISODate, relativeDay, startOfWeek } from '../../utils/dates';
 import parseQuickAdd from '../../utils/parseQuickAdd';
 import './CalendarWidget.css';
 
-// What a task being dragged from the Tasks widget carries, so a day can take it (see TaskItem).
-export const TASK_DRAG_TYPE = 'application/x-dashboard-task';
+// What a task being dragged from the Tasks widget carries, so a day can take it.
+export { TASK_DRAG_TYPE };
 
 const label = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
 const firstOfMonth = (iso) => `${iso.slice(0, 8)}01`;

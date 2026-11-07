@@ -186,3 +186,25 @@ describe('TaskItem tags and repeat', () => {
     expect(onFilterTag).toHaveBeenCalledWith('home');
   });
 });
+
+describe('TaskItem due date keys', () => {
+  it('moves the date a day with the arrow keys, starts from today, and clears with Delete', async () => {
+    const { onUpdate } = setup({ dueDate: '2026-11-08' });
+    screen.getByRole('button', { name: /^Due date: Write tests/ }).focus();
+    await userEvent.keyboard('{ArrowUp}');
+    expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: '2026-11-09' });
+    await userEvent.keyboard('{ArrowDown}');
+    expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: '2026-11-07' });
+    await userEvent.keyboard('{Delete}');
+    expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: null });
+  });
+
+  it('carries the task when dragged, so the Calendar can take it', () => {
+    setup();
+    const setData = vi.fn();
+    fireEvent.dragStart(screen.getByRole('button', { name: 'Reorder task: Write tests' }), {
+      dataTransfer: { setData, setDragImage: () => {}, effectAllowed: '' },
+    });
+    expect(setData).toHaveBeenCalledWith('application/x-dashboard-task', '1');
+  });
+});
