@@ -25,6 +25,15 @@ describe('SettingsDrawer', () => {
     expect(onThemeChange).toHaveBeenCalledWith('system');
   });
 
+  it('saves the temperature unit and clock format', async () => {
+    setup();
+    expect(screen.getByRole('radio', { name: 'Celsius (°C)' })).toBeChecked();
+    await userEvent.click(screen.getByRole('radio', { name: 'Fahrenheit (°F)' }));
+    await userEvent.click(screen.getByRole('radio', { name: '24-hour (15:00)' }));
+    expect(JSON.parse(localStorage.getItem('settings'))).toEqual({ temperatureUnit: 'fahrenheit', timeFormat: '24h' });
+    expect(screen.getByRole('radio', { name: 'Fahrenheit (°F)' })).toBeChecked();
+  });
+
   it('resets the layout', async () => {
     const { onResetLayout } = setup();
     await userEvent.click(screen.getByRole('button', { name: 'Reset layout' }));

@@ -1,6 +1,7 @@
 import { useId, useRef } from 'react';
 import useDismiss from '../../hooks/useDismiss';
 import useFocusTrap from '../../hooks/useFocusTrap';
+import useSettings from '../../hooks/useSettings';
 import DataSection from './DataSection';
 import './SettingsDrawer.css';
 
@@ -8,6 +9,17 @@ const THEMES = [
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
   { value: 'system', label: 'Match system' },
+];
+
+const TEMPERATURE_UNITS = [
+  { value: 'celsius', label: 'Celsius (°C)' },
+  { value: 'fahrenheit', label: 'Fahrenheit (°F)' },
+];
+
+const TIME_FORMATS = [
+  { value: 'auto', label: 'Automatic' },
+  { value: '12h', label: '12-hour (3:00 PM)' },
+  { value: '24h', label: '24-hour (15:00)' },
 ];
 
 // What the AI section says for each useAIHealth status.
@@ -41,6 +53,8 @@ function SettingsDrawer({
   notify = () => {},
 }) {
   const aiStatus = AI_STATUS[ai.status] ?? AI_STATUS['not-configured'];
+  // Units and the clock are read where they are shown, so they are changed straight from here.
+  const [settings, updateSettings] = useSettings();
   const panelRef = useRef(null);
   const headingId = useId();
 
@@ -73,6 +87,38 @@ function SettingsDrawer({
                 value={option.value}
                 checked={theme === option.value}
                 onChange={() => onThemeChange(option.value)}
+              />
+              {option.label}
+            </label>
+          ))}
+        </fieldset>
+
+        <fieldset className="drawer-section">
+          <legend>Temperature</legend>
+          {TEMPERATURE_UNITS.map((option) => (
+            <label key={option.value} className="drawer-radio">
+              <input
+                type="radio"
+                name="temperatureUnit"
+                value={option.value}
+                checked={settings.temperatureUnit === option.value}
+                onChange={() => updateSettings({ temperatureUnit: option.value })}
+              />
+              {option.label}
+            </label>
+          ))}
+        </fieldset>
+
+        <fieldset className="drawer-section">
+          <legend>Clock</legend>
+          {TIME_FORMATS.map((option) => (
+            <label key={option.value} className="drawer-radio">
+              <input
+                type="radio"
+                name="timeFormat"
+                value={option.value}
+                checked={settings.timeFormat === option.value}
+                onChange={() => updateSettings({ timeFormat: option.value })}
               />
               {option.label}
             </label>

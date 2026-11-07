@@ -8,6 +8,7 @@ export const STORAGE_KEYS = [
   'activeBoard', // the id of the board on screen
   'dashboardTitle',
   'theme', // 'light' | 'dark' | 'system'
+  'settings', // { temperatureUnit, timeFormat }, see data/settings.js
   'weatherPlaces', // [{ id, name, latitude, longitude, ... }]
   'weatherActive', // the id of the place the Weather widget shows
   'dailyBrief', // { text, at }: the last brief, so a reload doesn't pay for a new one
