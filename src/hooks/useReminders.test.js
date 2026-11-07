@@ -1,4 +1,4 @@
-import { dayKey, dueReminders, eventKey } from './useReminders';
+import { dayKey, dueReminders, eventKey, reviewKey } from './useReminders';
 
 // Saturday 7 November 2026, 14:52.
 const now = new Date(2026, 10, 7, 14, 52);
@@ -27,5 +27,14 @@ describe('dueReminders', () => {
     expect(dueReminders({ events: [], tasks, now, sent: {} }).due).toEqual({ today: 1, overdue: 1 });
     expect(dueReminders({ events: [], tasks, now, sent: { [dayKey('2026-11-07')]: true } }).due).toBeNull();
     expect(dueReminders({ events: [], tasks, now, sent: {}, withDue: false }).due).toBeNull();
+  });
+});
+
+describe('dueReminders review', () => {
+  it('nudges about the weekly review once on the day it is due', () => {
+    expect(dueReminders({ events: [], tasks: [], now, sent: {}, reviewDue: true }).review).toBe(true);
+    expect(dueReminders({ events: [], tasks: [], now, sent: {}, reviewDue: false }).review).toBe(false);
+    expect(dueReminders({ events: [], tasks: [], now, sent: { [reviewKey('2026-11-07')]: true }, reviewDue: true }).review).toBe(false);
+    expect(dueReminders({ events: [], tasks: [], now, sent: {}, reviewDue: true, withDue: false }).review).toBe(false);
   });
 });

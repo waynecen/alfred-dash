@@ -27,8 +27,9 @@ import { WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
 import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
 import insertAt from './utils/insertAt';
-import { parseISODate, toISODate } from './utils/dates';
+import { parseISODate, startOfWeek, toISODate } from './utils/dates';
 import { isScheduled } from './data/habits';
+import { isReviewed, reviewWeek } from './data/reviews';
 import { formatClock } from './data/focus';
 
 // What the Add widget list needs to know about each widget.
@@ -91,7 +92,21 @@ function App() {
   // The focus timer keeps time here, so it runs (and announces the end of a phase) on any board.
   const { focus, focusActions } = useFocusTimer(notify, settings.notifications);
   // Ten minutes before each timed event, and once a day for what is due.
-  useReminders({ events, tasks, notify, noticesOn: settings.notifications, onShowToday: () => goToToday() });
+  // On the first day of a week, the week just ended is ready to review; nobody with nothing on
+  // the dashboard yet is nudged.
+  const reviewDue =
+    startOfWeek(today, settings.weekStart) === today &&
+    !isReviewed(reviews, reviewWeek(today, settings.weekStart).from) &&
+    tasks.length + habits.length + goals.length > 0;
+  useReminders({
+    events,
+    tasks,
+    notify,
+    noticesOn: settings.notifications,
+    onShowToday: () => goToToday(),
+    reviewDue,
+    onStartReview: () => setReviewOpen(true),
+  });
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
   // Checked each time Settings opens, so the AI status there is current.

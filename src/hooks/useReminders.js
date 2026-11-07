@@ -12,12 +12,13 @@ const minutesOf = (hhmm) => {
 };
 
 // What is due a reminder at this moment, from the events and tasks, leaving out what was sent:
-//   { events: [event, ...], due: { today, overdue } | null }
+//   { events: [event, ...], due: { today, overdue } | null, review: boolean }
 // An event is due one from LEAD_MINUTES before it starts until it starts; the day's tasks get one
-// summary, the first time the dashboard is open that day.
+// summary, the first time the dashboard is open that day, and so does the weekly review.
 //   sent: { [key]: true }, the reminders already given (see reminderKey)
 //   withDue: whether to look at the tasks at all (only when the dashboard opens, or the day turns)
-export function dueReminders({ events, tasks, now, sent, withDue = true }) {
+//   reviewDue: whether today is the day for the weekly review, which hasn't been done yet
+export function dueReminders({ events, tasks, now, sent, withDue = true, reviewDue = false }) {
   const today = toISODate(now);
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
   const soon = events.filter((event) => {
@@ -31,22 +32,25 @@ export function dueReminders({ events, tasks, now, sent, withDue = true }) {
     const counts = { today: open.filter((t) => t.dueDate === today).length, overdue: open.filter((t) => t.dueDate < today).length };
     if (counts.today || counts.overdue) due = counts;
   }
-  return { events: soon, due, today };
+  const review = withDue && reviewDue && !sent[reviewKey(today)];
+  return { events: soon, due, review, today };
 }
 
 // Each reminder's key names its day, so changing an event's time reminds again, and old keys
 // can be dropped once their day is past.
 export const eventKey = (event) => `${event.date}|event|${event.id}|${event.start}`;
 export const dayKey = (day) => `${day}|due`;
+export const reviewKey = (day) => `${day}|review`;
 
 const pruned = (sent, today) => Object.fromEntries(Object.entries(sent).filter(([key]) => key.slice(0, 10) >= today));
 
 // Reminds about what is coming while the dashboard is open: a toast (and a system notice, when
-// turned on in Settings) ten minutes before each timed event, and a morning summary of the tasks
-// due and overdue. Reminders already given are saved under 'reminders', so a reload, or a second
-// tab, never repeats one.
+// turned on in Settings) ten minutes before each timed event, a morning summary of the tasks due
+// and overdue, and on the first day of a week, a nudge to do the weekly review. Reminders already
+// given are saved under 'reminders', so a reload, or a second tab, never repeats one.
 //   notify: shows a toast    noticesOn: the Settings switch    onShowToday: opens the Today view
-function useReminders({ events, tasks, notify, noticesOn, onShowToday }) {
+//   reviewDue: a new week has begun and its review isn't done    onStartReview: opens the review
+function useReminders({ events, tasks, notify, noticesOn, onShowToday, reviewDue = false, onStartReview }) {
   const [saved, setSaved] = useLocalStorage('reminders', { sent: {} });
   const [now, setNow] = useState(() => new Date());
 
@@ -71,8 +75,8 @@ function useReminders({ events, tasks, notify, noticesOn, onShowToday }) {
     const day = toISODate(now);
     const withDue = dueCheckedFor.current !== day;
     dueCheckedFor.current = day;
-    const { events: soon, due, today } = dueReminders({ events, tasks, now, sent, withDue });
-    if (!soon.length && !due) return;
+    const { events: soon, due, review, today } = dueReminders({ events, tasks, now, sent, withDue, reviewDue });
+    if (!soon.length && !due && !review) return;
 
     // Claim each reminder in storage before giving it, so another tab checking in the same
     // moment finds it taken and stays quiet.
@@ -90,6 +94,10 @@ function useReminders({ events, tasks, notify, noticesOn, onShowToday }) {
         next[dayKey(today)] = true;
         claimed.push({ kind: 'due', due });
       }
+      if (review && !had[reviewKey(today)]) {
+        next[reviewKey(today)] = true;
+        claimed.push({ kind: 'review' });
+      }
       return claimed.length ? { sent: next } : current;
     });
 
@@ -99,6 +107,9 @@ function useReminders({ events, tasks, notify, noticesOn, onShowToday }) {
         const when = minutes <= 1 ? 'starting now' : `in ${minutes} minutes`;
         notify({ message: `“${item.event.title}” ${when}`, actionLabel: 'Show', onAction: onShowToday });
         showNotice(noticesOn, item.event.title, { body: `Starts ${when}, at ${item.event.start}.`, tag: eventKey(item.event) });
+      } else if (item.kind === 'review') {
+        // Not urgent, so a toast only: no system notice.
+        notify({ message: 'A new week: time for the weekly review', actionLabel: 'Start', onAction: onStartReview });
       } else {
         const parts = [item.due.today && `${item.due.today} due today`, item.due.overdue && `${item.due.overdue} overdue`].filter(Boolean);
         const message = `Tasks: ${parts.join(', ')}`;
