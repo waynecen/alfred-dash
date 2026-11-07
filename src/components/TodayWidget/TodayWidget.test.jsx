@@ -6,15 +6,16 @@ import { addDays, toISODate } from '../../utils/dates';
 
 const today = toISODate();
 
-function setup({ tasks = [], events = [], focus } = {}) {
+function setup({ tasks = [], events = [], focus, habits, habitLog } = {}) {
   const actions = {
     toggleTask: vi.fn(),
+    toggleHabitDay: vi.fn(),
     addTask: vi.fn(),
     addEvent: vi.fn(),
     notify: vi.fn(),
     focusTimer: { toggle: vi.fn() },
   };
-  render(<TodayWidget tasks={tasks} events={events} focus={focus} actions={actions} />);
+  render(<TodayWidget tasks={tasks} events={events} focus={focus} habits={habits} habitLog={habitLog} actions={actions} />);
   return actions;
 }
 
@@ -55,5 +56,23 @@ describe('TodayWidget', () => {
     expect(screen.getByText('min so far').previousSibling).toHaveTextContent('25');
     await userEvent.click(screen.getByRole('button', { name: 'Start focus' }));
     expect(actions.focusTimer.toggle).toHaveBeenCalled();
+  });
+
+  it('lists the habits due today, to tick off', async () => {
+    const made = new Date(2020, 0, 1).getTime();
+    const actions = setup({
+      habits: [
+        { id: 1, name: 'Read', schedule: 'daily', createdAt: made, archived: false },
+        { id: 2, name: 'Stretch', schedule: 'daily', createdAt: made, archived: false },
+        { id: 3, name: 'Old', schedule: 'daily', createdAt: made, archived: true },
+      ],
+      habitLog: { 1: [addDays(today, -1), today] },
+    });
+    expect(screen.getByText('1 habit to go')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Done today: Read' })).toBeChecked();
+    expect(screen.getByText('2 in a row')).toBeInTheDocument();
+    expect(screen.queryByText('Old')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Done today: Stretch' }));
+    expect(actions.toggleHabitDay).toHaveBeenCalledWith(2, today);
   });
 });

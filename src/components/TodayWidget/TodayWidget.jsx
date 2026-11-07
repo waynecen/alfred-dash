@@ -4,7 +4,9 @@ import useSettings from '../../hooks/useSettings';
 import { hourCycle } from '../../data/settings';
 import { describeEventTime, eventsOn } from '../../data/events';
 import { formatClock } from '../../data/focus';
-import { parseISODate, relativeDay } from '../../utils/dates';
+import { isScheduled } from '../../data/habits';
+import { habitStreaks } from '../../utils/streaks';
+import { parseISODate, relativeDay, toISODate } from '../../utils/dates';
 import parseQuickAdd from '../../utils/parseQuickAdd';
 import './TodayWidget.css';
 
@@ -30,10 +32,10 @@ function readLine(text, today, weekStart) {
 }
 
 // The Today widget: one column of everything that matters today. The day's events, what is due
-// or overdue, the focus timer, and one line to add a task or an event.
-//   tasks, events, focus: shared dashboard data
-//   actions: { toggleTask, addTask, addEvent, focusTimer }
-function TodayWidget({ tasks, events, focus, actions }) {
+// or overdue, the habits to tick off, the focus timer, and one line to add a task or an event.
+//   tasks, events, focus, habits, habitLog: shared dashboard data
+//   actions: { toggleTask, addTask, addEvent, toggleHabitDay, focusTimer }
+function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions }) {
   const today = useToday();
   const now = useClockTime();
   const [{ weekStart, timeFormat }] = useSettings();
@@ -47,6 +49,11 @@ function TodayWidget({ tasks, events, focus, actions }) {
   const overdue = tasks.filter((task) => !task.completed && task.dueDate && task.dueDate < today);
   const dueToday = tasks.filter((task) => task.dueDate === today);
   const openToday = dueToday.filter((task) => !task.completed).length;
+  // The habits due today (made by today), and those still to tick off.
+  const keptHabits = habits.filter((habit) => !habit.archived);
+  const habitsToday = keptHabits.filter((habit) => isScheduled(habit, today) && toISODate(habit.createdAt) <= today);
+  const habitDone = (habit) => (habitLog[habit.id] ?? []).includes(today);
+  const habitsLeft = habitsToday.filter((habit) => !habitDone(habit)).length;
 
   const line = draft.trim() ? readLine(draft, today, weekStart) : null;
 
@@ -68,6 +75,7 @@ function TodayWidget({ tasks, events, focus, actions }) {
     schedule.length ? `${schedule.length} event${schedule.length === 1 ? '' : 's'}` : null,
     openToday ? `${openToday} due` : null,
     overdue.length ? `${overdue.length} overdue` : null,
+    habitsLeft ? `${habitsLeft} habit${habitsLeft === 1 ? '' : 's'} to go` : null,
   ].filter(Boolean);
 
   const renderTask = (task, late) => (
@@ -127,6 +135,36 @@ function TodayWidget({ tasks, events, focus, actions }) {
           <p className="today-empty">Nothing due today.</p>
         )}
       </section>
+
+      {keptHabits.length > 0 && (
+        <section className="today-section" aria-labelledby={`${id}-habits`}>
+          <h4 id={`${id}-habits`}>Habits</h4>
+          {habitsToday.length ? (
+            <ul className="today-list">
+              {habitsToday.map((habit) => {
+                const done = habitDone(habit);
+                const { current } = habitStreaks(habit, habitLog[habit.id], today);
+                return (
+                  <li key={habit.id} className={done ? 'today-item is-done' : 'today-item'}>
+                    <span className="today-item-when">
+                      <input
+                        type="checkbox"
+                        checked={done}
+                        onChange={() => actions.toggleHabitDay(habit.id, today)}
+                        aria-label={`Done today: ${habit.name}`}
+                      />
+                    </span>
+                    <span className="today-item-title">{habit.name}</span>
+                    {current > 1 && <span className="today-item-tag">{current} in a row</span>}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="today-empty">No habits due today.</p>
+          )}
+        </section>
+      )}
 
       {focus && (
         <section className="today-section today-focus" aria-labelledby={`${id}-focus`}>

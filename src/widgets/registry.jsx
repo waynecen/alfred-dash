@@ -54,10 +54,10 @@ export const WIDGETS = {
   today: {
     title: 'Today',
     category: 'Planning',
-    description: 'Today in one column: events, what is due, focus, and a line to add to it',
+    description: 'Today in one column: events, what is due, habits, focus, and a line to add to it',
     defaultSize: { w: 4, h: 10 },
-    render: ({ tasks, events, focus, actions }) => (
-      <TodayWidget tasks={tasks} events={events} focus={focus} actions={actions} />
+    render: ({ tasks, events, focus, habits, habitLog, actions }) => (
+      <TodayWidget tasks={tasks} events={events} focus={focus} habits={habits} habitLog={habitLog} actions={actions} />
     ),
   },
   calendar: {
