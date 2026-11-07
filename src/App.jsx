@@ -142,6 +142,20 @@ function App() {
     });
   }
 
+  function moveWidget(id, toBoardId) {
+    const to = boards.boards.find((b) => b.id === toBoardId);
+    if (!to) return;
+    boards.moveWidget(id, toBoardId);
+    notify({
+      message: `Moved ${WIDGETS[id]?.title ?? 'widget'} to ${to.name}`,
+      actionLabel: 'Show',
+      onAction: () => {
+        boards.switchTo(toBoardId);
+        focusWidget(id);
+      },
+    });
+  }
+
   function applyStarter(starter) {
     setWidgetIds(starter.widgets);
     setLayout({});
@@ -168,6 +182,8 @@ function App() {
       shownIds: shownWidgetIds,
       query,
       theme: shownTheme,
+      boards: boards.boards,
+      activeBoardId: board.id,
       actions: {
         addWidget,
         removeWidget,
@@ -176,6 +192,11 @@ function App() {
         toggleTheme,
         resetLayout,
         openSettings: () => setSettingsOpen(true),
+        switchBoard: boards.switchTo,
+        addBoard: boards.addBoard,
+        renameBoard: (name) => boards.renameBoard(board.id, name),
+        deleteBoard: () => boards.deleteBoard(board.id),
+        moveWidget,
       },
     });
 

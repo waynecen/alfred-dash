@@ -3,10 +3,14 @@
 // `always` commands depend on what was typed (like "Add task …") and are shown whenever
 // there is a query, after the ones that matched. New features add their commands here.
 //   widgets: the registry     shownIds: the widgets on the dashboard     query: what was typed
-//   actions: { addWidget, removeWidget, focusWidget, addTask, toggleTheme, resetLayout, openSettings }
+//   actions: { addWidget, removeWidget, focusWidget, addTask, toggleTheme, resetLayout, openSettings,
+//              switchBoard(id), addBoard(name?), renameBoard(name), deleteBoard(), moveWidget(id, boardId) }
 //   theme: the theme in use, 'light' or 'dark'
-export function buildCommands({ widgets, shownIds, query = '', actions, theme }) {
+//   boards: [{ id, name }]     activeBoardId: the board on screen (rename, delete and move act on it)
+export function buildCommands({ widgets, shownIds, query = '', actions, theme, boards = [], activeBoardId }) {
   const commands = [];
+  const otherBoards = boards.filter((board) => board.id !== activeBoardId);
+  const activeBoard = boards.find((board) => board.id === activeBoardId);
 
   for (const [id, widget] of Object.entries(widgets)) {
     if (shownIds.includes(id)) {
@@ -24,7 +28,14 @@ export function buildCommands({ widgets, shownIds, query = '', actions, theme })
           label: `Remove ${widget.title} widget`,
           keywords: 'delete close hide',
           run: () => actions.removeWidget(id),
-        }
+        },
+        ...otherBoards.map((board) => ({
+          id: `move-${id}-${board.id}`,
+          group: 'Boards',
+          label: `Move ${widget.title} to ${board.name}`,
+          keywords: 'send board page',
+          run: () => actions.moveWidget(id, board.id),
+        }))
       );
     } else {
       commands.push({
@@ -33,6 +44,34 @@ export function buildCommands({ widgets, shownIds, query = '', actions, theme })
         label: `Add ${widget.title} widget`,
         keywords: `new show ${widget.description ?? ''}`,
         run: () => actions.addWidget(id),
+      });
+    }
+  }
+
+  if (actions.switchBoard) {
+    commands.push(
+      ...otherBoards.map((board) => ({
+        id: `board-${board.id}`,
+        group: 'Boards',
+        label: `Switch to ${board.name}`,
+        keywords: 'board page go open show',
+        run: () => actions.switchBoard(board.id),
+      })),
+      {
+        id: 'new-board',
+        group: 'Boards',
+        label: 'New board',
+        keywords: 'add create page',
+        run: () => actions.addBoard(),
+      }
+    );
+    if (activeBoard && otherBoards.length > 0) {
+      commands.push({
+        id: 'delete-board',
+        group: 'Boards',
+        label: `Delete board “${activeBoard.name}”`,
+        keywords: 'remove page',
+        run: actions.deleteBoard,
       });
     }
   }
@@ -62,6 +101,29 @@ export function buildCommands({ widgets, shownIds, query = '', actions, theme })
   );
 
   const text = query.trim();
+
+  // "new board Work" and "rename board to Work" name the board in the same breath.
+  const newBoard = actions.addBoard && text.match(/^new board\s+(.+)/i);
+  if (newBoard) {
+    commands.push({
+      id: 'new-board-named',
+      group: 'Boards',
+      label: `New board “${newBoard[1]}”`,
+      run: () => actions.addBoard(newBoard[1]),
+      always: true,
+    });
+  }
+  const rename = actions.renameBoard && text.match(/^rename(?: board)?(?: to)?\s+(.+)/i);
+  if (rename) {
+    commands.push({
+      id: 'rename-board',
+      group: 'Boards',
+      label: `Rename this board to “${rename[1]}”`,
+      run: () => actions.renameBoard(rename[1]),
+      always: true,
+    });
+  }
+
   if (text) {
     commands.push({
       id: 'add-task',
