@@ -27,6 +27,31 @@ describe('useLocalStorage', () => {
     expect(result.current[0]).toBe('default');
   });
 
+  it('keeps every component using a key in step', () => {
+    const first = renderHook(() => useLocalStorage('shared', 0));
+    const second = renderHook(() => useLocalStorage('shared', 0));
+    act(() => first.result.current[1](3));
+    expect(second.result.current[0]).toBe(3);
+  });
+
+  it('gives functional updates the latest value, even in one event', () => {
+    const { result } = renderHook(() => useLocalStorage('count', 0));
+    act(() => {
+      result.current[1]((n) => n + 1);
+      result.current[1]((n) => n + 1);
+    });
+    expect(result.current[0]).toBe(2);
+  });
+
+  it('picks up changes made in another tab', () => {
+    const { result } = renderHook(() => useLocalStorage('key', 'a'));
+    act(() => {
+      localStorage.setItem('key', JSON.stringify('b'));
+      window.dispatchEvent(new StorageEvent('storage', { key: 'key' }));
+    });
+    expect(result.current[0]).toBe('b');
+  });
+
   it('keeps working when storage throws on write', () => {
     const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('full');
