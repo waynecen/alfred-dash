@@ -1,11 +1,12 @@
 import useLocalStorage from './useLocalStorage';
-import { createTask } from '../data/tasks';
+import { createTask, describeNext, nextTaskFields } from '../data/tasks';
 import insertAt from '../utils/insertAt';
+import { toISODate } from '../utils/dates';
 
 // The task list, saved in the browser, and everything that changes it. Every change is a
 // functional update, so changes made in the same moment (by a widget, the AI, a timer) never
 // overwrite each other.
-//   notify: shows a toast (from useToasts), used to offer Undo after a delete
+//   notify: shows a toast (from useToasts), used to offer Undo after a delete or a repeat
 function useTasks(notify) {
   const [tasks, setTasks] = useLocalStorage('tasks', []);
 
@@ -29,11 +30,40 @@ function useTasks(notify) {
     addTasks([{ ...extra, text, priority }]);
   }
 
+  // Ticking off a repeating task also adds its next occurrence, just below it, and says when
+  // that is due. Undo takes the next one away and reopens this one. Unticking a done task never
+  // removes the next one, which may have been changed since.
   function toggleTask(id) {
-    update(id, (task) => ({
-      completed: !task.completed,
-      completedAt: task.completed ? null : Date.now(),
-    }));
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    const now = Date.now();
+    if (task.completed || !task.recurrence) {
+      update(id, (t) => ({ completed: !t.completed, completedAt: t.completed ? null : now }));
+      return;
+    }
+
+    const today = toISODate(now);
+    const fields = nextTaskFields(task, today);
+    let nextId;
+    setTasks((current) => {
+      const index = current.findIndex((t) => t.id === id);
+      // Already done in the meantime (another tab, a double click): nothing more to add.
+      if (index === -1 || current[index].completed) return current;
+      nextId = Math.max(now, ...current.map((t) => t.id + 1));
+      const done = current.map((t) => (t.id === id ? { ...t, completed: true, completedAt: now } : t));
+      return insertAt(done, index + 1, createTask(fields, nextId, now));
+    });
+    if (nextId === undefined) return;
+    notify({
+      message: `Done. Next: ${describeNext(fields.dueDate, today)}`,
+      actionLabel: 'Undo',
+      onAction: () =>
+        setTasks((current) =>
+          current
+            .filter((t) => t.id !== nextId)
+            .map((t) => (t.id === id ? { ...t, completed: false, completedAt: null } : t))
+        ),
+    });
   }
 
   function editTask(id, text) {

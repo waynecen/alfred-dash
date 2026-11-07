@@ -64,6 +64,22 @@ describe('App', () => {
     expect(screen.queryByRole('button', { name: 'Done task' })).not.toBeInTheDocument();
   });
 
+  it('adds the next one when a repeating task is done, and Undo takes it back', async () => {
+    render(<App />);
+    await addTask('Water plants every week');
+    await userEvent.click(screen.getByLabelText('Mark complete: Water plants'));
+
+    const saved = () => JSON.parse(localStorage.getItem('tasks'));
+    expect(saved()).toHaveLength(2);
+    expect(saved()[0]).toMatchObject({ completed: true });
+    expect(saved()[1]).toMatchObject({ text: 'Water plants', completed: false, recurrence: { every: 'week' } });
+    expect(screen.getByText(/^Done\. Next:/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(saved()).toHaveLength(1);
+    expect(saved()[0]).toMatchObject({ completed: false, completedAt: null });
+  });
+
   describe('sorting the table', () => {
     // The task descriptions in the order the rows are shown.
     const shownOrder = () =>
