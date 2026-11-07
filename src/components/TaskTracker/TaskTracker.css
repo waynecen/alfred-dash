@@ -76,10 +76,53 @@
   border-bottom: 1px solid currentColor;
 }
 
-/* Filter: a row of ruled tabs; the chosen one is filled with ink. */
+/* Filters: two groups of ruled tabs (status, then due date), the chosen one filled with ink, and
+   the tag picker and search at the far end. Everything wraps on a narrow widget. */
+.task-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 1rem;
+}
+
 .task-filter {
   display: flex;
-  margin: 0 0 1rem;
+}
+
+.task-filter-find {
+  display: flex;
+  flex: 1 1 16rem;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.task-filter-find > * + * {
+  margin-left: -1px;
+}
+
+.task-filter-search,
+.task-filter-tag {
+  min-width: 0;
+  height: 1.85rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.task-filter-tag {
+  flex: none; /* the tag names stay readable; the search box gives way instead */
+}
+
+.task-filter-search {
+  flex: 0 1 12rem;
+}
+
+.task-filter-search::placeholder {
+  color: var(--muted);
 }
 
 .task-filter button {
@@ -322,7 +365,16 @@
     margin-top: -1px;
   }
 
+  .task-filter,
+  .task-filter-find {
+    flex: 1 1 100%;
+  }
+
   .task-filter button {
+    flex: 1;
+  }
+
+  .task-filter-search {
     flex: 1;
   }
 
