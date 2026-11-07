@@ -164,7 +164,7 @@ h1 {
   align-items: flex-start;
   gap: 0.25rem;
   min-height: 7rem;
-  padding: 1rem 0;
+  padding: 1rem; /* inset on every side, so the hover fill frames the text evenly */
   border: 0;
   border-bottom: 1px solid var(--border);
   text-align: left;
@@ -188,10 +188,10 @@ h1 {
   font-size: 0.85rem;
 }
 
-/* No ink fill on hover (the shared button rule would also turn the title bone on bone):
-   the title underlines instead, as links do elsewhere. */
+/* Hover fills the option with Sand, the hover surface (DESIGN.md), rather than the shared
+   button's ink fill, which would turn the title bone on bone. The title also underlines. */
 .starter-layout:hover {
-  background: transparent;
+  background: var(--surface);
   color: var(--text);
 }
 
@@ -209,10 +209,6 @@ h1 {
 
   .starter-layout {
     padding: 1rem var(--gutter);
-  }
-
-  .starter-layout:first-child {
-    padding-left: 0;
   }
 
   .starter-layout + .starter-layout {
