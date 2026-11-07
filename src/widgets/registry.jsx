@@ -6,6 +6,7 @@ import DailyBriefWidget from '../components/DailyBriefWidget/DailyBriefWidget';
 import TaskAssistantWidget from '../components/TaskAssistantWidget/TaskAssistantWidget';
 import CalendarWidget from '../components/CalendarWidget/CalendarWidget';
 import FocusWidget from '../components/FocusWidget/FocusWidget';
+import ClockWidget from '../components/ClockWidget/ClockWidget';
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list
@@ -84,6 +85,13 @@ export const WIDGETS = {
     description: 'Current conditions, hourly and 10-day forecasts for places you add',
     defaultSize: { w: 4, h: 11 }, // tall enough for the hourly and 10-day forecasts; it shows more as it grows
     render: () => <WeatherWidget />,
+  },
+  clock: {
+    title: 'Clock',
+    category: 'Info',
+    description: 'The time here in large type, and in other cities you add',
+    defaultSize: { w: 4, h: 6 },
+    render: () => <ClockWidget />,
   },
   brief: {
     title: 'Daily Brief',

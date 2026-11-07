@@ -14,6 +14,7 @@ export const STORAGE_KEYS = [
   'settings', // { temperatureUnit, timeFormat, weekStart }, see data/settings.js
   'weatherPlaces', // [{ id, name, latitude, longitude, ... }]
   'weatherActive', // the id of the place the Weather widget shows
+  'worldClocks', // time zone names the Clock widget shows, e.g. ['Asia/Tokyo']
   'dailyBrief', // { text, at }: the last brief, so a reload doesn't pay for a new one
 ];
 
