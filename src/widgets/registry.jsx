@@ -14,13 +14,14 @@ export const WIDGETS = {
   summary: {
     title: 'Summary',
     category: 'Productivity',
-    defaultSize: { w: 4, h: 4 },
-    description: 'Active and completed counts, open tasks by priority, and a progress bar',
-    render: ({ counts }) => (
+    defaultSize: { w: 4, h: 8 },
+    description: 'Open and done counts, what is overdue or due today, and the last week of progress',
+    render: ({ counts, tasks }) => (
       <SummaryWidget
         active={counts.active}
         completed={counts.completed}
         openByPriority={counts.openByPriority}
+        tasks={tasks}
       />
     ),
   },
@@ -70,7 +71,7 @@ export const WIDGETS = {
     title: 'Task Assistant',
     category: 'AI',
     description: 'Break a task into steps, or turn your notes into tasks',
-    defaultSize: { w: 4, h: 7 },
+    defaultSize: { w: 4, h: 8 },
     render: ({ tasks, notes, actions }) => (
       <TaskAssistantWidget
         tasks={tasks}

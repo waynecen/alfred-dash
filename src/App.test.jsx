@@ -388,7 +388,7 @@ describe('App', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Add widget' }));
       await userEvent.click(screen.getByRole('button', { name: /^Notes/ }));
       expect(cardOf('Notes').style.gridColumn).toBe('1 / span 4');
-      expect(cardOf('Notes').style.gridRow).toBe('5 / span 5');
+      expect(cardOf('Notes').style.gridRow).toBe('9 / span 5');
     });
 
     it('moves a widget with the arrow keys, the others make way, and the layout is remembered', async () => {
@@ -409,8 +409,8 @@ describe('App', () => {
       await userEvent.keyboard('{ArrowRight}{ArrowDown}');
 
       expect(cardOf('Summary').style.gridColumn).toBe('1 / span 5');
-      expect(cardOf('Summary').style.gridRow).toBe('1 / span 5');
-      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 5 });
+      expect(cardOf('Summary').style.gridRow).toBe('1 / span 9');
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 9 });
       // The Tasks give up their first column and stay beside the Summary.
       expect(savedLayout().tasks).toEqual({ x: 5, y: 0, w: 7, h: 9 });
     });
@@ -463,11 +463,11 @@ describe('App', () => {
 
       // Two rows down (96px) on the bottom edge: taller, same width.
       drag(summary.querySelector('.widget-edge-s'), { dy: 96 });
-      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 4, h: 6 });
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 4, h: 10 });
 
       // One column right on the right edge: wider, same height.
       drag(container.querySelector('.widget-edge-e'), { dx: 100 });
-      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 6 });
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 10 });
     });
 
     it('lets the card itself take the new size while it is being resized', () => {
@@ -475,9 +475,9 @@ describe('App', () => {
       drag(resizer('Summary'), { dx: 200, dy: 96, release: false });
       expect(cardOf('Summary')).toHaveClass('is-resizing');
       expect(cardOf('Summary').style.gridColumn).toBe('1 / span 6');
-      expect(cardOf('Summary').style.gridRow).toBe('1 / span 6');
+      expect(cardOf('Summary').style.gridRow).toBe('1 / span 10');
       fireEvent.pointerUp(window);
-      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 6, h: 6 });
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 6, h: 10 });
     });
 
     it('never makes a widget smaller than its minimum or wider than the grid', () => {
