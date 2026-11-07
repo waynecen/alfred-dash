@@ -188,8 +188,11 @@ h1 {
   font-size: 0.85rem;
 }
 
+/* No ink fill on hover (the shared button rule would also turn the title bone on bone):
+   the title underlines instead, as links do elsewhere. */
 .starter-layout:hover {
   background: transparent;
+  color: var(--text);
 }
 
 .starter-layout:hover strong {
