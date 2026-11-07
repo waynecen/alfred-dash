@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
 import useTasks from './hooks/useTasks';
+import useEvents from './hooks/useEvents';
 import useBoards from './hooks/useBoards';
 import useShortcuts from './hooks/useShortcuts';
 import useToday from './hooks/useToday';
@@ -51,6 +52,8 @@ function App() {
   const { toasts, notify, dismiss } = useToasts();
   // The tasks live here, so every widget shares one source of truth.
   const { tasks, actions: taskActions } = useTasks(notify);
+  // Calendar events, shared the same way (the Calendar and Today widgets both show them).
+  const { events, actions: eventActions } = useEvents(notify);
   // The pages of widgets. Each board has its own widgets, in order, and where each one sits:
   // { [id]: { x, y, w, h } } in grid cells. Widgets without a spot go in the first free one.
   const boards = useBoards(notify);
@@ -204,9 +207,10 @@ function App() {
   // Everything a widget might need, handed to each widget's render function.
   const context = {
     tasks,
+    events,
     notes,
     counts: countTasks(tasks),
-    actions: { ...taskActions, setNotes, notify },
+    actions: { ...taskActions, ...eventActions, setNotes, notify },
   };
 
   const getCommands = (query) =>

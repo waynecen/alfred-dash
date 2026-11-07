@@ -4,10 +4,11 @@ import NotesWidget from '../components/NotesWidget/NotesWidget';
 import WeatherWidget from '../components/WeatherWidget/WeatherWidget';
 import DailyBriefWidget from '../components/DailyBriefWidget/DailyBriefWidget';
 import TaskAssistantWidget from '../components/TaskAssistantWidget/TaskAssistantWidget';
+import CalendarWidget from '../components/CalendarWidget/CalendarWidget';
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list
-//   category: the heading it is listed under in the Add widget list (Productivity, Info, AI)
+//   category: the heading it is listed under in the Add widget list (Productivity, Planning, Info, AI)
 //   defaultSize: { w, h } in grid cells (12 columns, rows 48px tall) it starts with; the user can resize it
 //   render: builds the widget's content from the dashboard's shared data (ctx)
 export const WIDGETS = {
@@ -43,6 +44,22 @@ export const WIDGETS = {
         onCompleteMany={actions.completeTasks}
         onUpdateMany={actions.updateTasks}
         onDeleteMany={actions.deleteTasks}
+      />
+    ),
+  },
+  calendar: {
+    title: 'Calendar',
+    category: 'Planning',
+    description: 'A month or week of your events and the tasks due each day',
+    defaultSize: { w: 4, h: 11 },
+    render: ({ events, tasks, actions }) => (
+      <CalendarWidget
+        events={events}
+        tasks={tasks}
+        onAddEvent={actions.addEvent}
+        onDeleteEvent={actions.deleteEvent}
+        onSetTaskDue={(id, dueDate) => actions.updateTask(id, { dueDate })}
+        onToggleTask={actions.toggleTask}
       />
     ),
   },

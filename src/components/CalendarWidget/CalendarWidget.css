@@ -1,0 +1,393 @@
+/* Calendar: a ruled month (or week) of days, then the picked day's plan and a line to add to it.
+   The widget measures itself, so a wide calendar can lay its week out in columns. */
+.calendar {
+  container: calendar / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ‹ November 2026 ›   Today   Month | Week */
+.calendar-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calendar-heading {
+  flex: 1 1 auto;
+  min-width: 8rem;
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  order: -1;
+}
+
+.calendar-nav {
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.calendar-nav + .calendar-nav {
+  margin-left: -0.5rem; /* the arrows share an edge: gap 0.5rem minus the 1px overlap is close enough */
+}
+
+.calendar-today,
+.calendar-views button {
+  height: 1.85rem;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.calendar-today:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.calendar-today:disabled:hover {
+  background: transparent;
+}
+
+.calendar-views {
+  display: flex;
+}
+
+.calendar-views button + button {
+  margin-left: -1px;
+}
+
+.calendar-views button:not(.active) {
+  color: var(--muted);
+}
+
+.calendar-views button.active {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* The month: seven ruled columns, six rows, each day a square-ish cell. */
+.calendar-grid {
+  border-top: 1px solid var(--border);
+}
+
+.calendar-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-weekday {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.calendar-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.15rem;
+  min-width: 0;
+  height: 2.6rem;
+  padding: 0.3rem 0 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-day:hover {
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  color: var(--text);
+}
+
+.calendar-day-number {
+  min-width: 1.5rem;
+  padding: 0 0.2rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.calendar-day.is-outside .calendar-day-number {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* Today: the number set in a solid ink block. */
+.calendar-day.is-today .calendar-day-number {
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+/* The day picked: a Sand ground and an ink rule along its foot. */
+.calendar-day.is-selected {
+  background: var(--surface);
+  box-shadow: inset 0 -2px 0 var(--text);
+}
+
+/* A task hovering over the day it would be dropped on. */
+.calendar-day.is-drop,
+.calendar-week-day[data-drop] {
+  background: var(--surface);
+  outline: 1px dashed var(--text);
+  outline-offset: -2px;
+}
+
+/* Marks: filled squares are events, hollow ones are tasks due. */
+.calendar-marks {
+  display: flex;
+  gap: 2px;
+}
+
+.calendar-mark {
+  width: 5px;
+  height: 5px;
+}
+
+.calendar-mark-event {
+  background: var(--text);
+}
+
+.calendar-mark-task {
+  border: 1px solid var(--text);
+}
+
+/* The week: seven ruled columns on a wide widget, a ruled list on a narrow one. */
+.calendar-week {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+}
+
+.calendar-week-day {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  align-items: start;
+  min-height: 2.6rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.calendar-week-head {
+  display: flex;
+  align-items: center;
+}
+
+.calendar-week-head .calendar-day {
+  flex: none;
+  width: 2.2rem;
+  border-bottom: 0;
+}
+
+.calendar-week-name {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.calendar-week-day .calendar-items {
+  padding: 0.35rem 0;
+}
+
+@container calendar (min-width: 560px) {
+  .calendar-week {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calendar-week-day {
+    display: flex;
+    flex-direction: column;
+    min-height: 9rem;
+    border-bottom: 0;
+  }
+
+  .calendar-week-day + .calendar-week-day {
+    border-left: 1px solid var(--rule-soft);
+  }
+
+  .calendar-week-head {
+    flex-direction: column;
+    width: 100%;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+
+  .calendar-week-head .calendar-day {
+    width: 100%;
+    height: 2rem;
+  }
+
+  .calendar-week-name {
+    order: -1;
+    padding-top: 0.3rem;
+  }
+
+  .calendar-week-day .calendar-items {
+    padding: 0.35rem 0.35rem;
+  }
+
+  .calendar-week-day .calendar-item {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+/* The picked day's plan. */
+.calendar-agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.calendar-agenda-heading {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.calendar-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.calendar-items {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calendar-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 0.85rem;
+}
+
+.calendar-week-day .calendar-item {
+  padding: 0.15rem 0;
+  border-bottom: 0;
+  font-size: 0.75rem;
+}
+
+.calendar-item-time {
+  flex: none;
+  width: 6.5rem; /* one width for every row, so the titles line up; a long range wraps */
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-week-day .calendar-item-time {
+  width: auto;
+  font-size: 0.625rem;
+}
+
+.calendar-item-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.calendar-item.is-done .calendar-item-title {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.calendar-item-check {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--text);
+  align-self: center;
+}
+
+.calendar-item-delete {
+  flex: none;
+  padding: 0 0.4rem;
+  border-color: transparent;
+  color: var(--icon-subtle);
+  line-height: 1.4;
+}
+
+.calendar-item-delete:hover,
+.calendar-item-delete:focus-visible {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg);
+}
+
+/* Add an event: one ruled line and its button, sharing an edge. */
+.calendar-add {
+  display: flex;
+}
+
+.calendar-add input {
+  flex: 1;
+  min-width: 0;
+  height: 2.25rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.calendar-add input::placeholder {
+  color: var(--muted);
+}
+
+.calendar-add button {
+  height: 2.25rem;
+  margin-left: -1px;
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.calendar-add button:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+.calendar-add button:disabled {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+  cursor: default;
+}
+
+.calendar-add-preview {
+  min-height: 1rem;
+  margin: -0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
