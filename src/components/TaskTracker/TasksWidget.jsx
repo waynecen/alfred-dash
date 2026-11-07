@@ -9,6 +9,7 @@ import sortTasks from '../../utils/sortTasks';
 import moveTask from '../../utils/moveTask';
 import groupTasks, { countSteps } from '../../utils/groupTasks';
 import useToday from '../../hooks/useToday';
+import useSettings from '../../hooks/useSettings';
 import './TaskTracker.css';
 
 const NO_FILTER = { status: 'all', when: 'any', tag: '', query: '' };
@@ -31,6 +32,7 @@ function TasksWidget({
 }) {
   // Due labels ("Today", "Tomorrow") and the due filters move on at midnight.
   const today = useToday();
+  const [{ weekStart }] = useSettings();
   // The filter and sort are temporary UI state, so plain useState is enough (no need to save them).
   const [filter, setFilter] = useState(NO_FILTER);
   // null means "the order tasks were added in"; otherwise { key, direction }.
@@ -146,6 +148,7 @@ function TasksWidget({
           selectedIds={selectedIds}
           completedIds={completedIds}
           today={today}
+          weekStart={weekStart}
           onComplete={bulk(onCompleteMany)}
           onSetDue={bulk((ids, dueDate) => onUpdateMany(ids, { dueDate }))}
           onDelete={bulk(onDeleteMany)}

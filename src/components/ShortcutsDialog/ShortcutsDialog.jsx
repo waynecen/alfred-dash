@@ -8,6 +8,8 @@ export const SHORTCUTS = [
   { keys: ['Ctrl', 'K'], label: 'Open or close the command palette (⌘ K on a Mac)' },
   { keys: ['/'], label: 'Open the command palette' },
   { keys: ['N'], label: 'Add a task' },
+  { keys: ['T'], label: 'Go to the Today widget' },
+  { keys: ['F'], label: 'Start, pause or carry on the focus timer' },
   { keys: ['1', '…', '9'], label: 'Show board 1 to 9' },
   { keys: ['['], label: 'Previous board' },
   { keys: [']'], label: 'Next board' },
@@ -18,6 +20,7 @@ export const SHORTCUTS = [
 const IN_PLACE = [
   { keys: ['←', '→', '↑', '↓'], label: 'Move a widget (on its handle) or resize it (on its corner)' },
   { keys: ['↑', '↓'], label: 'Reorder a task (on its handle)' },
+  { keys: ['↑', '↓'], label: 'Move a task’s due date a day (on its date)' },
   { keys: ['←', '→'], label: 'Switch board (on the board tabs)' },
   { keys: ['F2'], label: 'Rename the board (on its tab)' },
 ];

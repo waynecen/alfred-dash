@@ -1,4 +1,5 @@
-import { useId, useRef } from 'react';
+import { useId, useRef, useState } from 'react';
+import { noticePermission, requestNotices } from '../../utils/systemNotice';
 import useDismiss from '../../hooks/useDismiss';
 import useFocusTrap from '../../hooks/useFocusTrap';
 import useSettings from '../../hooks/useSettings';
@@ -21,6 +22,44 @@ const TIME_FORMATS = [
   { value: '12h', label: '12-hour (3:00 PM)' },
   { value: '24h', label: '24-hour (15:00)' },
 ];
+
+const WEEK_STARTS = [
+  { value: 1, label: 'Monday' },
+  { value: 0, label: 'Sunday' },
+];
+
+// Notifications: a switch for system notices. Turning it on asks the browser first; if the browser
+// says no, the switch stays off and says how to allow them.
+function NoticesSection({ enabled, onChange }) {
+  const [permission, setPermission] = useState(noticePermission);
+  const on = enabled && permission === 'granted';
+
+  async function toggle(event) {
+    if (!event.target.checked) {
+      onChange(false);
+      return;
+    }
+    const answer = permission === 'granted' ? 'granted' : await requestNotices();
+    setPermission(answer);
+    onChange(answer === 'granted');
+  }
+
+  const note = {
+    unsupported: 'This browser can’t show system notices. Toasts on the page still appear.',
+    denied: 'The browser is blocking notices for this page. Allow them in its site settings, then turn this on.',
+  }[permission];
+
+  return (
+    <section className="drawer-section">
+      <h3>Notifications</h3>
+      <label className="drawer-radio">
+        <input type="checkbox" checked={on} onChange={toggle} disabled={permission === 'unsupported'} />
+        Show a system notice when a focus session ends or an event is about to start
+      </label>
+      {note && <p className="drawer-note">{note}</p>}
+    </section>
+  );
+}
 
 // What the AI section says for each useAIHealth status.
 const AI_STATUS = {
@@ -125,6 +164,24 @@ function SettingsDrawer({
           ))}
         </fieldset>
 
+        <fieldset className="drawer-section">
+          <legend>Week starts on</legend>
+          {WEEK_STARTS.map((option) => (
+            <label key={option.value} className="drawer-radio">
+              <input
+                type="radio"
+                name="weekStart"
+                value={option.value}
+                checked={settings.weekStart === option.value}
+                onChange={() => updateSettings({ weekStart: option.value })}
+              />
+              {option.label}
+            </label>
+          ))}
+        </fieldset>
+
+        <NoticesSection enabled={settings.notifications} onChange={(notifications) => updateSettings({ notifications })} />
+
         <section className="drawer-section">
           <h3>Layout</h3>
           <p className="drawer-note">Put every widget back at its default size and position.</p>
@@ -157,7 +214,9 @@ function SettingsDrawer({
           <h3>Keyboard</h3>
           <p className="drawer-note">
             <kbd>Ctrl</kbd> + <kbd>K</kbd> (<kbd>⌘</kbd> + <kbd>K</kbd> on a Mac) opens the command
-            palette, <kbd>N</kbd> adds a task and <kbd>1</kbd>–<kbd>9</kbd> switch boards. Press{' '}
+            palette, <kbd>N</kbd> adds a task, <kbd>T</kbd> goes to Today, <kbd>F</kbd> starts or pauses the
+            focus timer and{' '}
+            <kbd>1</kbd>–<kbd>9</kbd> switch boards. Press{' '}
             <kbd>?</kbd> anywhere for the full list.
           </p>
         </section>

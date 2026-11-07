@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import parseQuickAdd from "../../utils/parseQuickAdd";
 import { relativeDay } from "../../utils/dates";
 import { describeRecurrence } from "../../data/tasks";
+import useSettings from "../../hooks/useSettings";
 
 const PRIORITY_LABELS = { low: "Low", medium: "Medium", high: "High" };
 
@@ -21,9 +22,10 @@ function TaskForm({ onAdd }) {
   const [text, setText] = useState("");
   const [priority, setPriority] = useState("medium");
   const previewId = useId();
+  const [{ weekStart }] = useSettings();
 
   // Quick-add reads dates, !priority, #tags and repeats out of the text as it is typed.
-  const parsed = parseQuickAdd(text);
+  const parsed = parseQuickAdd(text, { weekStart });
   const understood = text.trim() ? describeParsed(parsed) : [];
 
   function handleSubmit(event) {

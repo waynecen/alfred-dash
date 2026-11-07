@@ -1,0 +1,449 @@
+/* Habits: a ruled table, one habit to a row, a column for each of the last seven days and one for
+   the streak. Done is a solid ink square, a missed day a hollow one, a rest day a short dash: told
+   apart by shape and fill, not colour (DESIGN.md). Today's column sits on a Sand ground. */
+.habits {
+  container: habits / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.habits-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.habits-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.habits-table th {
+  font-weight: 700;
+}
+
+.habits-table thead th {
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.habits-col-name {
+  text-align: left;
+}
+
+.habits-col-day {
+  width: 1.6rem;
+  text-align: center;
+}
+
+.habits-col-streak {
+  width: 3rem;
+  text-align: right;
+}
+
+.habits-table thead th.is-today {
+  color: var(--text);
+}
+
+.habits-table .is-today {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.habit-row > * {
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.habits-table .habit-name {
+  padding: 0.35rem 0.25rem 0.35rem 0;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-align: left;
+}
+
+.habit-name-button {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.habit-name-button:hover {
+  background: transparent;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.habit-schedule {
+  display: block;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.habit-day {
+  padding: 0;
+  text-align: center;
+}
+
+/* The whole cell is the button, so the boxes are easy to hit; the mark is drawn inside it. */
+.habit-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 2.1rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.habit-check:hover {
+  background: var(--surface);
+}
+
+.habit-check:focus-visible {
+  outline-offset: -2px;
+}
+
+.habit-check::before {
+  content: '';
+  box-sizing: border-box;
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.habit-check.is-done::before {
+  background: var(--text);
+}
+
+.habit-check.is-missed::before {
+  border: 1px solid var(--muted);
+}
+
+/* Today, still to do: a heavier empty box, the one waiting to be ticked. */
+.habit-check.is-due::before {
+  border: 2px solid var(--text);
+}
+
+.habit-check.is-rest::before {
+  width: 0.45rem;
+  height: 1px;
+  background: var(--muted);
+}
+
+.habit-streak {
+  padding: 0.35rem 0 0.35rem 0.25rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.habit-streak strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.habit-best {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The editor takes the row: name, days, then Save and Cancel with Archive and Delete set apart. */
+.habit-row.is-editing td {
+  padding: 0.5rem 0;
+  background: var(--surface);
+}
+
+.habit-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+.habit-editor input {
+  min-width: 0;
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.habit-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.habit-editor-actions button,
+.habits-archived-list button {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.habit-editor-save {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.habit-editor-spacer {
+  flex: 1;
+}
+
+.habit-editor-quiet {
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.habit-editor-quiet:hover {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.habit-editor-delete:hover,
+.habit-editor-delete:focus-visible {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg);
+}
+
+/* Add a habit: one ruled line and its button, sharing an edge, as in the Calendar and Today. */
+.habits-add {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.habits-add-line {
+  display: flex;
+}
+
+.habits-add input {
+  flex: 1;
+  min-width: 0;
+  height: 2.25rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.habits-add input::placeholder {
+  color: var(--muted);
+}
+
+.habits-add-line button {
+  height: 2.25rem;
+  margin-left: -1px;
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.habits-add-line button:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+.habits-add-line button:disabled {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+  cursor: default;
+}
+
+.habits-archived-toggle {
+  align-self: flex-start;
+  padding: 0.2rem 0;
+  border: 0;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.habits-archived-toggle:hover {
+  background: transparent;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.habits-archived-list {
+  margin: -0.4rem 0 0;
+  padding: 0;
+  border-top: 1px solid var(--rule-soft);
+  list-style: none;
+}
+
+.habits-archived-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 0.85rem;
+}
+
+.habits-archived-list li span {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted);
+}
+
+/* The last twelve weeks, on a wide widget only: a grid of small squares, one column a week, shaded
+   in ink by the share of the day's habits done. One hue, light to dark (the dataviz rule for
+   magnitude); a day with nothing done is an empty outline, a day with nothing due a faint square. */
+.habit-heatmap {
+  display: none;
+  margin: 0;
+}
+
+@container habits (min-width: 540px) {
+  .habit-heatmap {
+    display: block;
+  }
+}
+
+.habit-heatmap-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.habit-heatmap-title {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.8;
+  text-transform: uppercase;
+}
+
+.habit-heatmap-readout {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A label column, then twelve weeks; rows are the month line and seven weekdays. 2px of ground
+   between squares keeps neighbours apart. */
+.habit-heatmap-grid {
+  display: grid;
+  grid-template-columns: 1rem repeat(12, 1rem);
+  grid-auto-rows: 1rem;
+  gap: 2px;
+  width: max-content;
+}
+
+.habit-heatmap-grid:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+}
+
+.habit-heatmap-month {
+  overflow: visible;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.habit-heatmap-weekday {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1rem;
+}
+
+.habit-heatmap-cell {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  box-sizing: border-box;
+}
+
+.habit-heatmap-cell[data-level='rest'] {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.habit-heatmap-cell[data-level='0'] {
+  border: 1px solid color-mix(in srgb, var(--text) 35%, transparent);
+}
+
+.habit-heatmap-cell[data-level='1'] {
+  background: color-mix(in srgb, var(--text) 25%, transparent);
+}
+
+.habit-heatmap-cell[data-level='2'] {
+  background: color-mix(in srgb, var(--text) 50%, transparent);
+}
+
+.habit-heatmap-cell[data-level='3'] {
+  background: color-mix(in srgb, var(--text) 75%, transparent);
+}
+
+.habit-heatmap-cell[data-level='4'] {
+  background: var(--text);
+}
+
+.habit-heatmap-cell[data-active] {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+.habit-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.habit-heatmap-legend span:first-child {
+  margin-right: 0.3rem;
+}
+
+.habit-heatmap-legend span:last-child {
+  margin-left: 0.3rem;
+}
+
+.habit-heatmap .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

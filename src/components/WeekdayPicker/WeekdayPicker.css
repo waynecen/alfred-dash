@@ -1,0 +1,45 @@
+/* Seven square toggles sharing edges, then the schedule in words: "M T W T F S S  Weekdays". */
+.weekday-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+}
+
+.weekday-picker-days {
+  display: flex;
+}
+
+.weekday-picker-days button {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.weekday-picker-days button + button {
+  margin-left: -1px;
+}
+
+.weekday-picker-days button[aria-pressed='false'] {
+  color: var(--muted);
+}
+
+.weekday-picker-days button[aria-pressed='true'] {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.weekday-picker-days button[aria-pressed='false']:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.weekday-picker-summary {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

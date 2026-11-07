@@ -2,9 +2,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
 import useTasks from './hooks/useTasks';
+import useEvents from './hooks/useEvents';
+import useHabits from './hooks/useHabits';
+import useGoals from './hooks/useGoals';
+import useReviews from './hooks/useReviews';
 import useBoards from './hooks/useBoards';
 import useShortcuts from './hooks/useShortcuts';
 import useToday from './hooks/useToday';
+import useSettings from './hooks/useSettings';
+import useFocusTimer from './hooks/useFocusTimer';
+import useReminders from './hooks/useReminders';
 import { useAIHealth } from './hooks/useAI';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import BoardTabs, { tabId } from './components/BoardTabs/BoardTabs';
@@ -13,13 +20,17 @@ import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
 import CommandPalette from './components/CommandPalette/CommandPalette';
 import SettingsDrawer from './components/Settings/SettingsDrawer';
 import ShortcutsDialog from './components/ShortcutsDialog/ShortcutsDialog';
+import WeeklyReview from './components/WeeklyReview/WeeklyReview';
 import ToastRegion from './components/Toast/ToastRegion';
 import WidgetState from './components/WidgetState/WidgetState';
 import { WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
 import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
 import insertAt from './utils/insertAt';
-import { parseISODate } from './utils/dates';
+import { parseISODate, startOfWeek, toISODate } from './utils/dates';
+import { isScheduled } from './data/habits';
+import { isReviewed, reviewWeek } from './data/reviews';
+import { formatClock } from './data/focus';
 
 // What the Add widget list needs to know about each widget.
 const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
@@ -50,6 +61,14 @@ function App() {
   const { toasts, notify, dismiss } = useToasts();
   // The tasks live here, so every widget shares one source of truth.
   const { tasks, actions: taskActions } = useTasks(notify);
+  // Calendar events, shared the same way (the Calendar and Today widgets both show them).
+  const { events, actions: eventActions } = useEvents(notify);
+  // Habits and the days each was done (the Habits and Today widgets both show them).
+  const { habits, habitLog, actions: habitActions } = useHabits(notify);
+  // Goals; a tasks goal reads its progress from the tasks.
+  const { goals, actions: goalActions } = useGoals(notify);
+  // Weekly reviews saved so far.
+  const { reviews, saveReview } = useReviews();
   // The pages of widgets. Each board has its own widgets, in order, and where each one sits:
   // { [id]: { x, y, w, h } } in grid cells. Widgets without a spot go in the first free one.
   const boards = useBoards(notify);
@@ -67,7 +86,27 @@ function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const today = useToday();
+  const [settings] = useSettings();
+  // The focus timer keeps time here, so it runs (and announces the end of a phase) on any board.
+  const { focus, focusActions } = useFocusTimer(notify, settings.notifications);
+  // Ten minutes before each timed event, and once a day for what is due.
+  // On the first day of a week, the week just ended is ready to review; nobody with nothing on
+  // the dashboard yet is nudged.
+  const reviewDue =
+    startOfWeek(today, settings.weekStart) === today &&
+    !isReviewed(reviews, reviewWeek(today, settings.weekStart).from) &&
+    tasks.length + habits.length + goals.length > 0;
+  useReminders({
+    events,
+    tasks,
+    notify,
+    noticesOn: settings.notifications,
+    onShowToday: () => goToToday(),
+    reviewDue,
+    onStartReview: () => setReviewOpen(true),
+  });
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
   // Checked each time Settings opens, so the AI status there is current.
@@ -109,6 +148,18 @@ function App() {
     input.scrollIntoView?.({ block: 'nearest' });
   }
 
+  // Shows the Today widget: on this board if it is here, otherwise on the first board that has it.
+  // With none anywhere, offers to add one here.
+  function goToToday() {
+    const home = widgetIds.includes('today') ? board : boards.boards.find((b) => b.widgetIds.includes('today'));
+    if (home) {
+      if (home.id !== board.id) boards.switchTo(home.id);
+      focusWidget('today');
+      return;
+    }
+    notify({ message: 'No board has the Today widget yet.', actionLabel: 'Add it here', onAction: () => addWidget('today') });
+  }
+
   // The keys are listed for people in components/ShortcutsDialog; keep the two in step.
   useShortcuts([
     {
@@ -121,6 +172,8 @@ function App() {
     },
     { key: '/', run: () => setPaletteOpen(true) },
     { key: 'n', run: startNewTask },
+    { key: 't', run: goToToday },
+    { key: 'f', run: focusActions.toggle },
     { key: '?', run: () => setShortcutsOpen(true) },
     { key: '[', run: () => stepBoard(-1) },
     { key: ']', run: () => stepBoard(1) },
@@ -131,10 +184,12 @@ function App() {
     setFocusRequest((request) => ({ id, n: (request?.n ?? 0) + 1 }));
   }
 
-  // The browser tab names the board, so several open tabs can be told apart.
+  // The browser tab names the board, so several open tabs can be told apart. While the focus
+  // timer runs, the time left comes first, so it shows on the tab from any other tab.
+  const timerTitle = focus.running ? `${formatClock(focus.left)} ${focus.label} · ` : '';
   useEffect(() => {
-    document.title = boards.boards.length > 1 ? `${board.name} · ${title}` : title;
-  }, [board.name, boards.boards.length, title]);
+    document.title = timerTitle + (boards.boards.length > 1 ? `${board.name} · ${title}` : title);
+  }, [timerTitle, board.name, boards.boards.length, title]);
 
   function addWidget(id) {
     setWidgetIds((current) => (current.includes(id) ? current : [...current, id]));
@@ -202,9 +257,14 @@ function App() {
   // Everything a widget might need, handed to each widget's render function.
   const context = {
     tasks,
+    events,
+    habits,
+    habitLog,
+    goals,
     notes,
+    focus,
     counts: countTasks(tasks),
-    actions: { ...taskActions, setNotes, notify },
+    actions: { ...taskActions, ...eventActions, ...habitActions, ...goalActions, focusTimer: focusActions, setNotes, notify },
   };
 
   const getCommands = (query) =>
@@ -215,7 +275,19 @@ function App() {
       theme: shownTheme,
       boards: boards.boards,
       activeBoardId: board.id,
+      weekStart: settings.weekStart,
+      focus,
+      habitsToday: habits.filter(
+        (habit) =>
+          !habit.archived &&
+          isScheduled(habit, today) &&
+          toISODate(habit.createdAt) <= today &&
+          !(habitLog[habit.id] ?? []).includes(today)
+      ),
       actions: {
+        focusTimer: focusActions,
+        toggleHabitDay: habitActions.toggleHabitDay,
+        addHabit: habitActions.addHabit,
         addWidget,
         removeWidget,
         focusWidget,
@@ -224,6 +296,7 @@ function App() {
         resetLayout,
         openSettings: () => setSettingsOpen(true),
         openShortcuts: () => setShortcutsOpen(true),
+        openReview: () => setReviewOpen(true),
         switchBoard: boards.switchTo,
         addBoard: boards.addBoard,
         renameBoard: (name) => boards.renameBoard(board.id, name),
@@ -373,6 +446,24 @@ function App() {
           </WidgetState>
         )}
       </div>
+      {reviewOpen && (
+        <WeeklyReview
+          tasks={tasks}
+          habits={habits}
+          habitLog={habitLog}
+          sessions={focus.sessions}
+          goals={goals}
+          reviews={reviews}
+          actions={{
+            rescheduleTask: taskActions.rescheduleTask,
+            updateTasks: taskActions.updateTasks,
+            toggleTask: taskActions.toggleTask,
+            notify,
+          }}
+          onSave={saveReview}
+          onClose={() => setReviewOpen(false)}
+        />
+      )}
       {paletteOpen && <CommandPalette getCommands={getCommands} onClose={closePalette} />}
       {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}
       {settingsOpen && (

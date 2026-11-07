@@ -456,13 +456,7 @@
   white-space: nowrap;
 }
 
-/* Due date: a label that opens the native picker. The picker's own input sits under the label,
-   invisible, so the picker opens where the label is. */
-.due-date {
-  position: relative;
-  display: inline-block;
-}
-
+/* Due date: a label that opens the date picker (DatePicker.css). */
 .due-date-button {
   padding: 0.2rem 0.3rem;
   border-color: transparent;
@@ -498,7 +492,8 @@
 }
 
 .task-row:hover .due-none,
-.due-none:focus-visible {
+.due-none:focus-visible,
+.due-none[aria-expanded='true'] {
   opacity: 1;
 }
 
@@ -508,16 +503,9 @@
   }
 }
 
-.due-date-input {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  pointer-events: none;
+/* The date picker is open from this label: it holds the hover look while the panel is up. */
+.due-date-button[aria-expanded='true'] {
+  border-color: var(--border);
 }
 
 /* Details: the chevron beside Delete opens a row under the task. */
@@ -608,6 +596,33 @@
   color: var(--text);
   font: inherit;
   font-size: 0.85rem;
+}
+
+/* Due: a button that opens the date picker, drawn as one of the fields beside it. */
+.task-details-date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  background: var(--bg);
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.task-details-date:hover,
+.task-details-date[aria-expanded='true'] {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.task-details-date svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.task-details-date-none {
+  color: var(--muted);
 }
 
 .task-details textarea {

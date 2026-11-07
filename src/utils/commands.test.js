@@ -130,3 +130,41 @@ describe('matchCommands', () => {
     expect(ids('rsl')).toEqual(['c', 'd']);
   });
 });
+
+describe('buildCommands focus timer', () => {
+  const base = { widgets: {}, shownIds: [], theme: 'light' };
+  const timer = { toggle: () => {}, stop: () => {} };
+  const labels = (focus) =>
+    buildCommands({ ...base, focus, actions: { focusTimer: timer } })
+      .filter((command) => command.group === 'Focus')
+      .map((command) => command.label);
+
+  it('starts, pauses or resumes, and stops once something is running', () => {
+    expect(labels({ phase: 'idle', running: false, paused: false })).toEqual(['Start focus session']);
+    expect(labels({ phase: 'work', running: true, paused: false })).toEqual(['Pause focus', 'Stop the focus timer']);
+    expect(labels({ phase: 'break', running: false, paused: true })).toEqual(['Resume break', 'Stop the focus timer']);
+  });
+});
+
+describe('buildCommands review', () => {
+  it('starts the weekly review', () => {
+    const actions = { openReview: vi.fn() };
+    const commands = buildCommands({ widgets: {}, shownIds: [], actions });
+    commands.find((command) => command.label === 'Start weekly review').run();
+    expect(actions.openReview).toHaveBeenCalled();
+  });
+});
+
+describe('buildCommands habits', () => {
+  it('ticks off a habit due today, and adds one from "habit …"', () => {
+    const actions = { toggleHabitDay: vi.fn(), addHabit: vi.fn() };
+    const habitsToday = [{ id: 4, name: 'Stretch' }];
+    const commands = buildCommands({ widgets: {}, shownIds: [], actions, habitsToday, query: 'habit Read 20 minutes' });
+    commands.find((command) => command.label === 'Tick off “Stretch” for today').run();
+    expect(actions.toggleHabitDay).toHaveBeenCalledWith(4);
+    const add = commands.find((command) => command.id === 'add-habit');
+    expect(add.label).toBe('Add habit “Read 20 minutes” · every day');
+    add.run();
+    expect(actions.addHabit).toHaveBeenCalledWith({ name: 'Read 20 minutes' });
+  });
+});

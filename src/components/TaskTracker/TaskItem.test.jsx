@@ -107,12 +107,14 @@ describe('TaskItem due date', () => {
     expect(screen.getByRole('button', { name: 'Due date: Write tests, none' })).toHaveTextContent('Add date');
   });
 
-  it('saves a picked date and clears it', () => {
+  it('saves a day picked from the picker and clears it', async () => {
     const { onUpdate } = setup({ dueDate: '2026-11-08' });
-    const input = document.querySelector('input[type="date"]');
-    fireEvent.change(input, { target: { value: '2026-11-13' } });
+    const button = screen.getByRole('button', { name: /^Due date: Write tests/ });
+    await userEvent.click(button);
+    await userEvent.click(screen.getByRole('gridcell', { name: /\b13\b/ }));
     expect(onUpdate).toHaveBeenCalledWith(1, { dueDate: '2026-11-13' });
-    fireEvent.change(input, { target: { value: '' } });
+    await userEvent.click(button);
+    await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
     expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: null });
   });
 });
@@ -184,5 +186,27 @@ describe('TaskItem tags and repeat', () => {
     expect(screen.getByText('Every 2 weeks')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Show tasks tagged home' }));
     expect(onFilterTag).toHaveBeenCalledWith('home');
+  });
+});
+
+describe('TaskItem due date keys', () => {
+  it('moves the date a day with the arrow keys, starts from today, and clears with Delete', async () => {
+    const { onUpdate } = setup({ dueDate: '2026-11-08' });
+    screen.getByRole('button', { name: /^Due date: Write tests/ }).focus();
+    await userEvent.keyboard('{ArrowUp}');
+    expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: '2026-11-09' });
+    await userEvent.keyboard('{ArrowDown}');
+    expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: '2026-11-07' });
+    await userEvent.keyboard('{Delete}');
+    expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: null });
+  });
+
+  it('carries the task when dragged, so the Calendar can take it', () => {
+    setup();
+    const setData = vi.fn();
+    fireEvent.dragStart(screen.getByRole('button', { name: 'Reorder task: Write tests' }), {
+      dataTransfer: { setData, setDragImage: () => {}, effectAllowed: '' },
+    });
+    expect(setData).toHaveBeenCalledWith('application/x-dashboard-task', '1');
   });
 });

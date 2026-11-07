@@ -30,8 +30,33 @@ describe('SettingsDrawer', () => {
     expect(screen.getByRole('radio', { name: 'Celsius (°C)' })).toBeChecked();
     await userEvent.click(screen.getByRole('radio', { name: 'Fahrenheit (°F)' }));
     await userEvent.click(screen.getByRole('radio', { name: '24-hour (15:00)' }));
-    expect(JSON.parse(localStorage.getItem('settings'))).toEqual({ temperatureUnit: 'fahrenheit', timeFormat: '24h' });
+    expect(JSON.parse(localStorage.getItem('settings'))).toMatchObject({ temperatureUnit: 'fahrenheit', timeFormat: '24h' });
     expect(screen.getByRole('radio', { name: 'Fahrenheit (°F)' })).toBeChecked();
+  });
+
+  it('saves which day the week starts on', async () => {
+    setup();
+    expect(screen.getByRole('radio', { name: 'Monday' })).toBeChecked();
+    await userEvent.click(screen.getByRole('radio', { name: 'Sunday' }));
+    expect(JSON.parse(localStorage.getItem('settings')).weekStart).toBe(0);
+  });
+
+  it('turns system notices on once the browser allows them', async () => {
+    const requestPermission = vi.fn(async () => 'granted');
+    vi.stubGlobal('Notification', Object.assign(vi.fn(), { permission: 'default', requestPermission }));
+    setup();
+    const toggle = screen.getByRole('checkbox', { name: /system notice/ });
+    expect(toggle).not.toBeChecked();
+    await userEvent.click(toggle);
+    expect(requestPermission).toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem('settings')).notifications).toBe(true);
+    vi.unstubAllGlobals();
+  });
+
+  it('says when the browser cannot show system notices', () => {
+    setup();
+    expect(screen.getByRole('checkbox', { name: /system notice/ })).toBeDisabled();
+    expect(screen.getByText(/can’t show system notices/)).toBeInTheDocument();
   });
 
   it('resets the layout', async () => {

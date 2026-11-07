@@ -11,7 +11,23 @@ import { describeRecurrence } from '../data/tasks';
 //              switchBoard(id), addBoard(name?), renameBoard(name), deleteBoard(), moveWidget(id, boardId) }
 //   theme: the theme in use, 'light' or 'dark'
 //   boards: [{ id, name }]     activeBoardId: the board on screen (rename, delete and move act on it)
-export function buildCommands({ widgets, shownIds, query = '', actions, theme, boards = [], activeBoardId }) {
+//   weekStart: 1 for Monday, 0 for Sunday, for dates such as "next week" in a typed task
+//   focus: the focus timer ({ phase, running, paused }), with actions.focusTimer { toggle, stop }
+//   actions.openReview(): opens the weekly review
+//   habitsToday: [{ id, name }], the habits due today and not yet done, with
+//     actions.toggleHabitDay(id) to tick one off and actions.addHabit({ name }) for "habit …"
+export function buildCommands({
+  widgets,
+  shownIds,
+  query = '',
+  actions,
+  theme,
+  boards = [],
+  activeBoardId,
+  weekStart = 1,
+  focus,
+  habitsToday = [],
+}) {
   const commands = [];
   const otherBoards = boards.filter((board) => board.id !== activeBoardId);
   const activeBoard = boards.find((board) => board.id === activeBoardId);
@@ -103,6 +119,41 @@ export function buildCommands({ widgets, shownIds, query = '', actions, theme, b
       run: actions.openSettings,
     }
   );
+  // The focus timer, whether or not its widget is on this board.
+  if (focus && actions.focusTimer) {
+    const timer = actions.focusTimer;
+    let label = 'Start focus session';
+    if (focus.running) label = `Pause ${focus.phase === 'work' ? 'focus' : 'break'}`;
+    else if (focus.paused) label = `Resume ${focus.phase === 'work' ? 'focus' : 'break'}`;
+    commands.push({ id: 'timer-toggle', group: 'Focus', label, keywords: 'pomodoro timer focus start pause', run: timer.toggle });
+    if (focus.phase !== 'idle') {
+      commands.push({ id: 'timer-stop', group: 'Focus', label: 'Stop the focus timer', keywords: 'pomodoro end cancel', run: timer.stop });
+    }
+  }
+
+  if (actions.openReview) {
+    commands.push({
+      id: 'weekly-review',
+      group: 'Review',
+      label: 'Start weekly review',
+      keywords: 'week look back reflect retro plan habits goals',
+      run: actions.openReview,
+    });
+  }
+
+  // Habits still to do today, ticked off without finding the widget.
+  if (actions.toggleHabitDay) {
+    commands.push(
+      ...habitsToday.map((habit) => ({
+        id: `habit-${habit.id}`,
+        group: 'Habits',
+        label: `Tick off “${habit.name}” for today`,
+        keywords: 'habit done check log streak',
+        run: () => actions.toggleHabitDay(habit.id),
+      }))
+    );
+  }
+
   if (actions.openShortcuts) {
     commands.push({
       id: 'open-shortcuts',
@@ -137,9 +188,21 @@ export function buildCommands({ widgets, shownIds, query = '', actions, theme, b
     });
   }
 
+  // "habit Read 20 minutes" starts a daily habit.
+  const newHabit = actions.addHabit && text.match(/^(?:new |add )?habit:?\s+(.+)/i);
+  if (newHabit) {
+    commands.push({
+      id: 'add-habit',
+      group: 'Habits',
+      label: `Add habit “${newHabit[1]}” · every day`,
+      run: () => actions.addHabit({ name: newHabit[1] }),
+      always: true,
+    });
+  }
+
   if (text) {
     // Quick-add works here too: "Call bank fri !high" is a task due Friday.
-    const task = parseQuickAdd(text);
+    const task = parseQuickAdd(text, { weekStart });
     const extras = [
       task.dueDate && relativeDay(task.dueDate),
       task.priority && `${task.priority[0].toUpperCase()}${task.priority.slice(1)}`,

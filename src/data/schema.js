@@ -3,14 +3,23 @@
 // Defaults stay with the code that reads each key (useLocalStorage's second argument).
 export const STORAGE_KEYS = [
   'tasks', // [{ id, text, priority, completed, createdAt, ... }], see data/tasks.js
+  'events', // [{ id, title, date, start, end, notes }], see data/events.js
+  'focus', // the focus timer: { phase, endsAt, pausedLeft, taskId, round, lengths }, see data/focus.js
+  'focusSessions', // [{ taskId, startedAt, minutes }]: each focus session finished
+  'habits', // [{ id, name, schedule, createdAt, archived }], see data/habits.js
+  'habitLog', // { [habitId]: ['YYYY-MM-DD', …] }: the days each habit was done
+  'goals', // [{ id, title, kind, target, progress, unit, tag, dueDate, createdAt }], see data/goals.js
+  'reviews', // [{ week, notes, reflection, stats, savedAt }]: weekly reviews, see data/reviews.js
+  'reminders', // { sent: { [key]: true } }: reminders already given today, so none repeats
   'notes', // the Notes widget's text
   'boards', // [{ id, name, widgetIds, layout }], see data/boards.js
   'activeBoard', // the id of the board on screen
   'dashboardTitle',
   'theme', // 'light' | 'dark' | 'system'
-  'settings', // { temperatureUnit, timeFormat }, see data/settings.js
+  'settings', // { temperatureUnit, timeFormat, weekStart }, see data/settings.js
   'weatherPlaces', // [{ id, name, latitude, longitude, ... }]
   'weatherActive', // the id of the place the Weather widget shows
+  'worldClocks', // time zone names the Clock widget shows, e.g. ['Asia/Tokyo']
   'dailyBrief', // { text, at }: the last brief, so a reload doesn't pay for a new one
 ];
 

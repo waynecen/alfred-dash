@@ -86,3 +86,7 @@ export function describeNext(iso, today) {
   const full = parseISODate(iso).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   return near === 'Today' || near === 'Tomorrow' ? near : full;
 }
+
+// The type a task carries while it is dragged out of the Tasks widget (its id as the data), so
+// other widgets, such as the Calendar, can tell a task from any other drag.
+export const TASK_DRAG_TYPE = 'application/x-dashboard-task';

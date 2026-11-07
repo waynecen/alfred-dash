@@ -1,5 +1,7 @@
 import CompletionChart from './CompletionChart';
+import ProgressBar from '../ProgressBar/ProgressBar';
 import useToday from '../../hooks/useToday';
+import useSettings from '../../hooks/useSettings';
 import { countDue } from '../../utils/countTasks';
 import { completedThisWeek, completionsByDay } from '../../utils/completions';
 import './SummaryWidget.css';
@@ -48,16 +50,7 @@ function SummaryWidget({
         ))}
       </ul>
       <div className="summary-progress-row">
-        <div
-          className="summary-progress"
-          role="progressbar"
-          aria-label="Tasks completed"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={percent}
-        >
-          <div className="summary-progress-fill" style={{ width: `${percent}%` }} />
-        </div>
+        <ProgressBar value={percent} label="Tasks completed" className="summary-progress" />
         <p className="summary-caption">
           {completed} of {total} done ({percent}%)
         </p>
@@ -70,11 +63,12 @@ function SummaryWidget({
 // Three smaller figures under the main two: what needs doing soon, and what got done this week.
 // Overdue is set in bold when there is any, by weight rather than colour (DESIGN.md).
 function DueFigures({ tasks, today }) {
+  const [{ weekStart }] = useSettings();
   const due = countDue(tasks, today);
   const figures = [
     { label: 'Overdue', value: due.overdue, urgent: due.overdue > 0 },
     { label: 'Due today', value: due.today },
-    { label: 'Done this week', value: completedThisWeek(tasks, today) },
+    { label: 'Done this week', value: completedThisWeek(tasks, today, weekStart) },
   ];
   return (
     <dl className="summary-figures">
