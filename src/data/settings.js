@@ -3,10 +3,13 @@
 //   temperatureUnit: 'celsius' | 'fahrenheit'
 //   timeFormat: 'auto' (the browser's language decides) | '12h' | '24h'
 //   weekStart: 1 (Monday) | 0 (Sunday): where weeks begin in the calendar, "next week" and "this week"
+//   notifications: true to also show system notices (focus sessions ending, reminders), once the
+//                  browser allows them
 export const DEFAULT_SETTINGS = {
   temperatureUnit: 'celsius',
   timeFormat: 'auto',
   weekStart: 1,
+  notifications: false,
 };
 
 // The hour options for toLocaleTimeString / Intl.DateTimeFormat that follow timeFormat.
