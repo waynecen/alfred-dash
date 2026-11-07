@@ -10,12 +10,12 @@ import {
   formatBytes,
 } from '../../data/backup';
 
-// What a backup holds, in a few words: "12 tasks, notes and 4 widgets".
+// What a backup holds, in a few words: "12 tasks, notes, 2 boards".
 function describe(data) {
   const parts = [];
   if (Array.isArray(data.tasks)) parts.push(`${data.tasks.length} task${data.tasks.length === 1 ? '' : 's'}`);
   if (data.notes) parts.push('notes');
-  if (Array.isArray(data.widgets)) parts.push(`${data.widgets.length} widget${data.widgets.length === 1 ? '' : 's'}`);
+  if (Array.isArray(data.boards)) parts.push(`${data.boards.length} board${data.boards.length === 1 ? '' : 's'}`);
   return parts.length > 0 ? parts.join(', ') : 'no tasks or notes';
 }
 

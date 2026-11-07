@@ -4,8 +4,8 @@
 export const STORAGE_KEYS = [
   'tasks', // [{ id, text, priority, completed, createdAt, ... }], see data/tasks.js
   'notes', // the Notes widget's text
-  'widgets', // the ids of the widgets on the dashboard, in order
-  'layout', // { [widgetId]: { x, y, w, h } }
+  'boards', // [{ id, name, widgetIds, layout }], see data/boards.js
+  'activeBoard', // the id of the board on screen
   'dashboardTitle',
   'theme', // 'light' | 'dark' | 'system'
   'weatherPlaces', // [{ id, name, latitude, longitude, ... }]
@@ -13,11 +13,19 @@ export const STORAGE_KEYS = [
   'dailyBrief', // { text, at }: the last brief, so a reload doesn't pay for a new one
 ];
 
+// Keys older versions saved that a migration has since replaced. They are only read, so that
+// old browsers and old backups can be upgraded; nothing writes them any more.
+export const LEGACY_KEYS = [
+  'widgets', // until version 3: the widgets on the one dashboard (now boards[].widgetIds)
+  'layout', // until version 3: their positions (now boards[].layout)
+];
+
 // Which shape the saved data is in. Bump it, and add a step to MIGRATIONS in data/migrate.js,
 // whenever a saved shape changes in a way old code or old data can't read.
 //   1: everything before versioning
 //   2: tasks gain dueDate, completedAt, tags, parentId, recurrence and notes
-export const SCHEMA_VERSION = 2;
+//   3: widgets and layout move into boards
+export const SCHEMA_VERSION = 3;
 
 // Where the version of the saved data is kept. It is not a STORAGE_KEY: backups carry it
 // separately.

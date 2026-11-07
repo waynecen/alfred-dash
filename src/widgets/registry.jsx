@@ -78,8 +78,8 @@ export const WIDGETS = {
   },
 };
 
-// Shown the first time the dashboard opens.
-export const DEFAULT_WIDGETS = ['summary', 'tasks'];
+// Shown the first time the dashboard opens (defined with the boards, which start with them).
+export { DEFAULT_WIDGETS } from '../data/boards';
 
 // Ready-made sets offered when the dashboard is empty, so nobody starts from a blank page.
 export const STARTER_LAYOUTS = [

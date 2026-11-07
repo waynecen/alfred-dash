@@ -2,15 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
 import useTasks from './hooks/useTasks';
+import useBoards from './hooks/useBoards';
 import { useAIHealth } from './hooks/useAI';
 import EditableTitle from './components/EditableTitle/EditableTitle';
+import BoardTabs, { tabId } from './components/BoardTabs/BoardTabs';
 import Dashboard from './components/Dashboard/Dashboard';
 import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
 import CommandPalette from './components/CommandPalette/CommandPalette';
 import SettingsDrawer from './components/Settings/SettingsDrawer';
 import ToastRegion from './components/Toast/ToastRegion';
 import WidgetState from './components/WidgetState/WidgetState';
-import { WIDGETS, DEFAULT_WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
+import { WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
 import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
 import insertAt from './utils/insertAt';
@@ -24,6 +26,9 @@ const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
 }));
 
 const DARK_QUERY = '(prefers-color-scheme: dark)';
+
+// The element the board tabs control.
+const BOARD_PANEL_ID = 'board-panel';
 
 // Follows the operating system's light or dark setting as it changes.
 function useSystemDark() {
@@ -41,11 +46,12 @@ function App() {
   const { toasts, notify, dismiss } = useToasts();
   // The tasks live here, so every widget shares one source of truth.
   const { tasks, actions: taskActions } = useTasks(notify);
-  // Which widgets are on the dashboard, in order. Saved so the layout survives a reload.
-  const [widgetIds, setWidgetIds] = useLocalStorage('widgets', DEFAULT_WIDGETS);
-  // Where each widget sits on the grid and how big it is: { [id]: { x, y, w, h } }.
-  // Widgets without an entry are placed in the first free spot at their default size.
-  const [layout, setLayout] = useLocalStorage('layout', {});
+  // The pages of widgets. Each board has its own widgets, in order, and where each one sits:
+  // { [id]: { x, y, w, h } } in grid cells. Widgets without a spot go in the first free one.
+  const boards = useBoards(notify);
+  const board = boards.active;
+  const { widgetIds, layout } = board;
+  const { setWidgetIds, setLayout } = boards; // the active board's, unless given another id
   // The notepad text lives here too, so it survives removing and re-adding the widget.
   const [notes, setNotes] = useLocalStorage('notes', '');
   const [title, setTitle] = useLocalStorage('dashboardTitle', 'My Dashboard');
@@ -94,38 +100,45 @@ function App() {
     setFocusRequest((request) => ({ id, n: (request?.n ?? 0) + 1 }));
   }
 
+  // The browser tab names the board, so several open tabs can be told apart.
+  useEffect(() => {
+    document.title = boards.boards.length > 1 ? `${board.name} · ${title}` : title;
+  }, [board.name, boards.boards.length, title]);
+
   function addWidget(id) {
-    if (!widgetIds.includes(id)) setWidgetIds([...widgetIds, id]);
+    setWidgetIds((current) => (current.includes(id) ? current : [...current, id]));
     // Take the user to it, so they can see where it landed.
     focusWidget(id);
   }
 
   function removeWidget(id) {
+    const boardId = board.id; // Undo goes back to this board, even if another is shown by then
     const index = widgetIds.indexOf(id);
     const spot = layout[id];
-    setWidgetIds(widgetIds.filter((widgetId) => widgetId !== id));
+    setWidgetIds((current) => current.filter((widgetId) => widgetId !== id), boardId);
     // Forget its spot, so adding it back later places it in a free one.
-    const { [id]: _removed, ...rest } = layout;
-    setLayout(rest);
+    setLayout(({ [id]: _removed, ...rest }) => rest, boardId);
     notify({
       message: `${WIDGETS[id]?.title ?? 'Widget'} removed`,
       actionLabel: 'Undo',
       onAction: () => {
         // Undo puts it back where it was, at the same size.
-        setWidgetIds((current) => (current.includes(id) ? current : insertAt(current, index, id)));
-        if (spot) setLayout((current) => ({ ...current, [id]: spot }));
+        setWidgetIds((current) => (current.includes(id) ? current : insertAt(current, index, id)), boardId);
+        if (spot) setLayout((current) => ({ ...current, [id]: spot }), boardId);
+        boards.switchTo(boardId);
         focusWidget(id);
       },
     });
   }
 
   function resetLayout() {
+    const boardId = board.id;
     const previous = layout;
-    setLayout({});
+    setLayout({}, boardId);
     notify({
       message: 'Layout reset',
       actionLabel: 'Undo',
-      onAction: () => setLayout(previous),
+      onAction: () => setLayout(previous, boardId),
     });
   }
 
@@ -254,36 +267,53 @@ function App() {
           </button>
         </div>
       </header>
-      <Dashboard
-        ids={shownWidgetIds}
-        widgets={WIDGETS}
-        saved={layout}
-        context={context}
-        onChange={setLayout}
-        onRemove={removeWidget}
-        focusRequest={focusRequest}
+      <BoardTabs
+        boards={boards.boards}
+        activeId={board.id}
+        panelId={BOARD_PANEL_ID}
+        onSwitch={boards.switchTo}
+        onAdd={() => boards.addBoard()}
+        onRename={boards.renameBoard}
+        onDelete={boards.deleteBoard}
       />
-      {shownWidgetIds.length === 0 && (
-        <WidgetState
-          status="empty"
-          className="dashboard-empty"
-          message="No widgets yet. Pick a starter layout, or use “Add widget” to choose your own."
-        >
-          <div className="starter-layouts">
-            {STARTER_LAYOUTS.map((starter) => (
-              <button
-                key={starter.id}
-                type="button"
-                className="starter-layout"
-                onClick={() => applyStarter(starter)}
-              >
-                <strong>{starter.title}</strong>
-                <span>{starter.description}</span>
-              </button>
-            ))}
-          </div>
-        </WidgetState>
-      )}
+      <div id={BOARD_PANEL_ID} role="tabpanel" aria-labelledby={tabId(board.id)}>
+        <Dashboard
+          // A new board starts with no drag in progress and its own layout.
+          key={board.id}
+          ids={shownWidgetIds}
+          widgets={WIDGETS}
+          saved={layout}
+          context={context}
+          onChange={setLayout}
+          onRemove={removeWidget}
+          focusRequest={focusRequest}
+        />
+        {shownWidgetIds.length === 0 && (
+          <WidgetState
+            status="empty"
+            className="dashboard-empty"
+            message={
+              boards.boards.length > 1
+                ? `Nothing on ${board.name} yet. Pick a starter layout, or use “Add widget” to choose your own.`
+                : 'No widgets yet. Pick a starter layout, or use “Add widget” to choose your own.'
+            }
+          >
+            <div className="starter-layouts">
+              {STARTER_LAYOUTS.map((starter) => (
+                <button
+                  key={starter.id}
+                  type="button"
+                  className="starter-layout"
+                  onClick={() => applyStarter(starter)}
+                >
+                  <strong>{starter.title}</strong>
+                  <span>{starter.description}</span>
+                </button>
+              ))}
+            </div>
+          </WidgetState>
+        )}
+      </div>
       {paletteOpen && <CommandPalette getCommands={getCommands} onClose={closePalette} />}
       {settingsOpen && (
         <SettingsDrawer

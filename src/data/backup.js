@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, SCHEMA_VERSION, VERSION_KEY } from './schema';
+import { STORAGE_KEYS, LEGACY_KEYS, SCHEMA_VERSION, VERSION_KEY } from './schema';
 import { migrate, readAll } from './migrate';
 import { toISODate } from '../utils/dates';
 
@@ -39,12 +39,16 @@ export function parseBackup(text) {
   if (version > SCHEMA_VERSION) {
     return { ok: false, error: 'That backup was made by a newer version of the dashboard.' };
   }
-  // Keep only keys this version knows about, so a backup can't fill storage with junk.
-  const known = Object.fromEntries(Object.entries(file.data).filter(([key]) => STORAGE_KEYS.includes(key)));
+  // Keep only keys this version knows about (old ones included, so they can be upgraded), so a
+  // backup can't fill storage with junk.
+  const readable = [...STORAGE_KEYS, ...LEGACY_KEYS];
+  const known = Object.fromEntries(Object.entries(file.data).filter(([key]) => readable.includes(key)));
   if (known.tasks !== undefined && !Array.isArray(known.tasks)) {
     return { ok: false, error: 'That backup’s task list is damaged.' };
   }
-  return { ok: true, backup: { exportedAt: file.exportedAt ?? null, data: migrate(known, version) } };
+  const current = migrate(known, version);
+  const data = Object.fromEntries(Object.entries(current).filter(([key]) => STORAGE_KEYS.includes(key)));
+  return { ok: true, backup: { exportedAt: file.exportedAt ?? null, data } };
 }
 
 // Replaces everything the dashboard saves with data (a { key: value } object in the current
@@ -61,7 +65,7 @@ export function restoreData(data, storage = localStorage) {
 // Removes everything the dashboard saves, so it starts as if new. Whatever is saved from now on
 // is in the current shape, so the version stays.
 export function clearData(storage = localStorage) {
-  for (const key of STORAGE_KEYS) storage.removeItem(key);
+  for (const key of [...STORAGE_KEYS, ...LEGACY_KEYS]) storage.removeItem(key);
   storage.setItem(VERSION_KEY, String(SCHEMA_VERSION));
 }
 

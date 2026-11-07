@@ -20,6 +20,23 @@ describe('migrate', () => {
     expect(v1.tasks[0]).not.toHaveProperty('dueDate'); // the input is untouched
   });
 
+  it('moves the one dashboard into a Home board', () => {
+    const layout = { tasks: { x: 0, y: 0, w: 8, h: 9 } };
+    const result = migrate({ widgets: ['tasks'], layout }, 2);
+    expect(result.boards).toEqual([{ id: 'home', name: 'Home', widgetIds: ['tasks'], layout }]);
+    expect(result.activeBoard).toBe('home');
+    expect(result).not.toHaveProperty('widgets');
+    expect(result).not.toHaveProperty('layout');
+  });
+
+  it('removes keys a migration replaced', () => {
+    localStorage.setItem('schemaVersion', '2');
+    localStorage.setItem('widgets', JSON.stringify(['notes']));
+    runMigrations();
+    expect(localStorage.getItem('widgets')).toBeNull();
+    expect(JSON.parse(localStorage.getItem('boards'))[0].widgetIds).toEqual(['notes']);
+  });
+
   it('leaves current data alone', () => {
     const data = { tasks: [] };
     expect(migrate(data, SCHEMA_VERSION)).toBe(data);

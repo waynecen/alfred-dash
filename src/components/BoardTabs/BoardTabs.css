@@ -1,0 +1,100 @@
+/* The boards, as a row of label tags along a rule (DESIGN.md "Label Tag"): no fills, the board on
+   screen is marked by weight and an ink underline. */
+.board-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Many boards scroll sideways rather than wrap, so the bar keeps one height. */
+.board-tabs {
+  display: flex;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.board-tab,
+.board-action,
+.board-rename {
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.board-tab {
+  position: relative;
+  color: var(--muted);
+}
+
+.board-tab:first-child {
+  padding-left: 0;
+}
+
+.board-tab:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+.board-tab[aria-selected='true'] {
+  color: var(--text);
+}
+
+/* The ink underline sits on the bar's own rule. */
+.board-tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: -1px;
+  height: 3px;
+  background: var(--text);
+}
+
+.board-tab:first-child[aria-selected='true']::after {
+  left: 0;
+}
+
+.board-rename {
+  min-width: 4rem;
+  border-bottom: 1px solid var(--text);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+}
+
+.board-rename:focus-visible {
+  outline: none;
+}
+
+.board-action {
+  color: var(--muted);
+}
+
+.board-action:hover {
+  background: transparent;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.board-add {
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+/* Rename and Delete act on the board on screen, so they sit at the far end of the bar. */
+.board-actions {
+  display: flex;
+  margin-left: auto;
+}
+
+.board-actions .board-action:last-child {
+  padding-right: 0;
+}
