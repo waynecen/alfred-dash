@@ -1,0 +1,256 @@
+/* Goals: a ruled list, one goal to a band. The title and its figure on one line, the hairline bar
+   under them, then when it is due and the steppers. Reached is a label tag, late is bold: weight,
+   not colour (DESIGN.md). */
+.goals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.goals-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.goals-list {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+}
+
+.goal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.goal-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.goal-title {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  font-size: 0.95rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.goal-title:hover {
+  background: transparent;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.goal-tag {
+  flex: none;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goal-figure {
+  flex: none;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.goal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.6rem;
+}
+
+.goal-meta {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goal-meta.is-late {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* − and +, two squares sharing an edge. */
+.goal-stepper {
+  display: flex;
+  flex: none;
+}
+
+.goal-stepper button {
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.goal-stepper button + button {
+  margin-left: -1px;
+}
+
+.goal-stepper button:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.goal-stepper button:disabled:hover {
+  background: transparent;
+}
+
+/* The editor takes the band: title across the top, the figures in a row, then the actions. */
+.goal.is-editing {
+  padding: 0.6rem 0.5rem;
+  background: var(--surface);
+}
+
+.goal-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.goal-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.goal-editor-wide,
+.goal-editor-actions {
+  grid-column: 1 / -1;
+}
+
+.goal-editor-field label {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goal-editor input,
+.goal-editor-date {
+  min-width: 0;
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.goal-editor-date:hover,
+.goal-editor-date[aria-expanded='true'] {
+  background: var(--bg);
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.goal-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.goal-editor-actions button {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.goal-editor-save {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.goal-editor-spacer {
+  flex: 1;
+}
+
+.goal-editor-delete {
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.goal-editor-delete:hover,
+.goal-editor-delete:focus-visible {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg);
+}
+
+/* Add a goal: one ruled line and its button, then what the line will make. */
+.goals-add {
+  display: flex;
+  margin-top: auto;
+}
+
+.goals-add input {
+  flex: 1;
+  min-width: 0;
+  height: 2.25rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.goals-add input::placeholder {
+  color: var(--muted);
+}
+
+.goals-add button {
+  height: 2.25rem;
+  margin-left: -1px;
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.goals-add button:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+.goals-add button:disabled {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+  cursor: default;
+}
+
+.goals-add-preview {
+  min-height: 1rem;
+  margin: -0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

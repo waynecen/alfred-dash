@@ -9,6 +9,7 @@ import FocusWidget from '../components/FocusWidget/FocusWidget';
 import ClockWidget from '../components/ClockWidget/ClockWidget';
 import TodayWidget from '../components/TodayWidget/TodayWidget';
 import HabitsWidget from '../components/HabitsWidget/HabitsWidget';
+import GoalsWidget from '../components/GoalsWidget/GoalsWidget';
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list
@@ -89,6 +90,13 @@ export const WIDGETS = {
     description: 'Habits to keep: tick off each day and watch your streaks; wider, the last 12 weeks',
     defaultSize: { w: 4, h: 10 },
     render: ({ habits, habitLog, actions }) => <HabitsWidget habits={habits} log={habitLog} actions={actions} />,
+  },
+  goals: {
+    title: 'Goals',
+    category: 'Growth',
+    description: 'Goals to reach: count up by hand, or follow the tasks with a tag',
+    defaultSize: { w: 4, h: 9 },
+    render: ({ goals, tasks, actions }) => <GoalsWidget goals={goals} tasks={tasks} actions={actions} />,
   },
   notes: {
     title: 'Notes',
