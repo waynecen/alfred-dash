@@ -14,6 +14,9 @@ import {
 function describe(data) {
   const parts = [];
   if (Array.isArray(data.tasks)) parts.push(`${data.tasks.length} task${data.tasks.length === 1 ? '' : 's'}`);
+  if (Array.isArray(data.events) && data.events.length > 0) {
+    parts.push(`${data.events.length} event${data.events.length === 1 ? '' : 's'}`);
+  }
   if (data.notes) parts.push('notes');
   if (Array.isArray(data.boards)) parts.push(`${data.boards.length} board${data.boards.length === 1 ? '' : 's'}`);
   return parts.length > 0 ? parts.join(', ') : 'no tasks or notes';

@@ -3,12 +3,13 @@
 // Defaults stay with the code that reads each key (useLocalStorage's second argument).
 export const STORAGE_KEYS = [
   'tasks', // [{ id, text, priority, completed, createdAt, ... }], see data/tasks.js
+  'events', // [{ id, title, date, start, end, notes }], see data/events.js
   'notes', // the Notes widget's text
   'boards', // [{ id, name, widgetIds, layout }], see data/boards.js
   'activeBoard', // the id of the board on screen
   'dashboardTitle',
   'theme', // 'light' | 'dark' | 'system'
-  'settings', // { temperatureUnit, timeFormat }, see data/settings.js
+  'settings', // { temperatureUnit, timeFormat, weekStart }, see data/settings.js
   'weatherPlaces', // [{ id, name, latitude, longitude, ... }]
   'weatherActive', // the id of the place the Weather widget shows
   'dailyBrief', // { text, at }: the last brief, so a reload doesn't pay for a new one
