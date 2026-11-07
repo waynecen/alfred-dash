@@ -154,6 +154,12 @@ export const STARTER_LAYOUTS = [
     widgets: ['today', 'calendar', 'focus'],
   },
   {
+    id: 'habits',
+    title: 'Habits',
+    description: 'Habits, goals and today',
+    widgets: ['habits', 'goals', 'today'],
+  },
+  {
     id: 'planner',
     title: 'Planner',
     description: 'Summary, tasks and notes',
