@@ -1,8 +1,6 @@
 import useLocalStorage from './useLocalStorage';
 import { createTask } from '../data/tasks';
-
-// Puts an item back at the index it was taken from (or at the end, if the list got shorter).
-const insertAt = (list, index, item) => [...list.slice(0, index), item, ...list.slice(index)];
+import insertAt from '../utils/insertAt';
 
 // The task list, saved in the browser, and everything that changes it. Every change is a
 // functional update, so changes made in the same moment (by a widget, the AI, a timer) never

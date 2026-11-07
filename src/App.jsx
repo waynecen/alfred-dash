@@ -13,6 +13,7 @@ import WidgetState from './components/WidgetState/WidgetState';
 import { WIDGETS, DEFAULT_WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
 import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
+import insertAt from './utils/insertAt';
 
 // What the Add widget list needs to know about each widget.
 const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
@@ -23,9 +24,6 @@ const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
 }));
 
 const DARK_QUERY = '(prefers-color-scheme: dark)';
-
-// Puts an item back at the index it was taken from (or at the end, if the list got shorter).
-const insertAt = (list, index, item) => [...list.slice(0, index), item, ...list.slice(index)];
 
 // Follows the operating system's light or dark setting as it changes.
 function useSystemDark() {
