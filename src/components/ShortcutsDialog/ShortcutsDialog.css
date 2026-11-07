@@ -1,0 +1,70 @@
+.shortcuts-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 10vh var(--gutter) var(--gutter);
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+}
+
+/* A ruled sheet like the command palette: a title band, then one rule per shortcut. */
+.shortcuts {
+  width: min(36rem, 100%);
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.shortcuts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.shortcuts-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.shortcuts-subhead {
+  margin: 0;
+  padding: 1rem 1rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shortcut-list {
+  margin: 0;
+}
+
+.shortcut-row {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.shortcut-row:last-child {
+  border-bottom: 0;
+}
+
+.shortcut-row dt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.shortcut-row dd {
+  margin: 0;
+  font-size: 0.9rem;
+}

@@ -1,17 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
+import useTasks from './hooks/useTasks';
+import useBoards from './hooks/useBoards';
+import useShortcuts from './hooks/useShortcuts';
+import useToday from './hooks/useToday';
 import { useAIHealth } from './hooks/useAI';
 import EditableTitle from './components/EditableTitle/EditableTitle';
+import BoardTabs, { tabId } from './components/BoardTabs/BoardTabs';
 import Dashboard from './components/Dashboard/Dashboard';
 import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
 import CommandPalette from './components/CommandPalette/CommandPalette';
 import SettingsDrawer from './components/Settings/SettingsDrawer';
+import ShortcutsDialog from './components/ShortcutsDialog/ShortcutsDialog';
 import ToastRegion from './components/Toast/ToastRegion';
 import WidgetState from './components/WidgetState/WidgetState';
-import { WIDGETS, DEFAULT_WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
+import { WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
 import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
+import insertAt from './utils/insertAt';
+import { parseISODate } from './utils/dates';
 
 // What the Add widget list needs to know about each widget.
 const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
@@ -23,8 +31,8 @@ const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
 
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 
-// Puts an item back at the index it was taken from (or at the end, if the list got shorter).
-const insertAt = (list, index, item) => [...list.slice(0, index), item, ...list.slice(index)];
+// The element the board tabs control.
+const BOARD_PANEL_ID = 'board-panel';
 
 // Follows the operating system's light or dark setting as it changes.
 function useSystemDark() {
@@ -39,13 +47,15 @@ function useSystemDark() {
 }
 
 function App() {
+  const { toasts, notify, dismiss } = useToasts();
   // The tasks live here, so every widget shares one source of truth.
-  const [tasks, setTasks] = useLocalStorage('tasks', []);
-  // Which widgets are on the dashboard, in order. Saved so the layout survives a reload.
-  const [widgetIds, setWidgetIds] = useLocalStorage('widgets', DEFAULT_WIDGETS);
-  // Where each widget sits on the grid and how big it is: { [id]: { x, y, w, h } }.
-  // Widgets without an entry are placed in the first free spot at their default size.
-  const [layout, setLayout] = useLocalStorage('layout', {});
+  const { tasks, actions: taskActions } = useTasks(notify);
+  // The pages of widgets. Each board has its own widgets, in order, and where each one sits:
+  // { [id]: { x, y, w, h } } in grid cells. Widgets without a spot go in the first free one.
+  const boards = useBoards(notify);
+  const board = boards.active;
+  const { widgetIds, layout } = board;
+  const { setWidgetIds, setLayout } = boards; // the active board's, unless given another id
   // The notepad text lives here too, so it survives removing and re-adding the widget.
   const [notes, setNotes] = useLocalStorage('notes', '');
   const [title, setTitle] = useLocalStorage('dashboardTitle', 'My Dashboard');
@@ -56,9 +66,10 @@ function App() {
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const today = useToday();
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
-  const { toasts, notify, dismiss } = useToasts();
   // Checked each time Settings opens, so the AI status there is current.
   const aiHealth = useAIHealth(settingsOpen);
 
@@ -79,116 +90,100 @@ function App() {
     document.startViewTransition(apply);
   }, [shownTheme]);
 
-  // Ctrl+K (Cmd+K on a Mac) opens and closes the command palette from anywhere.
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        setPaletteOpen((open) => !open);
-      }
+  // Shows the board n steps along from this one, wrapping round at the ends.
+  function stepBoard(n) {
+    const list = boards.boards;
+    const index = list.findIndex((b) => b.id === board.id);
+    boards.switchTo(list[(index + n + list.length) % list.length].id);
+  }
+
+  // Puts the cursor in the Tasks widget's box, or opens the palette (which can add tasks too)
+  // when this board has no Tasks widget.
+  function startNewTask() {
+    const input = document.getElementById('new-task');
+    if (!input) {
+      setPaletteOpen(true);
+      return;
     }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    input.focus();
+    input.scrollIntoView?.({ block: 'nearest' });
+  }
+
+  // The keys are listed for people in components/ShortcutsDialog; keep the two in step.
+  useShortcuts([
+    {
+      key: 'k',
+      mod: true, // Ctrl+K, or Cmd+K on a Mac, opens and closes the palette from anywhere
+      run: () => {
+        setShortcutsOpen(false);
+        setPaletteOpen((open) => !open);
+      },
+    },
+    { key: '/', run: () => setPaletteOpen(true) },
+    { key: 'n', run: startNewTask },
+    { key: '?', run: () => setShortcutsOpen(true) },
+    { key: '[', run: () => stepBoard(-1) },
+    { key: ']', run: () => stepBoard(1) },
+    ...boards.boards.slice(0, 9).map((b, index) => ({ key: String(index + 1), run: () => boards.switchTo(b.id) })),
+  ]);
 
   function focusWidget(id) {
     setFocusRequest((request) => ({ id, n: (request?.n ?? 0) + 1 }));
   }
 
-  // Adds several tasks at once: items is [{ text, priority }]. A functional update, so tasks
-  // added in the same click (or by another widget) are never lost.
-  function addTasks(items) {
-    if (items.length === 0) return;
-    const now = Date.now();
-    setTasks((current) => {
-      // Ids are timestamps; step past any already taken so a batch never repeats one.
-      let nextId = Math.max(now, ...current.map((task) => task.id + 1));
-      const newTasks = items.map(({ text, priority }) => ({
-        id: nextId++,
-        text,
-        priority, // 'low' | 'medium' | 'high'
-        completed: false,
-        createdAt: now, // when the task was created, in milliseconds
-      }));
-      // Never change state directly: build a new array instead.
-      return [...current, ...newTasks];
-    });
-  }
-
-  function addTask(text, priority) {
-    addTasks([{ text, priority }]);
-  }
-
-  function toggleTask(id) {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  }
-
-  function editTask(id, newText) {
-    setTasks(
-      tasks.map((task) => (task.id === id ? { ...task, text: newText } : task))
-    );
-  }
-
-  function changePriority(id, priority) {
-    setTasks(
-      tasks.map((task) => (task.id === id ? { ...task, priority } : task))
-    );
-  }
-
-  function deleteTask(id) {
-    const index = tasks.findIndex((task) => task.id === id);
-    if (index === -1) return;
-    const task = tasks[index];
-    setTasks(tasks.filter((t) => t.id !== id));
-    notify({
-      message: `Deleted “${task.text}”`,
-      actionLabel: 'Undo',
-      // Functional updates, so anything done since the delete is kept.
-      onAction: () =>
-        setTasks((current) => (current.some((t) => t.id === id) ? current : insertAt(current, index, task))),
-    });
-  }
-
-  function reorderTasks(newTasks) {
-    setTasks(newTasks);
-  }
+  // The browser tab names the board, so several open tabs can be told apart.
+  useEffect(() => {
+    document.title = boards.boards.length > 1 ? `${board.name} · ${title}` : title;
+  }, [board.name, boards.boards.length, title]);
 
   function addWidget(id) {
-    if (!widgetIds.includes(id)) setWidgetIds([...widgetIds, id]);
+    setWidgetIds((current) => (current.includes(id) ? current : [...current, id]));
     // Take the user to it, so they can see where it landed.
     focusWidget(id);
   }
 
   function removeWidget(id) {
+    const boardId = board.id; // Undo goes back to this board, even if another is shown by then
     const index = widgetIds.indexOf(id);
     const spot = layout[id];
-    setWidgetIds(widgetIds.filter((widgetId) => widgetId !== id));
+    setWidgetIds((current) => current.filter((widgetId) => widgetId !== id), boardId);
     // Forget its spot, so adding it back later places it in a free one.
-    const { [id]: _removed, ...rest } = layout;
-    setLayout(rest);
+    setLayout(({ [id]: _removed, ...rest }) => rest, boardId);
     notify({
       message: `${WIDGETS[id]?.title ?? 'Widget'} removed`,
       actionLabel: 'Undo',
       onAction: () => {
         // Undo puts it back where it was, at the same size.
-        setWidgetIds((current) => (current.includes(id) ? current : insertAt(current, index, id)));
-        if (spot) setLayout((current) => ({ ...current, [id]: spot }));
+        setWidgetIds((current) => (current.includes(id) ? current : insertAt(current, index, id)), boardId);
+        if (spot) setLayout((current) => ({ ...current, [id]: spot }), boardId);
+        boards.switchTo(boardId);
         focusWidget(id);
       },
     });
   }
 
   function resetLayout() {
+    const boardId = board.id;
     const previous = layout;
-    setLayout({});
+    setLayout({}, boardId);
     notify({
       message: 'Layout reset',
       actionLabel: 'Undo',
-      onAction: () => setLayout(previous),
+      onAction: () => setLayout(previous, boardId),
+    });
+  }
+
+  function moveWidget(id, toBoardId) {
+    const to = boards.boards.find((b) => b.id === toBoardId);
+    if (!to) return;
+    boards.moveWidget(id, toBoardId);
+    notify({
+      message: `Moved ${WIDGETS[id]?.title ?? 'widget'} to ${to.name}`,
+      actionLabel: 'Show',
+      onAction: () => {
+        boards.switchTo(toBoardId);
+        focusWidget(id);
+      },
     });
   }
 
@@ -209,7 +204,7 @@ function App() {
     tasks,
     notes,
     counts: countTasks(tasks),
-    actions: { addTask, addTasks, toggleTask, editTask, changePriority, deleteTask, reorderTasks, setNotes, notify },
+    actions: { ...taskActions, setNotes, notify },
   };
 
   const getCommands = (query) =>
@@ -218,20 +213,34 @@ function App() {
       shownIds: shownWidgetIds,
       query,
       theme: shownTheme,
+      boards: boards.boards,
+      activeBoardId: board.id,
       actions: {
         addWidget,
         removeWidget,
         focusWidget,
-        addTask,
+        addTask: taskActions.addTask,
         toggleTheme,
         resetLayout,
         openSettings: () => setSettingsOpen(true),
+        openShortcuts: () => setShortcutsOpen(true),
+        switchBoard: boards.switchTo,
+        addBoard: boards.addBoard,
+        renameBoard: (name) => boards.renameBoard(board.id, name),
+        deleteBoard: () => boards.deleteBoard(board.id),
+        moveWidget,
       },
     });
 
   return (
     <main className="app">
       <header className="app-header">
+        <p className="app-header-index">
+          <span>Dashboard</span>
+          <time dateTime={today}>
+            {parseISODate(today).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+          </time>
+        </p>
         <EditableTitle value={title} onChange={setTitle} />
         <div className="app-header-actions">
           <button
@@ -317,37 +326,55 @@ function App() {
           </button>
         </div>
       </header>
-      <Dashboard
-        ids={shownWidgetIds}
-        widgets={WIDGETS}
-        saved={layout}
-        context={context}
-        onChange={setLayout}
-        onRemove={removeWidget}
-        focusRequest={focusRequest}
+      <BoardTabs
+        boards={boards.boards}
+        activeId={board.id}
+        panelId={BOARD_PANEL_ID}
+        onSwitch={boards.switchTo}
+        onAdd={() => boards.addBoard()}
+        onRename={boards.renameBoard}
+        onDelete={boards.deleteBoard}
       />
-      {shownWidgetIds.length === 0 && (
-        <WidgetState
-          status="empty"
-          className="dashboard-empty"
-          message="No widgets yet. Pick a starter layout, or use “Add widget” to choose your own."
-        >
-          <div className="starter-layouts">
-            {STARTER_LAYOUTS.map((starter) => (
-              <button
-                key={starter.id}
-                type="button"
-                className="starter-layout"
-                onClick={() => applyStarter(starter)}
-              >
-                <strong>{starter.title}</strong>
-                <span>{starter.description}</span>
-              </button>
-            ))}
-          </div>
-        </WidgetState>
-      )}
+      <div id={BOARD_PANEL_ID} role="tabpanel" aria-labelledby={tabId(board.id)}>
+        <Dashboard
+          // A new board starts with no drag in progress and its own layout.
+          key={board.id}
+          ids={shownWidgetIds}
+          widgets={WIDGETS}
+          saved={layout}
+          context={context}
+          onChange={setLayout}
+          onRemove={removeWidget}
+          focusRequest={focusRequest}
+        />
+        {shownWidgetIds.length === 0 && (
+          <WidgetState
+            status="empty"
+            className="dashboard-empty"
+            message={
+              boards.boards.length > 1
+                ? `Nothing on ${board.name} yet. Pick a starter layout, or use “Add widget” to choose your own.`
+                : 'No widgets yet. Pick a starter layout, or use “Add widget” to choose your own.'
+            }
+          >
+            <div className="starter-layouts">
+              {STARTER_LAYOUTS.map((starter) => (
+                <button
+                  key={starter.id}
+                  type="button"
+                  className="starter-layout"
+                  onClick={() => applyStarter(starter)}
+                >
+                  <strong>{starter.title}</strong>
+                  <span>{starter.description}</span>
+                </button>
+              ))}
+            </div>
+          </WidgetState>
+        )}
+      </div>
       {paletteOpen && <CommandPalette getCommands={getCommands} onClose={closePalette} />}
+      {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}
       {settingsOpen && (
         <SettingsDrawer
           theme={theme}
@@ -355,6 +382,7 @@ function App() {
           onResetLayout={resetLayout}
           onClose={() => setSettingsOpen(false)}
           ai={aiHealth}
+          notify={notify}
         />
       )}
       <ToastRegion toasts={toasts} onDismiss={dismiss} />

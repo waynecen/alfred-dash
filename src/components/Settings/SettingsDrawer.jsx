@@ -1,12 +1,25 @@
 import { useId, useRef } from 'react';
 import useDismiss from '../../hooks/useDismiss';
 import useFocusTrap from '../../hooks/useFocusTrap';
+import useSettings from '../../hooks/useSettings';
+import DataSection from './DataSection';
 import './SettingsDrawer.css';
 
 const THEMES = [
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
   { value: 'system', label: 'Match system' },
+];
+
+const TEMPERATURE_UNITS = [
+  { value: 'celsius', label: 'Celsius (°C)' },
+  { value: 'fahrenheit', label: 'Fahrenheit (°F)' },
+];
+
+const TIME_FORMATS = [
+  { value: 'auto', label: 'Automatic' },
+  { value: '12h', label: '12-hour (3:00 PM)' },
+  { value: '24h', label: '24-hour (15:00)' },
 ];
 
 // What the AI section says for each useAIHealth status.
@@ -30,8 +43,18 @@ const AI_STATUS = {
 //   onResetLayout(): put every widget back at its default size and place (it offers Undo)
 //   onClose()
 //   ai: { status, model, recheck } from useAIHealth
-function SettingsDrawer({ theme, onThemeChange, onResetLayout, onClose, ai = { status: 'not-configured' } }) {
+//   notify: shows a toast (from useToasts), for backups and Undo
+function SettingsDrawer({
+  theme,
+  onThemeChange,
+  onResetLayout,
+  onClose,
+  ai = { status: 'not-configured' },
+  notify = () => {},
+}) {
   const aiStatus = AI_STATUS[ai.status] ?? AI_STATUS['not-configured'];
+  // Units and the clock are read where they are shown, so they are changed straight from here.
+  const [settings, updateSettings] = useSettings();
   const panelRef = useRef(null);
   const headingId = useId();
 
@@ -70,6 +93,38 @@ function SettingsDrawer({ theme, onThemeChange, onResetLayout, onClose, ai = { s
           ))}
         </fieldset>
 
+        <fieldset className="drawer-section">
+          <legend>Temperature</legend>
+          {TEMPERATURE_UNITS.map((option) => (
+            <label key={option.value} className="drawer-radio">
+              <input
+                type="radio"
+                name="temperatureUnit"
+                value={option.value}
+                checked={settings.temperatureUnit === option.value}
+                onChange={() => updateSettings({ temperatureUnit: option.value })}
+              />
+              {option.label}
+            </label>
+          ))}
+        </fieldset>
+
+        <fieldset className="drawer-section">
+          <legend>Clock</legend>
+          {TIME_FORMATS.map((option) => (
+            <label key={option.value} className="drawer-radio">
+              <input
+                type="radio"
+                name="timeFormat"
+                value={option.value}
+                checked={settings.timeFormat === option.value}
+                onChange={() => updateSettings({ timeFormat: option.value })}
+              />
+              {option.label}
+            </label>
+          ))}
+        </fieldset>
+
         <section className="drawer-section">
           <h3>Layout</h3>
           <p className="drawer-note">Put every widget back at its default size and position.</p>
@@ -96,12 +151,14 @@ function SettingsDrawer({ theme, onThemeChange, onResetLayout, onClose, ai = { s
           )}
         </section>
 
+        <DataSection notify={notify} />
+
         <section className="drawer-section">
           <h3>Keyboard</h3>
           <p className="drawer-note">
             <kbd>Ctrl</kbd> + <kbd>K</kbd> (<kbd>⌘</kbd> + <kbd>K</kbd> on a Mac) opens the command
-            palette. Focus a widget&rsquo;s handle and use the arrow keys to move it, or its corner to
-            resize it.
+            palette, <kbd>N</kbd> adds a task and <kbd>1</kbd>–<kbd>9</kbd> switch boards. Press{' '}
+            <kbd>?</kbd> anywhere for the full list.
           </p>
         </section>
       </aside>

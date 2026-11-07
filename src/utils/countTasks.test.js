@@ -1,4 +1,4 @@
-import countTasks from './countTasks';
+import countTasks, { countDue, countTags } from './countTasks';
 
 describe('countTasks', () => {
   it('counts active and completed tasks', () => {
@@ -40,5 +40,30 @@ describe('countTasks', () => {
       { completed: false, priority: 'urgent' },
     ];
     expect(countTasks(tasks).openByPriority).toEqual({ high: 0, medium: 2, low: 0 });
+  });
+});
+
+describe('countDue', () => {
+  it('counts open tasks that are overdue, due today and due later', () => {
+    const tasks = [
+      { completed: false, dueDate: '2026-11-01' },
+      { completed: true, dueDate: '2026-11-01' },
+      { completed: false, dueDate: '2026-11-07' },
+      { completed: false, dueDate: '2026-11-09' },
+      { completed: false, dueDate: '2026-12-01' },
+      { completed: false, dueDate: null },
+    ];
+    expect(countDue(tasks, '2026-11-07')).toEqual({ overdue: 1, today: 1, upcoming: 2 });
+  });
+});
+
+describe('countTags', () => {
+  it('lists every tag, most used first, then A to Z', () => {
+    const tasks = [{ tags: ['work', 'home'] }, { tags: ['home'] }, { tags: ['admin'] }, {}];
+    expect(countTags(tasks)).toEqual([
+      { tag: 'home', count: 2 },
+      { tag: 'admin', count: 1 },
+      { tag: 'work', count: 1 },
+    ]);
   });
 });

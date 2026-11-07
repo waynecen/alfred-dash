@@ -27,7 +27,7 @@ function SortableHeader({ label, columnKey, sort, onSort, className }) {
   );
 }
 
-// A table of tasks. The Description, Priority and Created headings sort the list.
+// A table of tasks. The Description, Priority, Due and Created headings sort the list.
 function TaskList({
   tasks,
   totalCount,
@@ -36,8 +36,16 @@ function TaskList({
   onToggle,
   onEdit,
   onPriorityChange,
+  onUpdate,
   onDelete,
   onMove,
+  onFilterTag,
+  onAddStep,
+  depths,
+  stepCounts,
+  selectedIds = [],
+  onSelect,
+  today,
 }) {
   const emptyMessage =
     totalCount === 0 ? 'No tasks yet. Add one above!' : 'No tasks match this filter.';
@@ -79,6 +87,7 @@ function TaskList({
             <th scope="col" className="col-done">Done</th>
             <SortableHeader label="Description" columnKey="description" className="col-description" {...sortProps} />
             <SortableHeader label="Priority" columnKey="priority" className="col-priority" {...sortProps} />
+            <SortableHeader label="Due" columnKey="due" className="col-due" {...sortProps} />
             <SortableHeader label="Created" columnKey="created" className="col-created" {...sortProps} />
             <th scope="col" className="col-actions">Actions</th>
           </tr>
@@ -92,6 +101,14 @@ function TaskList({
               onToggle={onToggle}
               onEdit={onEdit}
               onPriorityChange={onPriorityChange}
+              onUpdate={onUpdate}
+              onFilterTag={onFilterTag}
+              onAddStep={onAddStep}
+              depth={depths?.get(task.id) ?? 0}
+              stepCount={stepCounts?.get(task.id)}
+              selected={selectedIds.includes(task.id)}
+              onSelect={onSelect}
+              today={today}
               onDelete={onDelete}
               isDragging={dragId === task.id}
               onDragStart={() => startDrag(task.id)}
@@ -110,7 +127,7 @@ function TaskList({
           ))}
           {tasks.length === 0 && (
             <tr>
-              <td colSpan={6} className="empty-message">
+              <td colSpan={7} className="empty-message">
                 {emptyMessage}
               </td>
             </tr>

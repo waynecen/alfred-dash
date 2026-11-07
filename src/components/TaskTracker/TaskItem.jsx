@@ -1,11 +1,45 @@
 import { useState, useRef } from 'react';
 import formatCreatedDate from '../../utils/formatCreatedDate';
+import DueDate from './DueDate';
+import TaskDetails from './TaskDetails';
+import { describeRecurrence } from '../../data/tasks';
+
+// A line under the task's text: how far along its steps are, its tags (each one filters the list
+// to it) and how it repeats. Nothing at all when there is none of these, so plain tasks keep a
+// single line.
+//   stepCount: { done, total } | undefined
+function TaskMeta({ task, stepCount, onFilterTag }) {
+  const tags = task.tags ?? [];
+  if (tags.length === 0 && !task.recurrence && !stepCount) return null;
+  return (
+    <div className="task-meta">
+      {stepCount && (
+        <span className="task-steps" aria-label={`${stepCount.done} of ${stepCount.total} steps done`}>
+          {stepCount.done}/{stepCount.total} steps
+        </span>
+      )}
+      {tags.map((tag) => (
+        <button
+          key={tag}
+          type="button"
+          className="task-tag"
+          onClick={() => onFilterTag?.(tag)}
+          aria-label={`Show tasks tagged ${tag}`}
+        >
+          #{tag}
+        </button>
+      ))}
+      {task.recurrence && <span className="task-repeat">{describeRecurrence(task.recurrence)}</span>}
+    </div>
+  );
+}
 
 function TaskItem({
   task,
   onToggle,
   onEdit,
   onPriorityChange,
+  onUpdate,
   onDelete,
   isDragging,
   onDragStart,
@@ -13,6 +47,13 @@ function TaskItem({
   onDrop,
   onDragEnd,
   onStep,
+  onFilterTag,
+  onAddStep,
+  depth = 0,
+  stepCount,
+  selected = false,
+  onSelect,
+  today,
 }) {
   // Tasks saved before priorities existed have none, so treat them as medium.
   const priority = task.priority ?? 'medium';
@@ -23,6 +64,20 @@ function TaskItem({
   const [draft, setDraft] = useState(task.text);
   // Remembers that Escape was pressed, so the blur that follows doesn't save.
   const cancelled = useRef(false);
+  // The detail row under this one: notes, due date, tags and repeat.
+  const [expanded, setExpanded] = useState(false);
+  const detailsId = `task-details-${task.id}`;
+
+  // A plain click edits the text. Shift-click (a range) or Ctrl/Cmd-click (one task) selects
+  // instead, for the bulk actions under the table; Shift+Enter and Ctrl+Enter do the same.
+  function handleTextClick(event) {
+    if (onSelect && (event.shiftKey || event.ctrlKey || event.metaKey)) {
+      event.preventDefault(); // no text selection from the Shift-click
+      onSelect(task.id, { range: event.shiftKey });
+      return;
+    }
+    startEditing();
+  }
 
   function startEditing() {
     setDraft(task.text); // always start from the current text
@@ -60,11 +115,18 @@ function TaskItem({
     }
   }
 
-  const rowClass = ['task-row', task.completed && 'completed', isDragging && 'dragging']
+  const rowClass = [
+    'task-row',
+    task.completed && 'completed',
+    isDragging && 'dragging',
+    expanded && 'expanded',
+    depth > 0 && 'subtask',
+    selected && 'selected',
+  ]
     .filter(Boolean)
     .join(' ');
 
-  return (
+  const row = (
     <tr
       className={rowClass}
       onDragOver={(event) => {
@@ -122,12 +184,22 @@ function TaskItem({
           <button
             type="button"
             className="task-text"
-            onClick={startEditing}
-            title="Click to edit"
+            onClick={handleTextClick}
+            // Shift-clicking would otherwise also select the page's text.
+            onMouseDown={(event) => event.shiftKey && event.preventDefault()}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && (event.shiftKey || event.ctrlKey || event.metaKey)) {
+                event.preventDefault(); // no click, so no edit
+                onSelect?.(task.id, { range: event.shiftKey });
+              }
+            }}
+            title="Click to edit, Shift- or Ctrl-click to select"
           >
             {task.text}
+            {selected && <span className="visually-hidden"> (selected)</span>}
           </button>
         )}
+        <TaskMeta task={task} stepCount={stepCount} onFilterTag={onFilterTag} />
       </td>
       <td className="col-priority">
         <select
@@ -141,6 +213,15 @@ function TaskItem({
           <option value="high">High</option>
         </select>
       </td>
+      <td className="col-due">
+        <DueDate
+          value={task.dueDate ?? null}
+          today={today}
+          completed={task.completed}
+          taskText={task.text}
+          onChange={(dueDate) => onUpdate(task.id, { dueDate })}
+        />
+      </td>
       <td className="col-created">
         {/* Tasks saved before this feature have no createdAt, but their id is a timestamp too. */}
         <time className="task-date" dateTime={new Date(task.createdAt ?? task.id).toISOString()}>
@@ -148,6 +229,30 @@ function TaskItem({
         </time>
       </td>
       <td className="col-actions">
+        <button
+          type="button"
+          className="details-button"
+          onClick={() => setExpanded((open) => !open)}
+          aria-expanded={expanded}
+          aria-controls={expanded ? detailsId : undefined}
+          aria-label={`Details: ${task.text}`}
+          title={expanded ? 'Hide details' : 'Notes, tags and repeat'}
+        >
+          {/* A chevron, turned up by CSS while the details are open. */}
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
         <button
           type="button"
           className="delete-button"
@@ -174,6 +279,24 @@ function TaskItem({
         </button>
       </td>
     </tr>
+  );
+
+  if (!expanded) return row;
+  return (
+    <>
+      {row}
+      <tr className="task-detail-row">
+        <td colSpan={7}>
+          <TaskDetails
+            id={detailsId}
+            task={task}
+            onUpdate={onUpdate}
+            // Steps go one level deep, so a step can't have steps of its own.
+            onAddStep={task.parentId == null && onAddStep ? (text) => onAddStep(task.id, text) : undefined}
+          />
+        </td>
+      </tr>
+    </>
   );
 }
 

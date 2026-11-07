@@ -3,6 +3,16 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import App from './App';
 
+// The board the dashboard opens on, as saved (the default one until something changes it), and a
+// way to save one before rendering.
+const savedBoard = () =>
+  JSON.parse(localStorage.getItem('boards') ?? 'null')?.[0] ?? { widgetIds: ['summary', 'tasks'], layout: {} };
+const saveBoard = (fields) =>
+  localStorage.setItem(
+    'boards',
+    JSON.stringify([{ id: 'home', name: 'Home', widgetIds: ['summary', 'tasks'], layout: {}, ...fields }])
+  );
+
 async function addTask(text, priority) {
   if (priority) await userEvent.selectOptions(screen.getByLabelText('Priority'), priority);
   await userEvent.type(screen.getByLabelText('New task'), `${text}{Enter}`);
@@ -52,6 +62,88 @@ describe('App', () => {
     await userEvent.click(within(filter).getByRole('button', { name: /Active/ }));
     expect(screen.getByRole('button', { name: 'Open task' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Done task' })).not.toBeInTheDocument();
+  });
+
+  it('adds the next one when a repeating task is done, and Undo takes it back', async () => {
+    render(<App />);
+    await addTask('Water plants every week');
+    await userEvent.click(screen.getByLabelText('Mark complete: Water plants'));
+
+    const saved = () => JSON.parse(localStorage.getItem('tasks'));
+    expect(saved()).toHaveLength(2);
+    expect(saved()[0]).toMatchObject({ completed: true });
+    expect(saved()[1]).toMatchObject({ text: 'Water plants', completed: false, recurrence: { every: 'week' } });
+    expect(screen.getByText(/^Done\. Next:/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(saved()).toHaveLength(1);
+    expect(saved()[0]).toMatchObject({ completed: false, completedAt: null });
+  });
+
+  it('adds steps under a task, counts them, and deletes them with it', async () => {
+    render(<App />);
+    await addTask('Plan trip');
+    await addTask('Other');
+    await userEvent.click(screen.getByRole('button', { name: 'Details: Plan trip' }));
+    await userEvent.type(screen.getByLabelText('Add a step'), 'Book flights{Enter}');
+    await userEvent.type(screen.getByLabelText('Add a step'), 'Pack{Enter}');
+
+    // The steps sit straight under their task, before the task added after it.
+    const shown = [...document.querySelectorAll('.task-text')].map((el) => el.textContent);
+    expect(shown).toEqual(['Plan trip', 'Book flights', 'Pack', 'Other']);
+    expect(screen.getByLabelText('0 of 2 steps done')).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText('Mark complete: Pack'));
+    expect(screen.getByLabelText('1 of 2 steps done')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete task: Plan trip' }));
+    expect(screen.getByText('Deleted “Plan trip” and 2 steps')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pack' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    const restored = [...document.querySelectorAll('.task-text')].map((el) => el.textContent);
+    expect(restored).toEqual(['Plan trip', 'Book flights', 'Pack', 'Other']);
+  });
+
+  describe('bulk actions', () => {
+    const saved = () => JSON.parse(localStorage.getItem('tasks'));
+    const shiftClick = async (name) => {
+      await userEvent.keyboard('{Shift>}');
+      await userEvent.click(screen.getByRole('button', { name }));
+      await userEvent.keyboard('{/Shift}');
+    };
+
+    it('selects a range with Shift-click and acts on all of it, with one Undo', async () => {
+      render(<App />);
+      await addTask('One');
+      await addTask('Two');
+      await addTask('Three');
+      await shiftClick('One');
+      await shiftClick('Three');
+      expect(screen.getByRole('toolbar', { name: '3 selected tasks' })).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Due tomorrow' }));
+      expect(saved().every((task) => task.dueDate)).toBe(true);
+      expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+
+      await shiftClick('One');
+      await shiftClick('Two');
+      await userEvent.click(screen.getByRole('button', { name: 'Complete' }));
+      expect(saved().map((task) => task.completed)).toEqual([true, true, false]);
+      expect(screen.getByText('Completed 2 tasks')).toBeInTheDocument();
+      await userEvent.click(screen.getAllByRole('button', { name: 'Undo' }).at(-1));
+      expect(saved().map((task) => task.completed)).toEqual([false, false, false]);
+    });
+
+    it('clears completed tasks, and Undo brings them back', async () => {
+      render(<App />);
+      await addTask('Keep');
+      await addTask('Done one');
+      await userEvent.click(screen.getByLabelText('Mark complete: Done one'));
+      await userEvent.click(screen.getByRole('button', { name: 'Clear completed (1)' }));
+      expect(saved().map((task) => task.text)).toEqual(['Keep']);
+      expect(screen.getByText('Deleted 1 completed task')).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      expect(saved().map((task) => task.text)).toEqual(['Keep', 'Done one']);
+    });
   });
 
   describe('sorting the table', () => {
@@ -254,7 +346,7 @@ describe('App', () => {
 
   describe('customising the dashboard', () => {
     const titles = () => [...document.querySelectorAll('.widget h2')].map((el) => el.textContent);
-    const savedLayout = () => JSON.parse(localStorage.getItem('layout'));
+    const savedLayout = () => savedBoard().layout;
     const handle = (name) => screen.getByRole('button', { name: `Move ${name} widget` });
     const resizer = (name) => screen.getByRole('button', { name: `Resize ${name} widget` });
     const cardOf = (name) => screen.getByRole('region', { name });
@@ -296,7 +388,7 @@ describe('App', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Add widget' }));
       await userEvent.click(screen.getByRole('button', { name: /^Notes/ }));
       expect(cardOf('Notes').style.gridColumn).toBe('1 / span 4');
-      expect(cardOf('Notes').style.gridRow).toBe('5 / span 5');
+      expect(cardOf('Notes').style.gridRow).toBe('9 / span 5');
     });
 
     it('moves a widget with the arrow keys, the others make way, and the layout is remembered', async () => {
@@ -317,8 +409,8 @@ describe('App', () => {
       await userEvent.keyboard('{ArrowRight}{ArrowDown}');
 
       expect(cardOf('Summary').style.gridColumn).toBe('1 / span 5');
-      expect(cardOf('Summary').style.gridRow).toBe('1 / span 5');
-      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 5 });
+      expect(cardOf('Summary').style.gridRow).toBe('1 / span 9');
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 9 });
       // The Tasks give up their first column and stay beside the Summary.
       expect(savedLayout().tasks).toEqual({ x: 5, y: 0, w: 7, h: 9 });
     });
@@ -371,11 +463,11 @@ describe('App', () => {
 
       // Two rows down (96px) on the bottom edge: taller, same width.
       drag(summary.querySelector('.widget-edge-s'), { dy: 96 });
-      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 4, h: 6 });
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 4, h: 10 });
 
       // One column right on the right edge: wider, same height.
       drag(container.querySelector('.widget-edge-e'), { dx: 100 });
-      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 6 });
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 5, h: 10 });
     });
 
     it('lets the card itself take the new size while it is being resized', () => {
@@ -383,9 +475,9 @@ describe('App', () => {
       drag(resizer('Summary'), { dx: 200, dy: 96, release: false });
       expect(cardOf('Summary')).toHaveClass('is-resizing');
       expect(cardOf('Summary').style.gridColumn).toBe('1 / span 6');
-      expect(cardOf('Summary').style.gridRow).toBe('1 / span 6');
+      expect(cardOf('Summary').style.gridRow).toBe('1 / span 10');
       fireEvent.pointerUp(window);
-      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 6, h: 6 });
+      expect(savedLayout().summary).toEqual({ x: 0, y: 0, w: 6, h: 10 });
     });
 
     it('never makes a widget smaller than its minimum or wider than the grid', () => {
@@ -429,12 +521,12 @@ describe('App', () => {
     render(<App />);
     await userEvent.click(screen.getByRole('button', { name: 'Remove Summary widget' }));
     expect(screen.queryByRole('region', { name: 'Summary' })).not.toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('widgets'))).toEqual(['tasks']);
+    expect(savedBoard().widgetIds).toEqual(['tasks']);
 
     await userEvent.click(screen.getByRole('button', { name: 'Add widget' }));
     await userEvent.click(screen.getByRole('button', { name: /Summary/ }));
     expect(screen.getByRole('region', { name: 'Summary' })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('widgets'))).toEqual(['tasks', 'summary']);
+    expect(savedBoard().widgetIds).toEqual(['tasks', 'summary']);
   });
 
   it('keeps the tasks when the Tasks widget is removed and re-added', async () => {
@@ -458,7 +550,7 @@ describe('App', () => {
   });
 
   it('restores the saved widget layout and ignores unknown widgets', () => {
-    localStorage.setItem('widgets', JSON.stringify(['old-widget', 'summary']));
+    saveBoard({ widgetIds: ['old-widget', 'summary'] });
     render(<App />);
     expect(screen.getByRole('region', { name: 'Summary' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Tasks' })).not.toBeInTheDocument();
@@ -490,7 +582,7 @@ describe('App', () => {
       expect(screen.getByText('Summary removed')).toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
-      expect(JSON.parse(localStorage.getItem('widgets'))).toEqual(['summary', 'tasks']);
+      expect(savedBoard().widgetIds).toEqual(['summary', 'tasks']);
       expect(screen.getByRole('button', { name: 'Move Summary widget' })).toHaveFocus();
       expect(screen.queryByText('Summary removed')).not.toBeInTheDocument();
     });
@@ -549,22 +641,112 @@ describe('App', () => {
     });
 
     it('resets the layout, with Undo', async () => {
-      localStorage.setItem('layout', JSON.stringify({ summary: { x: 0, y: 0, w: 6, h: 6 } }));
+      saveBoard({ layout: { summary: { x: 0, y: 0, w: 6, h: 6 } } });
       render(<App />);
       await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
       await userEvent.click(screen.getByRole('button', { name: 'Reset layout' }));
-      expect(JSON.parse(localStorage.getItem('layout'))).toEqual({});
+      expect(savedBoard().layout).toEqual({});
 
       await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
-      expect(JSON.parse(localStorage.getItem('layout')).summary).toEqual({ x: 0, y: 0, w: 6, h: 6 });
+      expect(savedBoard().layout.summary).toEqual({ x: 0, y: 0, w: 6, h: 6 });
     });
   });
 
   it('offers starter layouts when the dashboard is empty', async () => {
-    localStorage.setItem('widgets', JSON.stringify([]));
+    saveBoard({ widgetIds: [] });
     render(<App />);
     await userEvent.click(screen.getByRole('button', { name: /Planner/ }));
-    expect(JSON.parse(localStorage.getItem('widgets'))).toEqual(['summary', 'tasks', 'notes']);
+    expect(savedBoard().widgetIds).toEqual(['summary', 'tasks', 'notes']);
     expect(screen.queryByText(/No widgets yet/)).not.toBeInTheDocument();
+  });
+
+  describe('boards', () => {
+    const boardTab = (name) => screen.getByRole('tab', { name });
+
+    it('adds an empty board, shows it, and keeps the first one as it was', async () => {
+      render(<App />);
+      await userEvent.click(screen.getByRole('button', { name: 'New board' }));
+      expect(boardTab('Board 2')).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByText(/Nothing on Board 2 yet/)).toBeInTheDocument();
+
+      await userEvent.click(boardTab('Home'));
+      expect(screen.getByRole('button', { name: 'Move Summary widget' })).toBeInTheDocument();
+    });
+
+    it('shares tasks between boards', async () => {
+      render(<App />);
+      await addTask('Shared');
+      await userEvent.click(screen.getByRole('button', { name: 'New board' }));
+      await userEvent.click(screen.getByRole('button', { name: /Planner/ }));
+      expect(screen.getByText('Shared')).toBeInTheDocument();
+    });
+
+    it('moves between boards with the arrow keys', async () => {
+      render(<App />);
+      await userEvent.click(screen.getByRole('button', { name: 'New board' }));
+      boardTab('Board 2').focus();
+      await userEvent.keyboard('{ArrowRight}');
+      expect(boardTab('Home')).toHaveAttribute('aria-selected', 'true');
+      expect(boardTab('Home')).toHaveFocus();
+    });
+
+    it('renames a board', async () => {
+      render(<App />);
+      await userEvent.click(screen.getByRole('button', { name: 'Rename' }));
+      const input = screen.getByRole('textbox', { name: 'Rename board Home' });
+      await userEvent.clear(input);
+      await userEvent.type(input, 'Work{Enter}');
+      expect(boardTab('Work')).toBeInTheDocument();
+    });
+
+    it('deletes a board, with Undo', async () => {
+      render(<App />);
+      await userEvent.click(screen.getByRole('button', { name: 'New board' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Delete board Board 2' }));
+      expect(screen.queryByRole('tab', { name: 'Board 2' })).not.toBeInTheDocument();
+      expect(boardTab('Home')).toHaveAttribute('aria-selected', 'true');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      expect(boardTab('Board 2')).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it('never deletes the last board', () => {
+      render(<App />);
+      expect(screen.queryByRole('button', { name: /Delete board/ })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('keyboard shortcuts', () => {
+    it('lists them all on ?', async () => {
+      render(<App />);
+      await userEvent.keyboard('?');
+      expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument();
+      await userEvent.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog', { name: 'Keyboard shortcuts' })).not.toBeInTheDocument();
+    });
+
+    it('puts the cursor in the task box on N, without typing the N', async () => {
+      render(<App />);
+      await userEvent.keyboard('n');
+      expect(screen.getByLabelText('New task')).toHaveFocus();
+      expect(screen.getByLabelText('New task')).toHaveValue('');
+    });
+
+    it('switches boards with the number keys', async () => {
+      render(<App />);
+      await userEvent.click(screen.getByRole('button', { name: 'New board' }));
+      await userEvent.click(document.body);
+      await userEvent.keyboard('1');
+      expect(screen.getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true');
+      await userEvent.keyboard(']');
+      expect(screen.getByRole('tab', { name: 'Board 2' })).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it('leaves plain keys alone while typing', async () => {
+      render(<App />);
+      await userEvent.type(screen.getByLabelText('New task'), '?1');
+      expect(screen.queryByRole('dialog', { name: 'Keyboard shortcuts' })).not.toBeInTheDocument();
+      expect(screen.getByLabelText('New task')).toHaveValue('?1');
+    });
   });
 });

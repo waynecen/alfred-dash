@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import TaskItem from './TaskItem';
@@ -11,11 +11,12 @@ function setup(overrides = {}) {
     onEdit: vi.fn(),
     onPriorityChange: vi.fn(),
     onDelete: vi.fn(),
+    onUpdate: vi.fn(),
   };
   render(
     <table>
       <tbody>
-        <TaskItem task={{ ...task, ...overrides }} {...handlers} />
+        <TaskItem task={{ ...task, ...overrides }} today="2026-11-07" {...handlers} />
       </tbody>
     </table>
   );
@@ -92,5 +93,96 @@ describe('TaskItem', () => {
       await userEvent.type(input, '   {Enter}');
       expect(onEdit).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('TaskItem due date', () => {
+  it('shows the due day relative to today and marks it overdue', () => {
+    setup({ dueDate: '2026-11-06' });
+    expect(screen.getByRole('button', { name: 'Due date: Write tests, Yesterday, overdue' })).toBeInTheDocument();
+  });
+
+  it('offers to add a date when there is none', () => {
+    setup();
+    expect(screen.getByRole('button', { name: 'Due date: Write tests, none' })).toHaveTextContent('Add date');
+  });
+
+  it('saves a picked date and clears it', () => {
+    const { onUpdate } = setup({ dueDate: '2026-11-08' });
+    const input = document.querySelector('input[type="date"]');
+    fireEvent.change(input, { target: { value: '2026-11-13' } });
+    expect(onUpdate).toHaveBeenCalledWith(1, { dueDate: '2026-11-13' });
+    fireEvent.change(input, { target: { value: '' } });
+    expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: null });
+  });
+});
+
+describe('TaskItem details', () => {
+  const openDetails = () => userEvent.click(screen.getByRole('button', { name: 'Details: Write tests' }));
+
+  it('opens and closes a detail row under the task', async () => {
+    setup();
+    const toggle = screen.getByRole('button', { name: 'Details: Write tests' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await openDetails();
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByLabelText('Notes')).toBeInTheDocument();
+    await openDetails();
+    expect(screen.queryByLabelText('Notes')).not.toBeInTheDocument();
+  });
+
+  it('saves notes when they lose focus', async () => {
+    const { onUpdate } = setup();
+    await openDetails();
+    await userEvent.type(screen.getByLabelText('Notes'), 'Cover the parser');
+    expect(onUpdate).not.toHaveBeenCalled();
+    await userEvent.tab();
+    expect(onUpdate).toHaveBeenCalledWith(1, { notes: 'Cover the parser' });
+  });
+
+  it('reads tags the way quick-add does', async () => {
+    const { onUpdate } = setup({ tags: ['home'] });
+    await openDetails();
+    const tags = screen.getByLabelText('Tags');
+    expect(tags).toHaveValue('#home');
+    await userEvent.type(tags, ', Work #home{Enter}');
+    expect(onUpdate).toHaveBeenCalledWith(1, { tags: ['home', 'work'] });
+    expect(tags).toHaveValue('#home #work');
+  });
+
+  it('sets and stops a repeat', async () => {
+    const { onUpdate } = setup();
+    await openDetails();
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Repeat' }), 'week');
+    expect(onUpdate).toHaveBeenCalledWith(1, { recurrence: { every: 'week', interval: 1 } });
+  });
+
+  it('changes how often a task repeats', async () => {
+    const { onUpdate } = setup({ recurrence: { every: 'month', interval: 1 } });
+    await openDetails();
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Repeat every how many' }), { target: { value: '3' } });
+    expect(onUpdate).toHaveBeenCalledWith(1, { recurrence: { every: 'month', interval: 3 } });
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Repeat' }), 'Never');
+    expect(onUpdate).toHaveBeenLastCalledWith(1, { recurrence: null });
+  });
+});
+
+describe('TaskItem tags and repeat', () => {
+  it('shows them under the text, and a tag filters the list to it', async () => {
+    const onFilterTag = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <TaskItem
+            task={{ ...task, tags: ['home'], recurrence: { every: 'week', interval: 2 } }}
+            today="2026-11-07"
+            onFilterTag={onFilterTag}
+          />
+        </tbody>
+      </table>
+    );
+    expect(screen.getByText('Every 2 weeks')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Show tasks tagged home' }));
+    expect(onFilterTag).toHaveBeenCalledWith('home');
   });
 });

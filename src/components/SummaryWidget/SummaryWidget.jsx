@@ -1,13 +1,20 @@
+import CompletionChart from './CompletionChart';
+import useToday from '../../hooks/useToday';
+import { countDue } from '../../utils/countTasks';
+import { completedThisWeek, completionsByDay } from '../../utils/completions';
 import './SummaryWidget.css';
 
 const PRIORITIES = ['high', 'medium', 'low'];
 
 // The content of the Summary widget. The card and title come from <Widget>.
+//   tasks: the whole list, for what is due and what got done lately; without it those are left out
 function SummaryWidget({
   active,
   completed,
   openByPriority = { high: 0, medium: 0, low: 0 },
+  tasks,
 }) {
+  const today = useToday();
   const total = active + completed;
   // Avoid dividing by zero when there are no tasks yet.
   const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
@@ -24,6 +31,7 @@ function SummaryWidget({
           <dd>{completed}</dd>
         </div>
       </dl>
+      {tasks && <DueFigures tasks={tasks} today={today} />}
       <ul className="summary-priorities" aria-label="Open tasks by priority">
         {PRIORITIES.map((priority) => (
           <li
@@ -54,7 +62,29 @@ function SummaryWidget({
           {completed} of {total} done ({percent}%)
         </p>
       </div>
+      {tasks && <CompletionChart days={completionsByDay(tasks, today)} />}
     </div>
+  );
+}
+
+// Three smaller figures under the main two: what needs doing soon, and what got done this week.
+// Overdue is set in bold when there is any, by weight rather than colour (DESIGN.md).
+function DueFigures({ tasks, today }) {
+  const due = countDue(tasks, today);
+  const figures = [
+    { label: 'Overdue', value: due.overdue, urgent: due.overdue > 0 },
+    { label: 'Due today', value: due.today },
+    { label: 'Done this week', value: completedThisWeek(tasks, today) },
+  ];
+  return (
+    <dl className="summary-figures">
+      {figures.map((figure) => (
+        <div key={figure.label} className="summary-figure" data-urgent={figure.urgent || undefined}>
+          <dt>{figure.label}</dt>
+          <dd>{figure.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 

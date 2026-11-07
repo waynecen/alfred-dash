@@ -93,6 +93,146 @@
   white-space: nowrap;
 }
 
+/* Three smaller ruled figures: overdue, due today, done this week. */
+.summary-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 0.75rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.summary-figure {
+  display: flex;
+  flex-direction: column-reverse; /* the number sits under its label; the dt still comes first */
+  justify-content: flex-end;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.25rem 0.5rem 0.5rem 0;
+}
+
+.summary-figure + .summary-figure {
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--rule-soft);
+}
+
+.summary-figure dt {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.summary-figure dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+/* Something is late: the number turns bold, not red. */
+.summary-figure[data-urgent] dd {
+  font-weight: 700;
+}
+
+/* The last seven days: a caption line with the readout, then seven columns on one baseline. */
+.completion {
+  margin: 0.75rem 0 0;
+}
+
+.completion-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.completion-title {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.8;
+  text-transform: uppercase;
+}
+
+.completion-readout {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.completion-chart {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  height: 4.5rem;
+}
+
+.completion-chart:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.completion-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+/* The baseline runs under every column, so an empty day still reads as zero. */
+.completion-track {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Thin, square-ended columns (DESIGN.md has no rounded corners), capped at 24px, the rest air. */
+.completion-bar {
+  width: min(24px, 60%);
+  min-height: 2px;
+  background: var(--muted);
+}
+
+.completion-col[data-today] .completion-bar,
+.completion-col[data-active] .completion-bar {
+  background: var(--text);
+}
+
+.completion-day {
+  padding-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.completion-col[data-today] .completion-day,
+.completion-col[data-active] .completion-day {
+  color: var(--text);
+}
+
+.completion-col[data-active] .completion-day {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.completion .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .summary-progress-fill {
     transition: none;

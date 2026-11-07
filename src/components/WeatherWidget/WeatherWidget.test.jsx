@@ -70,6 +70,16 @@ async function addPlace(search, pick) {
 describe('WeatherWidget', () => {
   afterEach(() => vi.restoreAllMocks());
 
+  it('asks for the forecast in the unit chosen in Settings', async () => {
+    localStorage.setItem('settings', JSON.stringify({ temperatureUnit: 'fahrenheit' }));
+    const fetch = mockApi();
+    render(<WeatherWidget />);
+    await addPlace('lon', 'London');
+    await screen.findByRole('region', { name: 'Current weather in London' });
+    const forecastUrl = fetch.mock.calls.map(([url]) => url).find((url) => url.includes('forecast'));
+    expect(new URL(forecastUrl).searchParams.get('temperature_unit')).toBe('fahrenheit');
+  });
+
   it('asks for a city when no places are saved', () => {
     mockApi();
     render(<WeatherWidget />);

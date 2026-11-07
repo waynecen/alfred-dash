@@ -14,13 +14,14 @@ export const WIDGETS = {
   summary: {
     title: 'Summary',
     category: 'Productivity',
-    defaultSize: { w: 4, h: 4 },
-    description: 'Active and completed counts, open tasks by priority, and a progress bar',
-    render: ({ counts }) => (
+    defaultSize: { w: 4, h: 8 },
+    description: 'Open and done counts, what is overdue or due today, and the last week of progress',
+    render: ({ counts, tasks }) => (
       <SummaryWidget
         active={counts.active}
         completed={counts.completed}
         openByPriority={counts.openByPriority}
+        tasks={tasks}
       />
     ),
   },
@@ -36,8 +37,12 @@ export const WIDGETS = {
         onToggle={actions.toggleTask}
         onEdit={actions.editTask}
         onPriorityChange={actions.changePriority}
+        onUpdate={actions.updateTask}
         onDelete={actions.deleteTask}
         onReorder={actions.reorderTasks}
+        onCompleteMany={actions.completeTasks}
+        onUpdateMany={actions.updateTasks}
+        onDeleteMany={actions.deleteTasks}
       />
     ),
   },
@@ -66,7 +71,7 @@ export const WIDGETS = {
     title: 'Task Assistant',
     category: 'AI',
     description: 'Break a task into steps, or turn your notes into tasks',
-    defaultSize: { w: 4, h: 7 },
+    defaultSize: { w: 4, h: 8 },
     render: ({ tasks, notes, actions }) => (
       <TaskAssistantWidget
         tasks={tasks}
@@ -78,27 +83,27 @@ export const WIDGETS = {
   },
 };
 
-// Shown the first time the dashboard opens.
-export const DEFAULT_WIDGETS = ['summary', 'tasks'];
+// Shown the first time the dashboard opens (defined with the boards, which start with them).
+export { DEFAULT_WIDGETS } from '../data/boards';
 
 // Ready-made sets offered when the dashboard is empty, so nobody starts from a blank page.
 export const STARTER_LAYOUTS = [
   {
     id: 'planner',
     title: 'Planner',
-    description: 'Tasks, a summary and notes',
+    description: 'Summary, tasks and notes',
     widgets: ['summary', 'tasks', 'notes'],
   },
   {
     id: 'daily',
     title: 'Daily',
-    description: 'Weather, tasks and a summary',
+    description: 'Weather, summary and tasks',
     widgets: ['weather', 'summary', 'tasks'],
   },
   {
     id: 'minimal',
     title: 'Minimal',
-    description: 'Just your tasks',
+    description: 'Tasks only',
     widgets: ['tasks'],
   },
 ];

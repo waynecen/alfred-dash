@@ -39,11 +39,68 @@ describe('buildCommands', () => {
     const addTask = commands.find((command) => command.id === 'add-task');
     expect(addTask.label).toBe('Add task “Call the bank”');
     addTask.run();
-    expect(actions.addTask).toHaveBeenCalledWith('Call the bank', 'medium');
+    expect(actions.addTask).toHaveBeenCalledWith('Call the bank', 'medium', {
+      dueDate: null,
+      tags: [],
+      recurrence: null,
+    });
+  });
+
+  it('reads quick-add extras out of the typed task', () => {
+    const { commands, actions } = build('Call the bank !high #money');
+    const addTask = commands.find((command) => command.id === 'add-task');
+    expect(addTask.label).toBe('Add task “Call the bank” · High · #money');
+    addTask.run();
+    expect(actions.addTask).toHaveBeenCalledWith('Call the bank', 'high', {
+      dueDate: null,
+      tags: ['money'],
+      recurrence: null,
+    });
   });
 
   it('has no add-task command without a query', () => {
     expect(build().commands.some((command) => command.id === 'add-task')).toBe(false);
+  });
+});
+
+describe('buildCommands for boards', () => {
+  const boards = [
+    { id: 'home', name: 'Home' },
+    { id: 'work', name: 'Work' },
+  ];
+
+  function buildWithBoards(query = '') {
+    const actions = {
+      addWidget: vi.fn(),
+      removeWidget: vi.fn(),
+      focusWidget: vi.fn(),
+      addTask: vi.fn(),
+      switchBoard: vi.fn(),
+      addBoard: vi.fn(),
+      renameBoard: vi.fn(),
+      deleteBoard: vi.fn(),
+      moveWidget: vi.fn(),
+    };
+    const commands = buildCommands({ widgets, shownIds: ['summary'], query, actions, boards, activeBoardId: 'home' });
+    const find = (label) => commands.find((command) => command.label === label);
+    return { commands, actions, find };
+  }
+
+  it('switches to, moves widgets to, and deletes boards', () => {
+    const { actions, find } = buildWithBoards();
+    find('Switch to Work').run();
+    expect(actions.switchBoard).toHaveBeenCalledWith('work');
+    find('Move Summary to Work').run();
+    expect(actions.moveWidget).toHaveBeenCalledWith('summary', 'work');
+    expect(find('Switch to Home')).toBeUndefined(); // already there
+    expect(find('Delete board “Home”')).toBeDefined();
+  });
+
+  it('names a new board or renames this one from what was typed', () => {
+    buildWithBoards('new board Errands').find('New board “Errands”').run();
+    const { actions, find } = buildWithBoards('rename to Personal');
+    find('Rename this board to “Personal”').run();
+    expect(actions.renameBoard).toHaveBeenCalledWith('Personal');
   });
 });
 

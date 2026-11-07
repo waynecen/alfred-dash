@@ -61,3 +61,17 @@ describe('sortTasks', () => {
     expect(ids(tasks)).toEqual(before);
   });
 });
+
+describe('sortTasks by due date', () => {
+  const dated = [
+    { id: 1, text: 'a', dueDate: '2026-11-20' },
+    { id: 2, text: 'b', dueDate: null },
+    { id: 3, text: 'c', dueDate: '2026-11-08' },
+    { id: 4, text: 'd' },
+  ];
+
+  it('puts the soonest first, then the latest first, with undated tasks last both ways', () => {
+    expect(ids(sortTasks(dated, { key: 'due', direction: 'asc' }))).toEqual([3, 1, 2, 4]);
+    expect(ids(sortTasks(dated, { key: 'due', direction: 'desc' }))).toEqual([1, 3, 2, 4]);
+  });
+});

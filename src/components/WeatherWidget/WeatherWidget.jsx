@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import useSettings from '../../hooks/useSettings';
+import { hourCycle } from '../../data/settings';
 import { compassPoint, describeWeather, fetchForecast, searchPlaces, uvLevel } from '../../utils/weather';
 import WidgetState from '../WidgetState/WidgetState';
 import WeatherIcon from './WeatherIcon';
@@ -9,9 +11,13 @@ const round = (value) => Math.round(value);
 const placeLabel = (place) => [place.region, place.country].filter(Boolean).join(', ');
 const dayName = (date, index) =>
   index === 0 ? 'Today' : new Date(`${date}T12:00:00`).toLocaleDateString('en', { weekday: 'short' });
-const hourName = (time, index) =>
-  index === 0 ? 'Now' : new Date(time).toLocaleTimeString('en', { hour: 'numeric' }).replace(' ', '');
-const clock = (time) => new Date(time).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit' });
+// timeFormat: from Settings ('auto', '12h' or '24h'); 'auto' keeps the compact "3PM" style.
+const hourName = (time, index, timeFormat) =>
+  index === 0
+    ? 'Now'
+    : new Date(time).toLocaleTimeString('en', { hour: 'numeric', ...hourCycle(timeFormat) }).replace(' ', '');
+const clock = (time, timeFormat) =>
+  new Date(time).toLocaleTimeString('en', { hour: 'numeric', minute: '2-digit', ...hourCycle(timeFormat) });
 
 // Saved places, one shown at a time, styled after Apple's Weather app. The widget shows more as it
 // grows: just the temperature when small, then the hourly forecast, the 10-day forecast and the
@@ -151,17 +157,19 @@ function Forecast({ place }) {
   const [forecast, setForecast] = useState(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0); // bumped by Retry to fetch again
+  const [{ temperatureUnit, timeFormat }] = useSettings();
 
+  // Fetched again when the unit changes: the forecast comes in the unit asked for.
   useEffect(() => {
     let ignore = false;
     setError(false);
-    fetchForecast(place)
+    fetchForecast(place, { temperatureUnit })
       .then((data) => !ignore && setForecast(data))
       .catch(() => !ignore && setError(true));
     return () => {
       ignore = true;
     };
-  }, [place, attempt]);
+  }, [place, attempt, temperatureUnit]);
 
   if (error) {
     return (
@@ -197,7 +205,7 @@ function Forecast({ place }) {
             const hourSky = describeWeather(hour.code);
             return (
               <li key={hour.time}>
-                <span className="wx-hour">{hourName(hour.time, index)}</span>
+                <span className="wx-hour">{hourName(hour.time, index, timeFormat)}</span>
                 <span className="wx-hour-icon" title={hourSky.label}>
                   <WeatherIcon kind={hourSky.kind} isDay={hour.isDay} size={22} />
                   {hour.rain >= 20 && <span className="wx-chance">{hour.rain}%</span>}
@@ -216,7 +224,7 @@ function Forecast({ place }) {
 
       <section className="wx-details" aria-label="Details">
         <Tile label="Feels like" value={`${round(current.feelsLike)}°`}>
-          {feelsLikeNote(current)}
+          {feelsLikeNote(current, temperatureUnit)}
         </Tile>
         <Tile label="Humidity" value={`${round(current.humidity)}%`}>
           {today.rain !== null && `${today.rain}% chance of rain today`}
@@ -229,8 +237,8 @@ function Forecast({ place }) {
             {uvLevel(today.uv)}
           </Tile>
         )}
-        <Tile label="Sunrise" value={clock(today.sunrise)}>
-          Sunset: {clock(today.sunset)}
+        <Tile label="Sunrise" value={clock(today.sunrise, timeFormat)}>
+          Sunset: {clock(today.sunset, timeFormat)}
         </Tile>
         <Tile label="Pressure" value={`${round(current.pressure)} hPa`}>
           {current.precipitation > 0 ? `${current.precipitation} mm falling now` : 'No rain right now'}
@@ -282,10 +290,12 @@ function Tile({ label, value, children }) {
   );
 }
 
-function feelsLikeNote({ temperature, feelsLike }) {
+// unit: the forecast's temperature unit; 2 °C is about 4 °F.
+function feelsLikeNote({ temperature, feelsLike }, unit) {
   const difference = Math.round(feelsLike - temperature);
-  if (difference <= -2) return 'Wind is making it feel cooler';
-  if (difference >= 2) return 'Humidity is making it feel warmer';
+  const noticeable = unit === 'fahrenheit' ? 4 : 2;
+  if (difference <= -noticeable) return 'Wind is making it feel cooler';
+  if (difference >= noticeable) return 'Humidity is making it feel warmer';
   return 'Similar to the actual temperature';
 }
 

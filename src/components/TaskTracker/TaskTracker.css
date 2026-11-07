@@ -1,3 +1,8 @@
+/* The widget measures itself, so the detail row can fit a narrow widget on a wide screen. */
+.task-tracker {
+  container: tasks / inline-size;
+}
+
 /* Form */
 .task-form label {
   display: block;
@@ -54,10 +59,75 @@
   color: var(--text);
 }
 
-/* Filter: a row of ruled tabs; the chosen one is filled with ink. */
+/* What quick-add read from the text, as label tags under the input. Empty takes no room,
+   but stays on the page so screen readers announce what appears. */
+.task-form-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.task-form-preview:empty {
+  margin: 0;
+}
+
+.task-form-chip {
+  padding-bottom: 1px;
+  border-bottom: 1px solid currentColor;
+}
+
+/* Filters: two groups of ruled tabs (status, then due date), the chosen one filled with ink, and
+   the tag picker and search at the far end. Everything wraps on a narrow widget. */
+.task-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 1rem;
+}
+
 .task-filter {
   display: flex;
-  margin: 0 0 1rem;
+}
+
+.task-filter-find {
+  display: flex;
+  flex: 1 1 16rem;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.task-filter-find > * + * {
+  margin-left: -1px;
+}
+
+.task-filter-search,
+.task-filter-tag {
+  min-width: 0;
+  height: 1.85rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.task-filter-tag {
+  flex: none; /* the tag names stay readable; the search box gives way instead */
+}
+
+.task-filter-search {
+  flex: 0 1 12rem;
+}
+
+.task-filter-search::placeholder {
+  color: var(--muted);
 }
 
 .task-filter button {
@@ -124,6 +194,11 @@
   padding-left: calc(1rem + 1px);
 }
 
+/* Likewise the Due label, over the date button's padding and border. */
+.task-table th.col-due {
+  padding-left: calc(0.8rem + 1px);
+}
+
 /* Label and sort button on one centred line, so headings with and without a button match. */
 .th-content {
   display: inline-flex;
@@ -151,12 +226,25 @@
   width: 7rem;
 }
 
+.col-due {
+  width: 6.5rem;
+}
+
 .col-created {
   width: 6rem;
 }
 
+/* A narrow Tasks widget (on any screen) drops Created, the column needed least, so the text and
+   the Due column keep their room. */
+@container tasks (max-width: 680px) {
+  .col-created {
+    display: none;
+  }
+}
+
 .col-actions {
-  width: 4.5rem;
+  width: 5.5rem;
+  white-space: nowrap;
   text-align: right !important;
 }
 
@@ -181,7 +269,7 @@
 }
 
 .task-row:hover td {
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  background-color: color-mix(in srgb, var(--surface) 60%, transparent);
 }
 
 .task-row input[type='checkbox'] {
@@ -203,6 +291,35 @@
   background: transparent;
   color: var(--text);
   border-color: var(--border);
+}
+
+/* Tags and repeat, under the text and indented to start where it does. */
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.6rem;
+  padding: 0 calc(0.5rem + 1px);
+  font-size: 0.7rem;
+}
+
+.task-tag {
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.task-tag:hover {
+  background: transparent;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.task-repeat {
+  color: var(--muted);
 }
 
 .task-row.completed .task-text {
@@ -291,13 +408,19 @@
     margin-top: -1px;
   }
 
+  .task-filter,
+  .task-filter-find {
+    flex: 1 1 100%;
+  }
+
   .task-filter button {
     flex: 1;
   }
 
-  .col-created {
-    display: none;
+  .task-filter-search {
+    flex: 1;
   }
+
 }
 
 /* Drag handle for reordering. */
@@ -331,4 +454,320 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* Due date: a label that opens the native picker. The picker's own input sits under the label,
+   invisible, so the picker opens where the label is. */
+.due-date {
+  position: relative;
+  display: inline-block;
+}
+
+.due-date-button {
+  padding: 0.2rem 0.3rem;
+  border-color: transparent;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.due-date-button:hover {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* Weight, not colour: overdue is bold and underlined, today is bold, later is plain ink. */
+.due-overdue {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.due-today {
+  font-weight: 700;
+}
+
+.due-none,
+.due-done {
+  color: var(--muted);
+}
+
+/* "Add date" only shows on the row being pointed at or worked in, so empty rows stay quiet. */
+.due-none {
+  opacity: 0;
+}
+
+.task-row:hover .due-none,
+.due-none:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .due-none {
+    opacity: 1;
+  }
+}
+
+.due-date-input {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Details: the chevron beside Delete opens a row under the task. */
+.details-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem;
+  border-color: transparent;
+  color: var(--icon-subtle);
+}
+
+.details-button:hover {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.details-button svg {
+  transition: transform 0.15s ease;
+}
+
+.details-button[aria-expanded='true'] {
+  color: var(--text);
+}
+
+.details-button[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+/* The open task and its details read as one block: no rule between them, a Sand ground. */
+.task-row.expanded td {
+  border-bottom-color: transparent;
+}
+
+.task-row.expanded td,
+.task-detail-row td {
+  background-color: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.task-detail-row td {
+  padding: 0.25rem 0.5rem 1rem calc(2rem + 3.5rem + 1rem);
+}
+
+.task-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 16rem);
+  gap: 1rem var(--gutter);
+}
+
+.task-details-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-details-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.task-details-field > label,
+.task-details-field > legend {
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* A legend ignores the fieldset's gap, so it brings its own. */
+.task-details-field > legend {
+  margin-bottom: 0.25rem;
+}
+
+.task-details input,
+.task-details select,
+.task-details textarea {
+  min-width: 0;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.task-details textarea {
+  flex: 1;
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.task-details-repeat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.task-details-repeat-row input {
+  width: 4rem;
+}
+
+.task-details-repeat-row select {
+  flex: 1;
+}
+
+/* A narrow Tasks widget: the fields stack under the notes, and the details start at the row's edge. */
+@container tasks (max-width: 640px) {
+  .task-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .task-detail-row td {
+    padding-left: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .details-button svg {
+    transition: none;
+  }
+}
+
+/* Steps: indented under their task behind a short hairline, set a size down. */
+.task-row.subtask .col-description {
+  padding-left: 1.75rem;
+  background-image: linear-gradient(var(--rule-soft), var(--rule-soft));
+  background-position: 1rem 0;
+  background-repeat: no-repeat;
+  background-size: 1px 100%;
+}
+
+.task-row.subtask .task-text {
+  font-size: 0.9rem;
+}
+
+/* No rule between a task and its steps: one hairline closes the whole group. */
+.task-row:has(+ .task-row.subtask) td,
+.task-detail-row:has(+ .task-row.subtask) td {
+  border-bottom-color: transparent;
+}
+
+.task-steps {
+  color: var(--text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-details-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* Selected for a bulk action: a Sand ground and an ink bar down the left edge. */
+.task-row.selected td {
+  background-color: var(--surface);
+}
+
+.task-row.selected td:first-child {
+  box-shadow: inset 3px 0 0 var(--text);
+}
+
+/* Under the table: Clear completed and the hint, or the bulk actions for the selection. */
+.task-footer {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.task-footer-idle,
+.task-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.task-footer-hint {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.task-footer-clear {
+  margin-left: auto;
+}
+
+.task-footer button,
+.task-bulk button {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.task-bulk-count {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+/* The due choices share their edges, like the filter tabs. */
+.task-bulk-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.task-bulk-group button + button {
+  margin-left: -1px;
+}
+
+.task-bulk-label {
+  margin-right: 0.5rem;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Red only when about to act, as with the row's delete button. */
+.task-bulk-delete:hover,
+.task-bulk-delete:focus-visible {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg);
+}
+
+.task-bulk-clear {
+  margin-left: auto;
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.task-bulk-clear:hover {
+  background: transparent;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Phones have no Shift or Ctrl key to click with. */
+@media (hover: none) {
+  .task-footer-hint {
+    display: none;
+  }
 }

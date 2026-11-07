@@ -20,9 +20,11 @@ export async function searchPlaces(query) {
 }
 
 // Current conditions, the next 24 hours and the next 10 days for a place. Times are the place's
-// local time, as "2026-11-03T14:00" strings.
-export async function fetchForecast({ latitude, longitude }) {
+// local time, as "2026-11-03T14:00" strings. Temperatures are in temperatureUnit
+// ('celsius' or 'fahrenheit').
+export async function fetchForecast({ latitude, longitude }, { temperatureUnit = 'celsius' } = {}) {
   const params = new URLSearchParams({
+    temperature_unit: temperatureUnit === 'fahrenheit' ? 'fahrenheit' : 'celsius',
     latitude: String(latitude),
     longitude: String(longitude),
     current:

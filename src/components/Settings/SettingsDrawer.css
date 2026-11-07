@@ -106,6 +106,33 @@
   color: var(--bg);
 }
 
+/* A row of buttons that wraps on a narrow drawer. */
+.drawer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* A question waiting for a yes or no, ruled off above and below like the sections. */
+.drawer-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.drawer-confirm p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.drawer-error {
+  color: var(--danger);
+}
+
 @keyframes drawer-in {
   from {
     transform: translateX(100%);

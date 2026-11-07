@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import useSettings from '../../hooks/useSettings';
+import { hourCycle, temperatureSymbol } from '../../data/settings';
 import { useAI } from '../../hooks/useAI';
 import WidgetState from '../WidgetState/WidgetState';
 import { formatOpenTasks } from '../../utils/buildTaskContext';
@@ -16,39 +18,28 @@ Also today: other tasks worth fitting in, if any.
 Heads-up: anything from the notes or the weather worth knowing (an umbrella, a deadline). Leave this section out if there is nothing.
 Use only the tasks and notes given; never invent tasks. If there are no open tasks, say so in a friendly line and suggest using the time well.`;
 
-// The place the Weather widget is showing, read straight from storage at click time so it
-// matches whatever the Weather widget last saved.
-function readActivePlace() {
-  try {
-    const places = JSON.parse(localStorage.getItem('weatherPlaces') ?? '[]');
-    const activeId = JSON.parse(localStorage.getItem('weatherActive') ?? 'null');
-    return places.find((place) => place.id === activeId) ?? places[0] ?? null;
-  } catch {
-    return null;
-  }
-}
-
-// One line about today's weather, or '' if there is no place or the forecast can't load.
-async function describeToday() {
-  const place = readActivePlace();
+// One line about today's weather in place, in the user's unit, or '' if there is no place or the
+// forecast can't load.
+async function describeToday(place, temperatureUnit) {
   if (!place) return '';
   try {
-    const { current, days } = await fetchForecast(place);
+    const { current, days } = await fetchForecast(place, { temperatureUnit });
     const today = days[0];
+    const unit = temperatureSymbol(temperatureUnit);
     const rain = today?.rain != null ? `, ${today.rain}% chance of rain` : '';
     return (
-      `Weather in ${place.name}: ${describeWeather(current.code).label}, ${Math.round(current.temperature)}°C now` +
-      (today ? `; today ${Math.round(today.min)}–${Math.round(today.max)}°C${rain}.` : '.')
+      `Weather in ${place.name}: ${describeWeather(current.code).label}, ${Math.round(current.temperature)}${unit} now` +
+      (today ? `; today ${Math.round(today.min)}–${Math.round(today.max)}${unit}${rain}.` : '.')
     );
   } catch {
     return '';
   }
 }
 
-function buildPrompt({ tasks, notes, weather }) {
+function buildPrompt({ tasks, notes, weather, timeFormat }) {
   const now = new Date();
   const date = now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
-  const time = now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const time = now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', ...hourCycle(timeFormat) });
   const trimmedNotes = notes.trim().slice(0, MAX_NOTES_CHARS);
   return [
     `It is ${date}, ${time}.`,
@@ -67,6 +58,11 @@ function DailyBriefWidget({ tasks, notes }) {
   const ai = useAI();
   const [saved, setSaved] = useLocalStorage('dailyBrief', null); // { text, at }
   const [gathering, setGathering] = useState(false);
+  // The place the Weather widget is showing; shared storage keeps the two in step.
+  const [places] = useLocalStorage('weatherPlaces', []);
+  const [activeId] = useLocalStorage('weatherActive', null);
+  const place = places.find((p) => p.id === activeId) ?? places[0] ?? null;
+  const [{ temperatureUnit, timeFormat }] = useSettings();
 
   // Keep a finished brief; a stopped or failed one is not worth keeping.
   useEffect(() => {
@@ -75,11 +71,11 @@ function DailyBriefWidget({ tasks, notes }) {
 
   async function brief() {
     setGathering(true);
-    const weather = await describeToday();
+    const weather = await describeToday(place, temperatureUnit);
     setGathering(false);
     ai.send({
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: buildPrompt({ tasks, notes, weather }) }],
+      messages: [{ role: 'user', content: buildPrompt({ tasks, notes, weather, timeFormat }) }],
       effort: 'low',
     });
   }
@@ -112,7 +108,11 @@ function DailyBriefWidget({ tasks, notes }) {
   if (ai.busy) meta = 'Writing…';
   else if (ai.status === 'stopped') meta = 'Stopped';
   else if (saved) {
-    const time = new Date(saved.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    const time = new Date(saved.at).toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      ...hourCycle(timeFormat),
+    });
     meta = isToday(saved.at)
       ? `Generated at ${time}`
       : `From ${new Date(saved.at).toLocaleDateString()}. Regenerate for today.`;
