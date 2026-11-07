@@ -7,6 +7,7 @@ import TaskAssistantWidget from '../components/TaskAssistantWidget/TaskAssistant
 import CalendarWidget from '../components/CalendarWidget/CalendarWidget';
 import FocusWidget from '../components/FocusWidget/FocusWidget';
 import ClockWidget from '../components/ClockWidget/ClockWidget';
+import TodayWidget from '../components/TodayWidget/TodayWidget';
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list
@@ -47,6 +48,15 @@ export const WIDGETS = {
         onUpdateMany={actions.updateTasks}
         onDeleteMany={actions.deleteTasks}
       />
+    ),
+  },
+  today: {
+    title: 'Today',
+    category: 'Planning',
+    description: 'Today in one column: events, what is due, focus, and a line to add to it',
+    defaultSize: { w: 4, h: 10 },
+    render: ({ tasks, events, focus, actions }) => (
+      <TodayWidget tasks={tasks} events={events} focus={focus} actions={actions} />
     ),
   },
   calendar: {
@@ -121,6 +131,12 @@ export { DEFAULT_WIDGETS } from '../data/boards';
 
 // Ready-made sets offered when the dashboard is empty, so nobody starts from a blank page.
 export const STARTER_LAYOUTS = [
+  {
+    id: 'today',
+    title: 'Today',
+    description: 'Today, calendar and focus timer',
+    widgets: ['today', 'calendar', 'focus'],
+  },
   {
     id: 'planner',
     title: 'Planner',

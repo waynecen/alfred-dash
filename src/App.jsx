@@ -118,6 +118,18 @@ function App() {
     input.scrollIntoView?.({ block: 'nearest' });
   }
 
+  // Shows the Today widget: on this board if it is here, otherwise on the first board that has it.
+  // With none anywhere, offers to add one here.
+  function goToToday() {
+    const home = widgetIds.includes('today') ? board : boards.boards.find((b) => b.widgetIds.includes('today'));
+    if (home) {
+      if (home.id !== board.id) boards.switchTo(home.id);
+      focusWidget('today');
+      return;
+    }
+    notify({ message: 'No board has the Today widget yet.', actionLabel: 'Add it here', onAction: () => addWidget('today') });
+  }
+
   // The keys are listed for people in components/ShortcutsDialog; keep the two in step.
   useShortcuts([
     {
@@ -130,6 +142,7 @@ function App() {
     },
     { key: '/', run: () => setPaletteOpen(true) },
     { key: 'n', run: startNewTask },
+    { key: 't', run: goToToday },
     { key: 'f', run: focusActions.toggle },
     { key: '?', run: () => setShortcutsOpen(true) },
     { key: '[', run: () => stepBoard(-1) },
