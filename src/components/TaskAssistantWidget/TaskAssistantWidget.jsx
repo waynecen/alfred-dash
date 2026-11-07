@@ -36,7 +36,11 @@ function TaskAssistantWidget({ tasks, notes, onAddTasks, notify }) {
   // null until a reply is parsed; then the suggestions not yet added or dismissed.
   const [suggestions, setSuggestions] = useState(null);
 
-  const openTasks = tasks.filter((task) => !task.completed);
+  // Steps go one level deep, so only tasks that aren't steps can be broken down.
+  const openTasks = tasks.filter((task) => !task.completed && task.parentId == null);
+  // The task the suggestions on screen were made for: they are added as its steps, even if the
+  // picker has moved on since.
+  const [brokenDownId, setBrokenDownId] = useState(null);
   // Fall back to the first open task if nothing is picked or the picked one is gone or done.
   const target = openTasks.find((task) => task.id === taskId) ?? openTasks[0];
   const hasNotes = notes.trim() !== '';
@@ -63,15 +67,23 @@ function TaskAssistantWidget({ tasks, notes, onAddTasks, notify }) {
       mode === 'breakdown'
         ? `Task to break down: [${target.priority ?? 'medium'}] ${target.text}\n\nTasks already on the list:\n${taskList}`
         : `Notes:\n${notes.trim().slice(0, MAX_NOTES_CHARS)}\n\nTasks already on the list:\n${taskList}`;
+    setBrokenDownId(mode === 'breakdown' ? target.id : null);
     ai.send({ system: PROMPTS[mode], messages: [{ role: 'user', content }], effort: 'medium' });
   }
 
   function add(items) {
-    onAddTasks(items);
+    // A breakdown's steps go under their task, unless it was deleted meanwhile.
+    const parent = mode === 'breakdown' ? tasks.find((task) => task.id === brokenDownId) : null;
+    onAddTasks(parent ? items.map((item) => ({ ...item, parentId: parent.id })) : items);
     const added = new Set(items);
     const rest = suggestions.filter((item) => !added.has(item));
     setSuggestions(rest.length > 0 ? rest : null);
-    notify({ message: items.length === 1 ? `Added “${items[0].text}”` : `Added ${items.length} tasks` });
+    const what = parent
+      ? `${items.length === 1 ? 'a step' : `${items.length} steps`} to “${parent.text}”`
+      : items.length === 1
+        ? `“${items[0].text}”`
+        : `${items.length} tasks`;
+    notify({ message: `Added ${what}` });
   }
 
   function dismiss(item) {
