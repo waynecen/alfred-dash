@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
+import useTasks from './hooks/useTasks';
 import { useAIHealth } from './hooks/useAI';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -39,8 +40,9 @@ function useSystemDark() {
 }
 
 function App() {
+  const { toasts, notify, dismiss } = useToasts();
   // The tasks live here, so every widget shares one source of truth.
-  const [tasks, setTasks] = useLocalStorage('tasks', []);
+  const { tasks, actions: taskActions } = useTasks(notify);
   // Which widgets are on the dashboard, in order. Saved so the layout survives a reload.
   const [widgetIds, setWidgetIds] = useLocalStorage('widgets', DEFAULT_WIDGETS);
   // Where each widget sits on the grid and how big it is: { [id]: { x, y, w, h } }.
@@ -58,7 +60,6 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
-  const { toasts, notify, dismiss } = useToasts();
   // Checked each time Settings opens, so the AI status there is current.
   const aiHealth = useAIHealth(settingsOpen);
 
@@ -93,68 +94,6 @@ function App() {
 
   function focusWidget(id) {
     setFocusRequest((request) => ({ id, n: (request?.n ?? 0) + 1 }));
-  }
-
-  // Adds several tasks at once: items is [{ text, priority }]. A functional update, so tasks
-  // added in the same click (or by another widget) are never lost.
-  function addTasks(items) {
-    if (items.length === 0) return;
-    const now = Date.now();
-    setTasks((current) => {
-      // Ids are timestamps; step past any already taken so a batch never repeats one.
-      let nextId = Math.max(now, ...current.map((task) => task.id + 1));
-      const newTasks = items.map(({ text, priority }) => ({
-        id: nextId++,
-        text,
-        priority, // 'low' | 'medium' | 'high'
-        completed: false,
-        createdAt: now, // when the task was created, in milliseconds
-      }));
-      // Never change state directly: build a new array instead.
-      return [...current, ...newTasks];
-    });
-  }
-
-  function addTask(text, priority) {
-    addTasks([{ text, priority }]);
-  }
-
-  function toggleTask(id) {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  }
-
-  function editTask(id, newText) {
-    setTasks(
-      tasks.map((task) => (task.id === id ? { ...task, text: newText } : task))
-    );
-  }
-
-  function changePriority(id, priority) {
-    setTasks(
-      tasks.map((task) => (task.id === id ? { ...task, priority } : task))
-    );
-  }
-
-  function deleteTask(id) {
-    const index = tasks.findIndex((task) => task.id === id);
-    if (index === -1) return;
-    const task = tasks[index];
-    setTasks(tasks.filter((t) => t.id !== id));
-    notify({
-      message: `Deleted “${task.text}”`,
-      actionLabel: 'Undo',
-      // Functional updates, so anything done since the delete is kept.
-      onAction: () =>
-        setTasks((current) => (current.some((t) => t.id === id) ? current : insertAt(current, index, task))),
-    });
-  }
-
-  function reorderTasks(newTasks) {
-    setTasks(newTasks);
   }
 
   function addWidget(id) {
@@ -209,7 +148,7 @@ function App() {
     tasks,
     notes,
     counts: countTasks(tasks),
-    actions: { addTask, addTasks, toggleTask, editTask, changePriority, deleteTask, reorderTasks, setNotes, notify },
+    actions: { ...taskActions, setNotes, notify },
   };
 
   const getCommands = (query) =>
@@ -222,7 +161,7 @@ function App() {
         addWidget,
         removeWidget,
         focusWidget,
-        addTask,
+        addTask: taskActions.addTask,
         toggleTheme,
         resetLayout,
         openSettings: () => setSettingsOpen(true),
