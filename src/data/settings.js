@@ -2,9 +2,11 @@
 // is missing here falls back to its default, so new settings can be added freely.
 //   temperatureUnit: 'celsius' | 'fahrenheit'
 //   timeFormat: 'auto' (the browser's language decides) | '12h' | '24h'
+//   weekStart: 1 (Monday) | 0 (Sunday): where weeks begin in the calendar, "next week" and "this week"
 export const DEFAULT_SETTINGS = {
   temperatureUnit: 'celsius',
   timeFormat: 'auto',
+  weekStart: 1,
 };
 
 // The hour options for toLocaleTimeString / Intl.DateTimeFormat that follow timeFormat.

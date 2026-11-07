@@ -22,6 +22,11 @@ const TIME_FORMATS = [
   { value: '24h', label: '24-hour (15:00)' },
 ];
 
+const WEEK_STARTS = [
+  { value: 1, label: 'Monday' },
+  { value: 0, label: 'Sunday' },
+];
+
 // What the AI section says for each useAIHealth status.
 const AI_STATUS = {
   checking: { label: 'Checking…', note: 'Looking for the local AI proxy.' },
@@ -119,6 +124,22 @@ function SettingsDrawer({
                 value={option.value}
                 checked={settings.timeFormat === option.value}
                 onChange={() => updateSettings({ timeFormat: option.value })}
+              />
+              {option.label}
+            </label>
+          ))}
+        </fieldset>
+
+        <fieldset className="drawer-section">
+          <legend>Week starts on</legend>
+          {WEEK_STARTS.map((option) => (
+            <label key={option.value} className="drawer-radio">
+              <input
+                type="radio"
+                name="weekStart"
+                value={option.value}
+                checked={settings.weekStart === option.value}
+                onChange={() => updateSettings({ weekStart: option.value })}
               />
               {option.label}
             </label>

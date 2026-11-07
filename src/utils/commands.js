@@ -11,7 +11,8 @@ import { describeRecurrence } from '../data/tasks';
 //              switchBoard(id), addBoard(name?), renameBoard(name), deleteBoard(), moveWidget(id, boardId) }
 //   theme: the theme in use, 'light' or 'dark'
 //   boards: [{ id, name }]     activeBoardId: the board on screen (rename, delete and move act on it)
-export function buildCommands({ widgets, shownIds, query = '', actions, theme, boards = [], activeBoardId }) {
+//   weekStart: 1 for Monday, 0 for Sunday, for dates such as "next week" in a typed task
+export function buildCommands({ widgets, shownIds, query = '', actions, theme, boards = [], activeBoardId, weekStart = 1 }) {
   const commands = [];
   const otherBoards = boards.filter((board) => board.id !== activeBoardId);
   const activeBoard = boards.find((board) => board.id === activeBoardId);
@@ -139,7 +140,7 @@ export function buildCommands({ widgets, shownIds, query = '', actions, theme, b
 
   if (text) {
     // Quick-add works here too: "Call bank fri !high" is a task due Friday.
-    const task = parseQuickAdd(text);
+    const task = parseQuickAdd(text, { weekStart });
     const extras = [
       task.dueDate && relativeDay(task.dueDate),
       task.priority && `${task.priority[0].toUpperCase()}${task.priority.slice(1)}`,

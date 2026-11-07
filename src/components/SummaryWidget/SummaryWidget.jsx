@@ -1,5 +1,6 @@
 import CompletionChart from './CompletionChart';
 import useToday from '../../hooks/useToday';
+import useSettings from '../../hooks/useSettings';
 import { countDue } from '../../utils/countTasks';
 import { completedThisWeek, completionsByDay } from '../../utils/completions';
 import './SummaryWidget.css';
@@ -70,11 +71,12 @@ function SummaryWidget({
 // Three smaller figures under the main two: what needs doing soon, and what got done this week.
 // Overdue is set in bold when there is any, by weight rather than colour (DESIGN.md).
 function DueFigures({ tasks, today }) {
+  const [{ weekStart }] = useSettings();
   const due = countDue(tasks, today);
   const figures = [
     { label: 'Overdue', value: due.overdue, urgent: due.overdue > 0 },
     { label: 'Due today', value: due.today },
-    { label: 'Done this week', value: completedThisWeek(tasks, today) },
+    { label: 'Done this week', value: completedThisWeek(tasks, today, weekStart) },
   ];
   return (
     <dl className="summary-figures">

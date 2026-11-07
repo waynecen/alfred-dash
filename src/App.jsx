@@ -5,6 +5,7 @@ import useTasks from './hooks/useTasks';
 import useBoards from './hooks/useBoards';
 import useShortcuts from './hooks/useShortcuts';
 import useToday from './hooks/useToday';
+import useSettings from './hooks/useSettings';
 import { useAIHealth } from './hooks/useAI';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import BoardTabs, { tabId } from './components/BoardTabs/BoardTabs';
@@ -68,6 +69,7 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const today = useToday();
+  const [settings] = useSettings();
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
   // Checked each time Settings opens, so the AI status there is current.
@@ -215,6 +217,7 @@ function App() {
       theme: shownTheme,
       boards: boards.boards,
       activeBoardId: board.id,
+      weekStart: settings.weekStart,
       actions: {
         addWidget,
         removeWidget,
