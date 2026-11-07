@@ -107,12 +107,14 @@ describe('TaskItem due date', () => {
     expect(screen.getByRole('button', { name: 'Due date: Write tests, none' })).toHaveTextContent('Add date');
   });
 
-  it('saves a picked date and clears it', () => {
+  it('saves a day picked from the picker and clears it', async () => {
     const { onUpdate } = setup({ dueDate: '2026-11-08' });
-    const input = document.querySelector('input[type="date"]');
-    fireEvent.change(input, { target: { value: '2026-11-13' } });
+    const button = screen.getByRole('button', { name: /^Due date: Write tests/ });
+    await userEvent.click(button);
+    await userEvent.click(screen.getByRole('gridcell', { name: /\b13\b/ }));
     expect(onUpdate).toHaveBeenCalledWith(1, { dueDate: '2026-11-13' });
-    fireEvent.change(input, { target: { value: '' } });
+    await userEvent.click(button);
+    await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
     expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: null });
   });
 });

@@ -1,13 +1,12 @@
-import { useRef } from 'react';
+import DatePicker from '../DatePicker/DatePicker';
 import { addDays, isOverdue, parseISODate, relativeDay, toISODate } from '../../utils/dates';
 
-// A task's due day, as a short label ("Today", "Fri", "13 Nov") that opens the browser's own date
-// picker. The picker's Clear removes the date. Overdue is set in bold and today in ink, by weight
+// A task's due day, as a short label ("Today", "Fri", "13 Nov") that opens a month to pick a day
+// from; the picker's Clear removes the date. Overdue is set in bold and today in ink, by weight
 // rather than colour (DESIGN.md). A done task's date is just a quiet note.
 //   value: 'YYYY-MM-DD' | null
 //   today: 'YYYY-MM-DD', so the labels move on at midnight
 function DueDate({ value, today = toISODate(), completed, taskText, onChange }) {
-  const input = useRef(null);
   const now = parseISODate(today);
   const label = value ? relativeDay(value, now) : 'Add date';
   const state = !value
@@ -32,38 +31,22 @@ function DueDate({ value, today = toISODate(), completed, taskText, onChange }) 
     }
   }
 
-  function openPicker() {
-    try {
-      input.current.showPicker();
-    } catch {
-      // Browsers without showPicker (or that refuse it) still let people type the date.
-      input.current.focus();
-    }
-  }
-
   return (
-    <span className="due-date">
-      <button
-        type="button"
-        className={`due-date-button due-${state}`}
-        onClick={openPicker}
-        onKeyDown={handleKeyDown}
-        aria-label={`Due date: ${taskText}, ${value ? label : 'none'}${state === 'overdue' ? ', overdue' : ''}`}
-        aria-keyshortcuts="ArrowUp ArrowDown Delete"
-        title={`${value ? parseISODate(value).toLocaleDateString(undefined, { dateStyle: 'full' }) : 'Set a due date'} (↑ ↓ to move it a day)`}
-      >
-        {label}
-      </button>
-      <input
-        ref={input}
-        type="date"
-        className="due-date-input"
-        value={value ?? ''}
-        onChange={(event) => onChange(event.target.value || null)}
-        tabIndex={-1}
-        aria-hidden="true"
-      />
-    </span>
+    <DatePicker
+      value={value}
+      today={today}
+      onChange={onChange}
+      title={`Due date: ${taskText}`}
+      buttonProps={{
+        className: `due-date-button due-${state}`,
+        onKeyDown: handleKeyDown,
+        'aria-label': `Due date: ${taskText}, ${value ? label : 'none'}${state === 'overdue' ? ', overdue' : ''}`,
+        'aria-keyshortcuts': 'ArrowUp ArrowDown Delete',
+        title: `${value ? parseISODate(value).toLocaleDateString(undefined, { dateStyle: 'full' }) : 'Set a due date'} (↑ ↓ to move it a day)`,
+      }}
+    >
+      {label}
+    </DatePicker>
   );
 }
 

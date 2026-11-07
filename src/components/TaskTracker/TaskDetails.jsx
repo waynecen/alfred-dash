@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import DatePicker from '../DatePicker/DatePicker';
 import { parseTags } from '../../data/tasks';
+import { parseISODate } from '../../utils/dates';
 
 const REPEAT_UNITS = [
   { value: 'day', label: 'days' },
@@ -70,12 +72,22 @@ function TaskDetails({ id, task, onUpdate, onAddStep }) {
       <div className="task-details-side">
         <div className="task-details-field">
           <label htmlFor={field('due')}>Due</label>
-          <input
-            id={field('due')}
-            type="date"
-            value={task.dueDate ?? ''}
-            onChange={(event) => onUpdate(task.id, { dueDate: event.target.value || null })}
-          />
+          <DatePicker
+            value={task.dueDate ?? null}
+            onChange={(dueDate) => onUpdate(task.id, { dueDate })}
+            title={`Due date: ${task.text}`}
+            buttonProps={{ id: field('due'), className: 'task-details-date' }}
+          >
+            <span className={task.dueDate ? undefined : 'task-details-date-none'}>
+              {task.dueDate
+                ? parseISODate(task.dueDate).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+                : 'No date'}
+            </span>
+            {/* A calendar page, so the field reads as a date to pick. */}
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+              <path d="M2 3.5h12v10H2zM2 6.5h12M5 1.5v3M11 1.5v3" />
+            </svg>
+          </DatePicker>
         </div>
         <div className="task-details-field">
           <label htmlFor={field('tags')}>Tags</label>
