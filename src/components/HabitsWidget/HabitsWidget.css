@@ -316,3 +316,134 @@
   min-width: 0;
   color: var(--muted);
 }
+
+/* The last twelve weeks, on a wide widget only: a grid of small squares, one column a week, shaded
+   in ink by the share of the day's habits done. One hue, light to dark (the dataviz rule for
+   magnitude); a day with nothing done is an empty outline, a day with nothing due a faint square. */
+.habit-heatmap {
+  display: none;
+  margin: 0;
+}
+
+@container habits (min-width: 540px) {
+  .habit-heatmap {
+    display: block;
+  }
+}
+
+.habit-heatmap-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.habit-heatmap-title {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.8;
+  text-transform: uppercase;
+}
+
+.habit-heatmap-readout {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A label column, then twelve weeks; rows are the month line and seven weekdays. 2px of ground
+   between squares keeps neighbours apart. */
+.habit-heatmap-grid {
+  display: grid;
+  grid-template-columns: 1rem repeat(12, 1rem);
+  grid-auto-rows: 1rem;
+  gap: 2px;
+  width: max-content;
+}
+
+.habit-heatmap-grid:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+}
+
+.habit-heatmap-month {
+  overflow: visible;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.habit-heatmap-weekday {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1rem;
+}
+
+.habit-heatmap-cell {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  box-sizing: border-box;
+}
+
+.habit-heatmap-cell[data-level='rest'] {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+.habit-heatmap-cell[data-level='0'] {
+  border: 1px solid color-mix(in srgb, var(--text) 35%, transparent);
+}
+
+.habit-heatmap-cell[data-level='1'] {
+  background: color-mix(in srgb, var(--text) 25%, transparent);
+}
+
+.habit-heatmap-cell[data-level='2'] {
+  background: color-mix(in srgb, var(--text) 50%, transparent);
+}
+
+.habit-heatmap-cell[data-level='3'] {
+  background: color-mix(in srgb, var(--text) 75%, transparent);
+}
+
+.habit-heatmap-cell[data-level='4'] {
+  background: var(--text);
+}
+
+.habit-heatmap-cell[data-active] {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+.habit-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.habit-heatmap-legend span:first-child {
+  margin-right: 0.3rem;
+}
+
+.habit-heatmap-legend span:last-child {
+  margin-left: 0.3rem;
+}
+
+.habit-heatmap .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

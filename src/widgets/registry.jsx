@@ -86,7 +86,7 @@ export const WIDGETS = {
   habits: {
     title: 'Habits',
     category: 'Growth',
-    description: 'Habits to keep: tick off each day and watch your streaks',
+    description: 'Habits to keep: tick off each day and watch your streaks; wider, the last 12 weeks',
     defaultSize: { w: 4, h: 10 },
     render: ({ habits, habitLog, actions }) => <HabitsWidget habits={habits} log={habitLog} actions={actions} />,
   },

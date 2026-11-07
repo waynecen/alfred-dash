@@ -3,6 +3,7 @@ import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
 import WeekdayPicker from '../WeekdayPicker/WeekdayPicker';
 import WidgetState from '../WidgetState/WidgetState';
+import HabitHeatmap from './HabitHeatmap';
 import { DAILY, describeSchedule, isScheduled } from '../../data/habits';
 import { dayTally, habitStreaks } from '../../utils/streaks';
 import { addDays, parseISODate, toISODate } from '../../utils/dates';
@@ -11,6 +12,7 @@ import './HabitsWidget.css';
 const dayLabel = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
 
 // The habits, each with the last seven days to tick off and its streak, then a line to add one.
+// On a wide widget the last twelve weeks show under them as a heatmap.
 //   habits: [{ id, name, schedule, createdAt, archived }]    log: { [habitId]: days done }
 //   actions: { addHabit, updateHabit, toggleHabitDay, archiveHabit, deleteHabit }
 function HabitsWidget({ habits, log, actions }) {
@@ -65,6 +67,7 @@ function HabitsWidget({ habits, log, actions }) {
               ))}
             </tbody>
           </table>
+          <HabitHeatmap habits={active} log={log} today={today} weekStart={weekStart} />
         </>
       ) : (
         <WidgetState status="empty" message="Add a habit to keep: something to do every day, or on the days you choose." />
