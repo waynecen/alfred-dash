@@ -43,6 +43,8 @@ function TaskList({
   onAddStep,
   depths,
   stepCounts,
+  selectedIds = [],
+  onSelect,
   today,
 }) {
   const emptyMessage =
@@ -104,6 +106,8 @@ function TaskList({
               onAddStep={onAddStep}
               depth={depths?.get(task.id) ?? 0}
               stepCount={stepCounts?.get(task.id)}
+              selected={selectedIds.includes(task.id)}
+              onSelect={onSelect}
               today={today}
               onDelete={onDelete}
               isDragging={dragId === task.id}

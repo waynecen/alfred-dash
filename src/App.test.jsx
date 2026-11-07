@@ -103,6 +103,49 @@ describe('App', () => {
     expect(restored).toEqual(['Plan trip', 'Book flights', 'Pack', 'Other']);
   });
 
+  describe('bulk actions', () => {
+    const saved = () => JSON.parse(localStorage.getItem('tasks'));
+    const shiftClick = async (name) => {
+      await userEvent.keyboard('{Shift>}');
+      await userEvent.click(screen.getByRole('button', { name }));
+      await userEvent.keyboard('{/Shift}');
+    };
+
+    it('selects a range with Shift-click and acts on all of it, with one Undo', async () => {
+      render(<App />);
+      await addTask('One');
+      await addTask('Two');
+      await addTask('Three');
+      await shiftClick('One');
+      await shiftClick('Three');
+      expect(screen.getByRole('toolbar', { name: '3 selected tasks' })).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Due tomorrow' }));
+      expect(saved().every((task) => task.dueDate)).toBe(true);
+      expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+
+      await shiftClick('One');
+      await shiftClick('Two');
+      await userEvent.click(screen.getByRole('button', { name: 'Complete' }));
+      expect(saved().map((task) => task.completed)).toEqual([true, true, false]);
+      expect(screen.getByText('Completed 2 tasks')).toBeInTheDocument();
+      await userEvent.click(screen.getAllByRole('button', { name: 'Undo' }).at(-1));
+      expect(saved().map((task) => task.completed)).toEqual([false, false, false]);
+    });
+
+    it('clears completed tasks, and Undo brings them back', async () => {
+      render(<App />);
+      await addTask('Keep');
+      await addTask('Done one');
+      await userEvent.click(screen.getByLabelText('Mark complete: Done one'));
+      await userEvent.click(screen.getByRole('button', { name: 'Clear completed (1)' }));
+      expect(saved().map((task) => task.text)).toEqual(['Keep']);
+      expect(screen.getByText('Deleted 1 completed task')).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      expect(saved().map((task) => task.text)).toEqual(['Keep', 'Done one']);
+    });
+  });
+
   describe('sorting the table', () => {
     // The task descriptions in the order the rows are shown.
     const shownOrder = () =>

@@ -51,6 +51,8 @@ function TaskItem({
   onAddStep,
   depth = 0,
   stepCount,
+  selected = false,
+  onSelect,
   today,
 }) {
   // Tasks saved before priorities existed have none, so treat them as medium.
@@ -65,6 +67,17 @@ function TaskItem({
   // The detail row under this one: notes, due date, tags and repeat.
   const [expanded, setExpanded] = useState(false);
   const detailsId = `task-details-${task.id}`;
+
+  // A plain click edits the text. Shift-click (a range) or Ctrl/Cmd-click (one task) selects
+  // instead, for the bulk actions under the table; Shift+Enter and Ctrl+Enter do the same.
+  function handleTextClick(event) {
+    if (onSelect && (event.shiftKey || event.ctrlKey || event.metaKey)) {
+      event.preventDefault(); // no text selection from the Shift-click
+      onSelect(task.id, { range: event.shiftKey });
+      return;
+    }
+    startEditing();
+  }
 
   function startEditing() {
     setDraft(task.text); // always start from the current text
@@ -108,6 +121,7 @@ function TaskItem({
     isDragging && 'dragging',
     expanded && 'expanded',
     depth > 0 && 'subtask',
+    selected && 'selected',
   ]
     .filter(Boolean)
     .join(' ');
@@ -170,10 +184,19 @@ function TaskItem({
           <button
             type="button"
             className="task-text"
-            onClick={startEditing}
-            title="Click to edit"
+            onClick={handleTextClick}
+            // Shift-clicking would otherwise also select the page's text.
+            onMouseDown={(event) => event.shiftKey && event.preventDefault()}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && (event.shiftKey || event.ctrlKey || event.metaKey)) {
+                event.preventDefault(); // no click, so no edit
+                onSelect?.(task.id, { range: event.shiftKey });
+              }
+            }}
+            title="Click to edit, Shift- or Ctrl-click to select"
           >
             {task.text}
+            {selected && <span className="visually-hidden"> (selected)</span>}
           </button>
         )}
         <TaskMeta task={task} stepCount={stepCount} onFilterTag={onFilterTag} />

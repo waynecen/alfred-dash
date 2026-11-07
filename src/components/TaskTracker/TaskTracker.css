@@ -674,3 +674,95 @@
   gap: 0.75rem;
   min-width: 0;
 }
+
+/* Selected for a bulk action: a Sand ground and an ink bar down the left edge. */
+.task-row.selected td {
+  background-color: var(--surface);
+}
+
+.task-row.selected td:first-child {
+  box-shadow: inset 3px 0 0 var(--text);
+}
+
+/* Under the table: Clear completed and the hint, or the bulk actions for the selection. */
+.task-footer {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.task-footer-idle,
+.task-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.task-footer-hint {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.task-footer-clear {
+  margin-left: auto;
+}
+
+.task-footer button,
+.task-bulk button {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.task-bulk-count {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+/* The due choices share their edges, like the filter tabs. */
+.task-bulk-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.task-bulk-group button + button {
+  margin-left: -1px;
+}
+
+.task-bulk-label {
+  margin-right: 0.5rem;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Red only when about to act, as with the row's delete button. */
+.task-bulk-delete:hover,
+.task-bulk-delete:focus-visible {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg);
+}
+
+.task-bulk-clear {
+  margin-left: auto;
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.task-bulk-clear:hover {
+  background: transparent;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Phones have no Shift or Ctrl key to click with. */
+@media (hover: none) {
+  .task-footer-hint {
+    display: none;
+  }
+}

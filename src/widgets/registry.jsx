@@ -39,6 +39,9 @@ export const WIDGETS = {
         onUpdate={actions.updateTask}
         onDelete={actions.deleteTask}
         onReorder={actions.reorderTasks}
+        onCompleteMany={actions.completeTasks}
+        onUpdateMany={actions.updateTasks}
+        onDeleteMany={actions.deleteTasks}
       />
     ),
   },
