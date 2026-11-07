@@ -39,7 +39,23 @@ describe('buildCommands', () => {
     const addTask = commands.find((command) => command.id === 'add-task');
     expect(addTask.label).toBe('Add task “Call the bank”');
     addTask.run();
-    expect(actions.addTask).toHaveBeenCalledWith('Call the bank', 'medium');
+    expect(actions.addTask).toHaveBeenCalledWith('Call the bank', 'medium', {
+      dueDate: null,
+      tags: [],
+      recurrence: null,
+    });
+  });
+
+  it('reads quick-add extras out of the typed task', () => {
+    const { commands, actions } = build('Call the bank !high #money');
+    const addTask = commands.find((command) => command.id === 'add-task');
+    expect(addTask.label).toBe('Add task “Call the bank” · High · #money');
+    addTask.run();
+    expect(actions.addTask).toHaveBeenCalledWith('Call the bank', 'high', {
+      dueDate: null,
+      tags: ['money'],
+      recurrence: null,
+    });
   });
 
   it('has no add-task command without a query', () => {

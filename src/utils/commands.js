@@ -1,3 +1,7 @@
+import parseQuickAdd from './parseQuickAdd';
+import { relativeDay } from './dates';
+import { describeRecurrence } from '../data/tasks';
+
 // The actions the command palette (Ctrl/Cmd+K) can run. Each command is
 //   { id, label, group, keywords?, run, always? }
 // `always` commands depend on what was typed (like "Add task …") and are shown whenever
@@ -125,11 +129,24 @@ export function buildCommands({ widgets, shownIds, query = '', actions, theme, b
   }
 
   if (text) {
+    // Quick-add works here too: "Call bank fri !high" is a task due Friday.
+    const task = parseQuickAdd(text);
+    const extras = [
+      task.dueDate && relativeDay(task.dueDate),
+      task.priority && `${task.priority[0].toUpperCase()}${task.priority.slice(1)}`,
+      ...task.tags.map((tag) => `#${tag}`),
+      describeRecurrence(task.recurrence),
+    ].filter(Boolean);
     commands.push({
       id: 'add-task',
       group: 'Tasks',
-      label: `Add task “${text}”`,
-      run: () => actions.addTask(text, 'medium'),
+      label: `Add task “${task.text}”${extras.map((extra) => ` · ${extra}`).join('')}`,
+      run: () =>
+        actions.addTask(task.text, task.priority ?? 'medium', {
+          dueDate: task.dueDate,
+          tags: task.tags,
+          recurrence: task.recurrence,
+        }),
       always: true,
     });
   }
