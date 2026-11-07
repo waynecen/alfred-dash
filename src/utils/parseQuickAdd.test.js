@@ -56,3 +56,36 @@ describe('parseQuickAdd', () => {
     expect(parse('Trip #Travel #travel #work').tags).toEqual(['travel', 'work']);
   });
 });
+
+describe('parseQuickAdd times', () => {
+  const at = (text) => {
+    const { text: rest, dueDate, time, endTime } = parse(text, { times: true });
+    return { text: rest, dueDate, time, endTime };
+  };
+
+  it('reads a time with the day', () => {
+    expect(at('Dentist fri 3pm')).toEqual({ text: 'Dentist', dueDate: '2026-11-13', time: '15:00', endTime: null });
+    expect(at('Party 20 nov 8pm')).toMatchObject({ text: 'Party', dueDate: '2026-11-20', time: '20:00' });
+  });
+
+  it('reads 24-hour times, noon and "at 9"', () => {
+    expect(at('Standup 9:30').time).toBe('09:30');
+    expect(at('Lunch noon tomorrow')).toMatchObject({ text: 'Lunch', time: '12:00', dueDate: '2026-11-08' });
+    expect(at('Meet at 9').time).toBe('09:00');
+  });
+
+  it('reads ranges, sharing am or pm unless that ends before it starts', () => {
+    expect(at('Workshop 2-4pm')).toMatchObject({ time: '14:00', endTime: '16:00' });
+    expect(at('Call 11-1pm')).toMatchObject({ time: '11:00', endTime: '13:00' });
+    expect(at('Gym 18:00-19:30')).toMatchObject({ time: '18:00', endTime: '19:30' });
+  });
+
+  it('leaves times in the text unless asked for them', () => {
+    expect(parse('Call at 3pm')).toMatchObject({ text: 'Call at 3pm' });
+    expect(parse('Call at 3pm')).not.toHaveProperty('time');
+  });
+
+  it('keeps a time that is all there is', () => {
+    expect(at('3pm')).toMatchObject({ text: '3pm', time: null });
+  });
+});

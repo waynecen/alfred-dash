@@ -11,9 +11,12 @@ import { toISODate, parseISODate, addDays, addMonths, startOfWeek, isISODate } f
 //               next friday, in 3 days / 2 weeks / 1 month, 2026-11-20, 20 nov, nov 20
 //               (an "on", "due" or "by" in front is dropped too)
 //   repeats     every day / week / month, every 2 weeks, every friday
+//   times       only when asked for (times: true), for events: 3pm, 3:30pm, 15:30, at 9, noon,
+//               and ranges 2-3pm, 11am-1pm, 9:00-10:30 (time and endTime, as 'HH:MM')
 // Whatever is matched is taken out of the text. If nothing would be left ("Monday" on its own),
 // the whole line is the task and nothing is read from it. Unmatched fields are null (or []).
 //   now: today's date    weekStart: 1 for Monday, 0 for Sunday ("next week" starts then)
+//   times: read times too. Tasks leave it off, so "Call at 3pm" keeps its time in the text.
 
 const PRIORITY_WORDS = { h: 'high', hi: 'high', high: 'high', m: 'medium', med: 'medium', medium: 'medium', l: 'low', lo: 'low', low: 'low' };
 const WEEKDAY = '(sun(?:day)?|mon(?:day)?|tue(?:s|sday)?|wed(?:nesday)?|thu(?:r|rs|rsday)?|fri(?:day)?|sat(?:urday)?)';
@@ -23,6 +26,46 @@ const MONTH_INDEX = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, au
 const UNIT = '(day|week|month)s?';
 // The \b keeps "on" from matching the end of a word ("Bacon today" is not "Bac" + "on today").
 const DATE_PREFIX = '(?:\\b(?:on|due|by)\\s+)?';
+
+// A clock time from its parts: (3, 30, 'pm') is '15:30'. Without am or pm the hour is taken
+// as written, on the 24-hour clock.
+function clockTime(hour, minute = 0, meridiem = '') {
+  let h = Number(hour);
+  const m = Number(minute);
+  if (m > 59) return null;
+  if (meridiem) {
+    if (h < 1 || h > 12) return null;
+    h = (h % 12) + (meridiem.toLowerCase() === 'pm' ? 12 : 0);
+  } else if (h > 23) {
+    return null;
+  }
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+// Each way of writing a time, tried in order: { time, endTime } from a match, or null.
+// A range shares its am/pm ("2-3pm"), unless that would end before it starts ("11-1pm").
+const TIME_RULES = [
+  [
+    /\b(?:from\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|–|to)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/,
+    (m) => {
+      const end = clockTime(m[4], m[5], m[6]);
+      let start = clockTime(m[1], m[2], m[3] || m[6]);
+      if (start && end && !m[3] && start > end) start = clockTime(m[1], m[2], 'am');
+      return start && end ? { time: start, endTime: end } : null;
+    },
+  ],
+  [
+    /\b(?:from\s+)?([01]?\d|2[0-3]):([0-5]\d)\s*(?:-|–|to)\s*([01]?\d|2[0-3]):([0-5]\d)\b/,
+    (m) => ({ time: clockTime(m[1], m[2]), endTime: clockTime(m[3], m[4]) }),
+  ],
+  [/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/, (m) => wrapTime(clockTime(m[1], m[2], m[3]))],
+  [/\b(?:at\s+)?([01]?\d|2[0-3]):([0-5]\d)\b/, (m) => wrapTime(clockTime(m[1], m[2]))],
+  [/\b(?:at\s+)?noon\b/, () => ({ time: '12:00', endTime: null })],
+  [/\b(?:at\s+)?midnight\b/, () => ({ time: '00:00', endTime: null })],
+  [/\bat\s+(\d{1,2})\b/, (m) => wrapTime(clockTime(m[1]))],
+];
+
+const wrapTime = (time) => (time ? { time, endTime: null } : null);
 
 const weekdayIndex = (word) => WEEKDAY_INDEX[word.slice(0, 3).toLowerCase()];
 
@@ -63,7 +106,7 @@ const DATE_RULES = [
   [new RegExp(`\\b${WEEKDAY}\\b`), (m, t) => nextWeekday(t, weekdayIndex(m[1]))],
 ];
 
-function parseQuickAdd(input, { now = new Date(), weekStart = 1 } = {}) {
+function parseQuickAdd(input, { now = new Date(), weekStart = 1, times = false } = {}) {
   const today = toISODate(now);
   let text = ` ${input} `; // spaces at the ends let every pattern look for a gap before and after
   const take = (match) => {
@@ -112,9 +155,24 @@ function parseQuickAdd(input, { now = new Date(), weekStart = 1 } = {}) {
   // Something that repeats starts today unless it says otherwise.
   if (recurrence && !dueDate) dueDate = today;
 
+  // Times come after dates, so a date's numbers ("20 nov") are already gone.
+  let clock = { time: null, endTime: null };
+  if (times) {
+    for (const [pattern, toTime] of TIME_RULES) {
+      const match = text.match(new RegExp(pattern.source, 'i'));
+      const found = match && toTime(match);
+      if (found) {
+        clock = found;
+        take(match);
+        break;
+      }
+    }
+  }
+
   const rest = text.replace(/\s+/g, ' ').trim();
-  if (!rest) return { text: input.trim(), priority: null, dueDate: null, tags: [], recurrence: null };
-  return { text: rest, priority, dueDate, tags, recurrence };
+  const nothing = { priority: null, dueDate: null, tags: [], recurrence: null };
+  if (!rest) return { text: input.trim(), ...nothing, ...(times && { time: null, endTime: null }) };
+  return { text: rest, priority, dueDate, tags, recurrence, ...(times && clock) };
 }
 
 export default parseQuickAdd;
