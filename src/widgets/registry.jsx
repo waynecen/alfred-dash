@@ -86,19 +86,19 @@ export const STARTER_LAYOUTS = [
   {
     id: 'planner',
     title: 'Planner',
-    description: 'Tasks, a summary and notes',
+    description: 'Summary, tasks and notes',
     widgets: ['summary', 'tasks', 'notes'],
   },
   {
     id: 'daily',
     title: 'Daily',
-    description: 'Weather, tasks and a summary',
+    description: 'Weather, summary and tasks',
     widgets: ['weather', 'summary', 'tasks'],
   },
   {
     id: 'minimal',
     title: 'Minimal',
-    description: 'Just your tasks',
+    description: 'Tasks only',
     widgets: ['tasks'],
   },
 ];
