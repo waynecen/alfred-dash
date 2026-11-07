@@ -47,3 +47,14 @@ export function normalizeTask(task) {
     tags: Array.isArray(task.tags) ? task.tags : [],
   };
 }
+
+// Tags typed as a list, "#home, Work errands" -> ['home', 'work', 'errands']: the same rules as
+// quick-add (letters, digits, _ and -, lower case, no repeats).
+export function parseTags(text) {
+  const tags = [];
+  for (const word of text.split(/[\s,]+/)) {
+    const name = word.replace(/^#+/, '').toLowerCase();
+    if (/^[\p{L}\p{N}_-]+$/u.test(name) && !tags.includes(name)) tags.push(name);
+  }
+  return tags;
+}

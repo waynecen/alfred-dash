@@ -116,3 +116,53 @@ describe('TaskItem due date', () => {
     expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: null });
   });
 });
+
+describe('TaskItem details', () => {
+  const openDetails = () => userEvent.click(screen.getByRole('button', { name: 'Details: Write tests' }));
+
+  it('opens and closes a detail row under the task', async () => {
+    setup();
+    const toggle = screen.getByRole('button', { name: 'Details: Write tests' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await openDetails();
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByLabelText('Notes')).toBeInTheDocument();
+    await openDetails();
+    expect(screen.queryByLabelText('Notes')).not.toBeInTheDocument();
+  });
+
+  it('saves notes when they lose focus', async () => {
+    const { onUpdate } = setup();
+    await openDetails();
+    await userEvent.type(screen.getByLabelText('Notes'), 'Cover the parser');
+    expect(onUpdate).not.toHaveBeenCalled();
+    await userEvent.tab();
+    expect(onUpdate).toHaveBeenCalledWith(1, { notes: 'Cover the parser' });
+  });
+
+  it('reads tags the way quick-add does', async () => {
+    const { onUpdate } = setup({ tags: ['home'] });
+    await openDetails();
+    const tags = screen.getByLabelText('Tags');
+    expect(tags).toHaveValue('#home');
+    await userEvent.type(tags, ', Work #home{Enter}');
+    expect(onUpdate).toHaveBeenCalledWith(1, { tags: ['home', 'work'] });
+    expect(tags).toHaveValue('#home #work');
+  });
+
+  it('sets and stops a repeat', async () => {
+    const { onUpdate } = setup();
+    await openDetails();
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Repeat' }), 'week');
+    expect(onUpdate).toHaveBeenCalledWith(1, { recurrence: { every: 'week', interval: 1 } });
+  });
+
+  it('changes how often a task repeats', async () => {
+    const { onUpdate } = setup({ recurrence: { every: 'month', interval: 1 } });
+    await openDetails();
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Repeat every how many' }), { target: { value: '3' } });
+    expect(onUpdate).toHaveBeenCalledWith(1, { recurrence: { every: 'month', interval: 3 } });
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Repeat' }), 'Never');
+    expect(onUpdate).toHaveBeenLastCalledWith(1, { recurrence: null });
+  });
+});

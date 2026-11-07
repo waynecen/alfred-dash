@@ -1,3 +1,8 @@
+/* The widget measures itself, so the detail row can fit a narrow widget on a wide screen. */
+.task-tracker {
+  container: tasks / inline-size;
+}
+
 /* Form */
 .task-form label {
   display: block;
@@ -230,7 +235,8 @@
 }
 
 .col-actions {
-  width: 4.5rem;
+  width: 5.5rem;
+  white-space: nowrap;
   text-align: right !important;
 }
 
@@ -478,4 +484,132 @@
   border: 0;
   opacity: 0;
   pointer-events: none;
+}
+
+/* Details: the chevron beside Delete opens a row under the task. */
+.details-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem;
+  border-color: transparent;
+  color: var(--icon-subtle);
+}
+
+.details-button:hover {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.details-button svg {
+  transition: transform 0.15s ease;
+}
+
+.details-button[aria-expanded='true'] {
+  color: var(--text);
+}
+
+.details-button[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+/* The open task and its details read as one block: no rule between them, a Sand ground. */
+.task-row.expanded td {
+  border-bottom-color: transparent;
+}
+
+.task-row.expanded td,
+.task-detail-row td {
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.task-detail-row td {
+  padding: 0.25rem 0.5rem 1rem calc(2rem + 3.5rem + 1rem);
+}
+
+.task-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 16rem);
+  gap: 1rem var(--gutter);
+}
+
+.task-details-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.task-details-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.task-details-field > label,
+.task-details-field > legend {
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* A legend ignores the fieldset's gap, so it brings its own. */
+.task-details-field > legend {
+  margin-bottom: 0.25rem;
+}
+
+.task-details input,
+.task-details select,
+.task-details textarea {
+  min-width: 0;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.task-details textarea {
+  flex: 1;
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.task-details-repeat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.task-details-repeat-row input {
+  width: 4rem;
+}
+
+.task-details-repeat-row select {
+  flex: 1;
+}
+
+/* A narrow Tasks widget: the fields stack under the notes, and the details start at the row's edge. */
+@container tasks (max-width: 640px) {
+  .task-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .task-detail-row td {
+    padding-left: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .details-button svg {
+    transition: none;
+  }
 }
