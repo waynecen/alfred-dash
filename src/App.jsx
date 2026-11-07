@@ -3,6 +3,7 @@ import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
 import useTasks from './hooks/useTasks';
 import useEvents from './hooks/useEvents';
+import useHabits from './hooks/useHabits';
 import useBoards from './hooks/useBoards';
 import useShortcuts from './hooks/useShortcuts';
 import useToday from './hooks/useToday';
@@ -57,6 +58,8 @@ function App() {
   const { tasks, actions: taskActions } = useTasks(notify);
   // Calendar events, shared the same way (the Calendar and Today widgets both show them).
   const { events, actions: eventActions } = useEvents(notify);
+  // Habits and the days each was done (the Habits and Today widgets both show them).
+  const { habits, habitLog, actions: habitActions } = useHabits(notify);
   // The pages of widgets. Each board has its own widgets, in order, and where each one sits:
   // { [id]: { x, y, w, h } } in grid cells. Widgets without a spot go in the first free one.
   const boards = useBoards(notify);
@@ -231,10 +234,12 @@ function App() {
   const context = {
     tasks,
     events,
+    habits,
+    habitLog,
     notes,
     focus,
     counts: countTasks(tasks),
-    actions: { ...taskActions, ...eventActions, focusTimer: focusActions, setNotes, notify },
+    actions: { ...taskActions, ...eventActions, ...habitActions, focusTimer: focusActions, setNotes, notify },
   };
 
   const getCommands = (query) =>

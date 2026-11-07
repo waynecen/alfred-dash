@@ -8,10 +8,11 @@ import CalendarWidget from '../components/CalendarWidget/CalendarWidget';
 import FocusWidget from '../components/FocusWidget/FocusWidget';
 import ClockWidget from '../components/ClockWidget/ClockWidget';
 import TodayWidget from '../components/TodayWidget/TodayWidget';
+import HabitsWidget from '../components/HabitsWidget/HabitsWidget';
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list
-//   category: the heading it is listed under in the Add widget list (Productivity, Planning, Info, AI)
+//   category: the heading it is listed under in the Add widget list (Productivity, Planning, Growth, Info, AI)
 //   defaultSize: { w, h } in grid cells (12 columns, rows 48px tall) it starts with; the user can resize it
 //   render: builds the widget's content from the dashboard's shared data (ctx)
 export const WIDGETS = {
@@ -81,6 +82,13 @@ export const WIDGETS = {
     description: 'A focus timer: work in sessions with short breaks, linked to a task',
     defaultSize: { w: 4, h: 8 },
     render: ({ focus, tasks, actions }) => <FocusWidget focus={focus} actions={actions.focusTimer} tasks={tasks} />,
+  },
+  habits: {
+    title: 'Habits',
+    category: 'Growth',
+    description: 'Habits to keep: tick off each day and watch your streaks',
+    defaultSize: { w: 4, h: 10 },
+    render: ({ habits, habitLog, actions }) => <HabitsWidget habits={habits} log={habitLog} actions={actions} />,
   },
   notes: {
     title: 'Notes',
