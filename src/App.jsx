@@ -4,6 +4,7 @@ import useToasts from './hooks/useToasts';
 import useTasks from './hooks/useTasks';
 import useBoards from './hooks/useBoards';
 import useShortcuts from './hooks/useShortcuts';
+import useToday from './hooks/useToday';
 import { useAIHealth } from './hooks/useAI';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import BoardTabs, { tabId } from './components/BoardTabs/BoardTabs';
@@ -18,6 +19,7 @@ import { WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
 import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
 import insertAt from './utils/insertAt';
+import { parseISODate } from './utils/dates';
 
 // What the Add widget list needs to know about each widget.
 const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
@@ -65,6 +67,7 @@ function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const today = useToday();
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
   // Checked each time Settings opens, so the AI status there is current.
@@ -232,6 +235,12 @@ function App() {
   return (
     <main className="app">
       <header className="app-header">
+        <p className="app-header-index">
+          <span>Dashboard</span>
+          <time dateTime={today}>
+            {parseISODate(today).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+          </time>
+        </p>
         <EditableTitle value={title} onChange={setTitle} />
         <div className="app-header-actions">
           <button

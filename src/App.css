@@ -87,9 +87,13 @@ h4 {
   border-bottom: 1px solid var(--border);
 }
 
-.app-header::before {
-  content: 'Dashboard';
+/* The index line: the wordmark on the left, today's date on the right. */
+.app-header-index {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
   grid-column: 1 / -1;
+  margin: 0;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
   font-size: 0.625rem;
