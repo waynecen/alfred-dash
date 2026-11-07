@@ -24,7 +24,8 @@ import { WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
 import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
 import insertAt from './utils/insertAt';
-import { parseISODate } from './utils/dates';
+import { parseISODate, toISODate } from './utils/dates';
+import { isScheduled } from './data/habits';
 import { formatClock } from './data/focus';
 
 // What the Add widget list needs to know about each widget.
@@ -252,8 +253,17 @@ function App() {
       activeBoardId: board.id,
       weekStart: settings.weekStart,
       focus,
+      habitsToday: habits.filter(
+        (habit) =>
+          !habit.archived &&
+          isScheduled(habit, today) &&
+          toISODate(habit.createdAt) <= today &&
+          !(habitLog[habit.id] ?? []).includes(today)
+      ),
       actions: {
         focusTimer: focusActions,
+        toggleHabitDay: habitActions.toggleHabitDay,
+        addHabit: habitActions.addHabit,
         addWidget,
         removeWidget,
         focusWidget,

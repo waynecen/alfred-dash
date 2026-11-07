@@ -145,3 +145,17 @@ describe('buildCommands focus timer', () => {
     expect(labels({ phase: 'break', running: false, paused: true })).toEqual(['Resume break', 'Stop the focus timer']);
   });
 });
+
+describe('buildCommands habits', () => {
+  it('ticks off a habit due today, and adds one from "habit …"', () => {
+    const actions = { toggleHabitDay: vi.fn(), addHabit: vi.fn() };
+    const habitsToday = [{ id: 4, name: 'Stretch' }];
+    const commands = buildCommands({ widgets: {}, shownIds: [], actions, habitsToday, query: 'habit Read 20 minutes' });
+    commands.find((command) => command.label === 'Tick off “Stretch” for today').run();
+    expect(actions.toggleHabitDay).toHaveBeenCalledWith(4);
+    const add = commands.find((command) => command.id === 'add-habit');
+    expect(add.label).toBe('Add habit “Read 20 minutes” · every day');
+    add.run();
+    expect(actions.addHabit).toHaveBeenCalledWith({ name: 'Read 20 minutes' });
+  });
+});

@@ -13,6 +13,8 @@ import { describeRecurrence } from '../data/tasks';
 //   boards: [{ id, name }]     activeBoardId: the board on screen (rename, delete and move act on it)
 //   weekStart: 1 for Monday, 0 for Sunday, for dates such as "next week" in a typed task
 //   focus: the focus timer ({ phase, running, paused }), with actions.focusTimer { toggle, stop }
+//   habitsToday: [{ id, name }], the habits due today and not yet done, with
+//     actions.toggleHabitDay(id) to tick one off and actions.addHabit({ name }) for "habit …"
 export function buildCommands({
   widgets,
   shownIds,
@@ -23,6 +25,7 @@ export function buildCommands({
   activeBoardId,
   weekStart = 1,
   focus,
+  habitsToday = [],
 }) {
   const commands = [];
   const otherBoards = boards.filter((board) => board.id !== activeBoardId);
@@ -127,6 +130,19 @@ export function buildCommands({
     }
   }
 
+  // Habits still to do today, ticked off without finding the widget.
+  if (actions.toggleHabitDay) {
+    commands.push(
+      ...habitsToday.map((habit) => ({
+        id: `habit-${habit.id}`,
+        group: 'Habits',
+        label: `Tick off “${habit.name}” for today`,
+        keywords: 'habit done check log streak',
+        run: () => actions.toggleHabitDay(habit.id),
+      }))
+    );
+  }
+
   if (actions.openShortcuts) {
     commands.push({
       id: 'open-shortcuts',
@@ -157,6 +173,18 @@ export function buildCommands({
       group: 'Boards',
       label: `Rename this board to “${rename[1]}”`,
       run: () => actions.renameBoard(rename[1]),
+      always: true,
+    });
+  }
+
+  // "habit Read 20 minutes" starts a daily habit.
+  const newHabit = actions.addHabit && text.match(/^(?:new |add )?habit:?\s+(.+)/i);
+  if (newHabit) {
+    commands.push({
+      id: 'add-habit',
+      group: 'Habits',
+      label: `Add habit “${newHabit[1]}” · every day`,
+      run: () => actions.addHabit({ name: newHabit[1] }),
       always: true,
     });
   }
