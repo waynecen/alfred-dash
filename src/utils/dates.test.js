@@ -1,4 +1,4 @@
-import { toISODate, parseISODate, isISODate, addDays, daysBetween, isOverdue, startOfWeek, relativeDay } from './dates';
+import { toISODate, parseISODate, isISODate, addDays, addMonths, daysBetween, isOverdue, startOfWeek, relativeDay } from './dates';
 
 // Saturday 7 November 2026, mid-morning local time.
 const NOW = new Date(2026, 10, 7, 10, 30);
@@ -19,6 +19,11 @@ describe('dates', () => {
     expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
     expect(addDays('2026-03-01', -1)).toBe('2026-02-28');
     expect(daysBetween('2026-11-07', '2026-11-10')).toBe(3);
+  });
+
+  it('adds months, keeping to the end of shorter months', () => {
+    expect(addMonths('2026-01-31', 1)).toBe('2026-02-28');
+    expect(addMonths('2026-11-07', 2)).toBe('2027-01-07');
   });
 
   it('counts only days before today as overdue', () => {

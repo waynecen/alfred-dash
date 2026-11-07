@@ -24,8 +24,9 @@ function useTasks(notify) {
     });
   }
 
-  function addTask(text, priority) {
-    addTasks([{ text, priority }]);
+  // extra: any other task fields, e.g. { dueDate, tags, recurrence } from quick-add.
+  function addTask(text, priority, extra = {}) {
+    addTasks([{ ...extra, text, priority }]);
   }
 
   function toggleTask(id) {

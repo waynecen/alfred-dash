@@ -54,6 +54,28 @@
   color: var(--text);
 }
 
+/* What quick-add read from the text, as label tags under the input. Empty takes no room,
+   but stays on the page so screen readers announce what appears. */
+.task-form-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.task-form-preview:empty {
+  margin: 0;
+}
+
+.task-form-chip {
+  padding-bottom: 1px;
+  border-bottom: 1px solid currentColor;
+}
+
 /* Filter: a row of ruled tabs; the chosen one is filled with ink. */
 .task-filter {
   display: flex;

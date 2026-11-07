@@ -29,6 +29,16 @@ export function addDays(iso, n) {
   return toISODate(date);
 }
 
+// The same day n months later. A day the month doesn't have becomes its last day
+// (31 January plus one month is 28 or 29 February).
+export function addMonths(iso, n) {
+  const [year, month, day] = iso.split('-').map(Number);
+  const target = new Date(year, month - 1 + n, 1);
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  target.setDate(Math.min(day, lastDay));
+  return toISODate(target);
+}
+
 // Whole days from a to b: daysBetween('2026-11-07', '2026-11-10') is 3.
 export function daysBetween(a, b) {
   // Noon avoids an hour lost or gained to daylight saving rounding the wrong way.

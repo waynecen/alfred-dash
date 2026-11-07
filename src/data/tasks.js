@@ -23,6 +23,13 @@ const DEFAULTS = {
   notes: '',
 };
 
+// How a repeat reads: "Every day", "Every 2 weeks".
+export function describeRecurrence(recurrence) {
+  if (!recurrence) return '';
+  const { every, interval = 1 } = recurrence;
+  return interval === 1 ? `Every ${every}` : `Every ${interval} ${every}s`;
+}
+
 // A new task from what the user (or the AI) gave: fields is at least { text }.
 export function createTask(fields, id, now) {
   return { ...DEFAULTS, ...fields, id, createdAt: now };
