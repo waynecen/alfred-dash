@@ -633,4 +633,38 @@ describe('App', () => {
       expect(screen.queryByRole('button', { name: /Delete board/ })).not.toBeInTheDocument();
     });
   });
+
+  describe('keyboard shortcuts', () => {
+    it('lists them all on ?', async () => {
+      render(<App />);
+      await userEvent.keyboard('?');
+      expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument();
+      await userEvent.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog', { name: 'Keyboard shortcuts' })).not.toBeInTheDocument();
+    });
+
+    it('puts the cursor in the task box on N, without typing the N', async () => {
+      render(<App />);
+      await userEvent.keyboard('n');
+      expect(screen.getByLabelText('New task')).toHaveFocus();
+      expect(screen.getByLabelText('New task')).toHaveValue('');
+    });
+
+    it('switches boards with the number keys', async () => {
+      render(<App />);
+      await userEvent.click(screen.getByRole('button', { name: 'New board' }));
+      await userEvent.click(document.body);
+      await userEvent.keyboard('1');
+      expect(screen.getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true');
+      await userEvent.keyboard(']');
+      expect(screen.getByRole('tab', { name: 'Board 2' })).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it('leaves plain keys alone while typing', async () => {
+      render(<App />);
+      await userEvent.type(screen.getByLabelText('New task'), '?1');
+      expect(screen.queryByRole('dialog', { name: 'Keyboard shortcuts' })).not.toBeInTheDocument();
+      expect(screen.getByLabelText('New task')).toHaveValue('?1');
+    });
+  });
 });

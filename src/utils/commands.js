@@ -103,6 +103,15 @@ export function buildCommands({ widgets, shownIds, query = '', actions, theme, b
       run: actions.openSettings,
     }
   );
+  if (actions.openShortcuts) {
+    commands.push({
+      id: 'open-shortcuts',
+      group: 'General',
+      label: 'Keyboard shortcuts',
+      keywords: 'keys help hotkeys',
+      run: actions.openShortcuts,
+    });
+  }
 
   const text = query.trim();
 

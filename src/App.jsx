@@ -3,6 +3,7 @@ import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
 import useTasks from './hooks/useTasks';
 import useBoards from './hooks/useBoards';
+import useShortcuts from './hooks/useShortcuts';
 import { useAIHealth } from './hooks/useAI';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import BoardTabs, { tabId } from './components/BoardTabs/BoardTabs';
@@ -10,6 +11,7 @@ import Dashboard from './components/Dashboard/Dashboard';
 import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
 import CommandPalette from './components/CommandPalette/CommandPalette';
 import SettingsDrawer from './components/Settings/SettingsDrawer';
+import ShortcutsDialog from './components/ShortcutsDialog/ShortcutsDialog';
 import ToastRegion from './components/Toast/ToastRegion';
 import WidgetState from './components/WidgetState/WidgetState';
 import { WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
@@ -62,6 +64,7 @@ function App() {
 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
   // Checked each time Settings opens, so the AI status there is current.
@@ -84,17 +87,42 @@ function App() {
     document.startViewTransition(apply);
   }, [shownTheme]);
 
-  // Ctrl+K (Cmd+K on a Mac) opens and closes the command palette from anywhere.
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        setPaletteOpen((open) => !open);
-      }
+  // Shows the board n steps along from this one, wrapping round at the ends.
+  function stepBoard(n) {
+    const list = boards.boards;
+    const index = list.findIndex((b) => b.id === board.id);
+    boards.switchTo(list[(index + n + list.length) % list.length].id);
+  }
+
+  // Puts the cursor in the Tasks widget's box, or opens the palette (which can add tasks too)
+  // when this board has no Tasks widget.
+  function startNewTask() {
+    const input = document.getElementById('new-task');
+    if (!input) {
+      setPaletteOpen(true);
+      return;
     }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    input.focus();
+    input.scrollIntoView?.({ block: 'nearest' });
+  }
+
+  // The keys are listed for people in components/ShortcutsDialog; keep the two in step.
+  useShortcuts([
+    {
+      key: 'k',
+      mod: true, // Ctrl+K, or Cmd+K on a Mac, opens and closes the palette from anywhere
+      run: () => {
+        setShortcutsOpen(false);
+        setPaletteOpen((open) => !open);
+      },
+    },
+    { key: '/', run: () => setPaletteOpen(true) },
+    { key: 'n', run: startNewTask },
+    { key: '?', run: () => setShortcutsOpen(true) },
+    { key: '[', run: () => stepBoard(-1) },
+    { key: ']', run: () => stepBoard(1) },
+    ...boards.boards.slice(0, 9).map((b, index) => ({ key: String(index + 1), run: () => boards.switchTo(b.id) })),
+  ]);
 
   function focusWidget(id) {
     setFocusRequest((request) => ({ id, n: (request?.n ?? 0) + 1 }));
@@ -192,6 +220,7 @@ function App() {
         toggleTheme,
         resetLayout,
         openSettings: () => setSettingsOpen(true),
+        openShortcuts: () => setShortcutsOpen(true),
         switchBoard: boards.switchTo,
         addBoard: boards.addBoard,
         renameBoard: (name) => boards.renameBoard(board.id, name),
@@ -336,6 +365,7 @@ function App() {
         )}
       </div>
       {paletteOpen && <CommandPalette getCommands={getCommands} onClose={closePalette} />}
+      {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}
       {settingsOpen && (
         <SettingsDrawer
           theme={theme}

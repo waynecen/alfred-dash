@@ -111,8 +111,8 @@ function SettingsDrawer({
           <h3>Keyboard</h3>
           <p className="drawer-note">
             <kbd>Ctrl</kbd> + <kbd>K</kbd> (<kbd>⌘</kbd> + <kbd>K</kbd> on a Mac) opens the command
-            palette. Focus a widget&rsquo;s handle and use the arrow keys to move it, or its corner to
-            resize it.
+            palette, <kbd>N</kbd> adds a task and <kbd>1</kbd>–<kbd>9</kbd> switch boards. Press{' '}
+            <kbd>?</kbd> anywhere for the full list.
           </p>
         </section>
       </aside>
