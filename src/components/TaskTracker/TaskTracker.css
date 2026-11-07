@@ -234,6 +234,14 @@
   width: 6rem;
 }
 
+/* A narrow Tasks widget (on any screen) drops Created, the column needed least, so the text and
+   the Due column keep their room. */
+@container tasks (max-width: 680px) {
+  .col-created {
+    display: none;
+  }
+}
+
 .col-actions {
   width: 5.5rem;
   white-space: nowrap;
@@ -413,9 +421,6 @@
     flex: 1;
   }
 
-  .col-created {
-    display: none;
-  }
 }
 
 /* Drag handle for reordering. */
