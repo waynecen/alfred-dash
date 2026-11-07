@@ -5,6 +5,7 @@ import { hourCycle } from '../../data/settings';
 import { describeEventTime, eventsOn } from '../../data/events';
 import { TASK_DRAG_TYPE } from '../../data/tasks';
 import { addDays, addMonths, parseISODate, relativeDay, startOfWeek } from '../../utils/dates';
+import { firstOfMonth, monthWeeks, stepFor } from '../../utils/monthGrid';
 import parseQuickAdd from '../../utils/parseQuickAdd';
 import './CalendarWidget.css';
 
@@ -12,32 +13,7 @@ import './CalendarWidget.css';
 export { TASK_DRAG_TYPE };
 
 const label = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
-const firstOfMonth = (iso) => `${iso.slice(0, 8)}01`;
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
-
-// The month grid's keys: a day, a week, a month (Page Up/Down) or the ends of the week.
-function stepFor(key, date, weekStart) {
-  switch (key) {
-    case 'ArrowLeft':
-      return addDays(date, -1);
-    case 'ArrowRight':
-      return addDays(date, 1);
-    case 'ArrowUp':
-      return addDays(date, -7);
-    case 'ArrowDown':
-      return addDays(date, 7);
-    case 'PageUp':
-      return addMonths(date, -1);
-    case 'PageDown':
-      return addMonths(date, 1);
-    case 'Home':
-      return startOfWeek(date, weekStart);
-    case 'End':
-      return addDays(startOfWeek(date, weekStart), 6);
-    default:
-      return null;
-  }
-}
 
 // A month (or a week) of local events, with the tasks due on each day beside them. Pick a day to
 // see and add to it; drop a task from the Tasks widget on a day to make it due then.
@@ -166,12 +142,9 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
     );
   }
 
-  const gridStart = startOfWeek(month, weekStart);
-  const weekdays = Array.from({ length: 7 }, (_, i) => addDays(gridStart, i));
-
   function renderMonth() {
-    // Six weeks always, so the widget keeps one height from month to month.
-    const weeks = Array.from({ length: 6 }, (_, w) => Array.from({ length: 7 }, (_, d) => addDays(gridStart, w * 7 + d)));
+    const weeks = monthWeeks(month, weekStart);
+    const weekdays = weeks[0];
     return (
       <div
         className="calendar-grid"
