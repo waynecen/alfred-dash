@@ -8,6 +8,7 @@ import useShortcuts from './hooks/useShortcuts';
 import useToday from './hooks/useToday';
 import useSettings from './hooks/useSettings';
 import useFocusTimer from './hooks/useFocusTimer';
+import useReminders from './hooks/useReminders';
 import { useAIHealth } from './hooks/useAI';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import BoardTabs, { tabId } from './components/BoardTabs/BoardTabs';
@@ -77,6 +78,8 @@ function App() {
   const [settings] = useSettings();
   // The focus timer keeps time here, so it runs (and announces the end of a phase) on any board.
   const { focus, focusActions } = useFocusTimer(notify, settings.notifications);
+  // Ten minutes before each timed event, and once a day for what is due.
+  useReminders({ events, tasks, notify, noticesOn: settings.notifications, onShowToday: () => goToToday() });
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
   // Checked each time Settings opens, so the AI status there is current.
