@@ -4,6 +4,8 @@
 export const STORAGE_KEYS = [
   'tasks', // [{ id, text, priority, completed, createdAt, ... }], see data/tasks.js
   'events', // [{ id, title, date, start, end, notes }], see data/events.js
+  'focus', // the focus timer: { phase, endsAt, pausedLeft, taskId, round, lengths }, see data/focus.js
+  'focusSessions', // [{ taskId, startedAt, minutes }]: each focus session finished
   'notes', // the Notes widget's text
   'boards', // [{ id, name, widgetIds, layout }], see data/boards.js
   'activeBoard', // the id of the board on screen

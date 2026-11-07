@@ -130,3 +130,18 @@ describe('matchCommands', () => {
     expect(ids('rsl')).toEqual(['c', 'd']);
   });
 });
+
+describe('buildCommands focus timer', () => {
+  const base = { widgets: {}, shownIds: [], theme: 'light' };
+  const timer = { toggle: () => {}, stop: () => {} };
+  const labels = (focus) =>
+    buildCommands({ ...base, focus, actions: { focusTimer: timer } })
+      .filter((command) => command.group === 'Focus')
+      .map((command) => command.label);
+
+  it('starts, pauses or resumes, and stops once something is running', () => {
+    expect(labels({ phase: 'idle', running: false, paused: false })).toEqual(['Start focus session']);
+    expect(labels({ phase: 'work', running: true, paused: false })).toEqual(['Pause focus', 'Stop the focus timer']);
+    expect(labels({ phase: 'break', running: false, paused: true })).toEqual(['Resume break', 'Stop the focus timer']);
+  });
+});

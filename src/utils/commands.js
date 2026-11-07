@@ -12,7 +12,18 @@ import { describeRecurrence } from '../data/tasks';
 //   theme: the theme in use, 'light' or 'dark'
 //   boards: [{ id, name }]     activeBoardId: the board on screen (rename, delete and move act on it)
 //   weekStart: 1 for Monday, 0 for Sunday, for dates such as "next week" in a typed task
-export function buildCommands({ widgets, shownIds, query = '', actions, theme, boards = [], activeBoardId, weekStart = 1 }) {
+//   focus: the focus timer ({ phase, running, paused }), with actions.focusTimer { toggle, stop }
+export function buildCommands({
+  widgets,
+  shownIds,
+  query = '',
+  actions,
+  theme,
+  boards = [],
+  activeBoardId,
+  weekStart = 1,
+  focus,
+}) {
   const commands = [];
   const otherBoards = boards.filter((board) => board.id !== activeBoardId);
   const activeBoard = boards.find((board) => board.id === activeBoardId);
@@ -104,6 +115,18 @@ export function buildCommands({ widgets, shownIds, query = '', actions, theme, b
       run: actions.openSettings,
     }
   );
+  // The focus timer, whether or not its widget is on this board.
+  if (focus && actions.focusTimer) {
+    const timer = actions.focusTimer;
+    let label = 'Start focus session';
+    if (focus.running) label = `Pause ${focus.phase === 'work' ? 'focus' : 'break'}`;
+    else if (focus.paused) label = `Resume ${focus.phase === 'work' ? 'focus' : 'break'}`;
+    commands.push({ id: 'timer-toggle', group: 'Focus', label, keywords: 'pomodoro timer focus start pause', run: timer.toggle });
+    if (focus.phase !== 'idle') {
+      commands.push({ id: 'timer-stop', group: 'Focus', label: 'Stop the focus timer', keywords: 'pomodoro end cancel', run: timer.stop });
+    }
+  }
+
   if (actions.openShortcuts) {
     commands.push({
       id: 'open-shortcuts',

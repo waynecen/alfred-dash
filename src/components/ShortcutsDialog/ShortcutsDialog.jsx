@@ -8,6 +8,7 @@ export const SHORTCUTS = [
   { keys: ['Ctrl', 'K'], label: 'Open or close the command palette (⌘ K on a Mac)' },
   { keys: ['/'], label: 'Open the command palette' },
   { keys: ['N'], label: 'Add a task' },
+  { keys: ['F'], label: 'Start, pause or carry on the focus timer' },
   { keys: ['1', '…', '9'], label: 'Show board 1 to 9' },
   { keys: ['['], label: 'Previous board' },
   { keys: [']'], label: 'Next board' },

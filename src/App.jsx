@@ -7,6 +7,7 @@ import useBoards from './hooks/useBoards';
 import useShortcuts from './hooks/useShortcuts';
 import useToday from './hooks/useToday';
 import useSettings from './hooks/useSettings';
+import useFocusTimer from './hooks/useFocusTimer';
 import { useAIHealth } from './hooks/useAI';
 import EditableTitle from './components/EditableTitle/EditableTitle';
 import BoardTabs, { tabId } from './components/BoardTabs/BoardTabs';
@@ -22,6 +23,7 @@ import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
 import insertAt from './utils/insertAt';
 import { parseISODate } from './utils/dates';
+import { formatClock } from './data/focus';
 
 // What the Add widget list needs to know about each widget.
 const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
@@ -73,6 +75,8 @@ function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const today = useToday();
   const [settings] = useSettings();
+  // The focus timer keeps time here, so it runs (and announces the end of a phase) on any board.
+  const { focus, focusActions } = useFocusTimer(notify, settings.notifications);
   // Asks a widget to take keyboard focus: { id, n }, with a new n each time.
   const [focusRequest, setFocusRequest] = useState(null);
   // Checked each time Settings opens, so the AI status there is current.
@@ -126,6 +130,7 @@ function App() {
     },
     { key: '/', run: () => setPaletteOpen(true) },
     { key: 'n', run: startNewTask },
+    { key: 'f', run: focusActions.toggle },
     { key: '?', run: () => setShortcutsOpen(true) },
     { key: '[', run: () => stepBoard(-1) },
     { key: ']', run: () => stepBoard(1) },
@@ -136,10 +141,12 @@ function App() {
     setFocusRequest((request) => ({ id, n: (request?.n ?? 0) + 1 }));
   }
 
-  // The browser tab names the board, so several open tabs can be told apart.
+  // The browser tab names the board, so several open tabs can be told apart. While the focus
+  // timer runs, the time left comes first, so it shows on the tab from any other tab.
+  const timerTitle = focus.running ? `${formatClock(focus.left)} ${focus.label} · ` : '';
   useEffect(() => {
-    document.title = boards.boards.length > 1 ? `${board.name} · ${title}` : title;
-  }, [board.name, boards.boards.length, title]);
+    document.title = timerTitle + (boards.boards.length > 1 ? `${board.name} · ${title}` : title);
+  }, [timerTitle, board.name, boards.boards.length, title]);
 
   function addWidget(id) {
     setWidgetIds((current) => (current.includes(id) ? current : [...current, id]));
@@ -209,8 +216,9 @@ function App() {
     tasks,
     events,
     notes,
+    focus,
     counts: countTasks(tasks),
-    actions: { ...taskActions, ...eventActions, setNotes, notify },
+    actions: { ...taskActions, ...eventActions, focusTimer: focusActions, setNotes, notify },
   };
 
   const getCommands = (query) =>
@@ -222,7 +230,9 @@ function App() {
       boards: boards.boards,
       activeBoardId: board.id,
       weekStart: settings.weekStart,
+      focus,
       actions: {
+        focusTimer: focusActions,
         addWidget,
         removeWidget,
         focusWidget,

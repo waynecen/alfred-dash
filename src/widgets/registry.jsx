@@ -5,6 +5,7 @@ import WeatherWidget from '../components/WeatherWidget/WeatherWidget';
 import DailyBriefWidget from '../components/DailyBriefWidget/DailyBriefWidget';
 import TaskAssistantWidget from '../components/TaskAssistantWidget/TaskAssistantWidget';
 import CalendarWidget from '../components/CalendarWidget/CalendarWidget';
+import FocusWidget from '../components/FocusWidget/FocusWidget';
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list
@@ -62,6 +63,13 @@ export const WIDGETS = {
         onToggleTask={actions.toggleTask}
       />
     ),
+  },
+  focus: {
+    title: 'Focus',
+    category: 'Planning',
+    description: 'A focus timer: work in sessions with short breaks, linked to a task',
+    defaultSize: { w: 4, h: 8 },
+    render: ({ focus, tasks, actions }) => <FocusWidget focus={focus} actions={actions.focusTimer} tasks={tasks} />,
   },
   notes: {
     title: 'Notes',
