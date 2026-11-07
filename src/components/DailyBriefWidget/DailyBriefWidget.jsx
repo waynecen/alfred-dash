@@ -16,21 +16,8 @@ Also today: other tasks worth fitting in, if any.
 Heads-up: anything from the notes or the weather worth knowing (an umbrella, a deadline). Leave this section out if there is nothing.
 Use only the tasks and notes given; never invent tasks. If there are no open tasks, say so in a friendly line and suggest using the time well.`;
 
-// The place the Weather widget is showing, read straight from storage at click time so it
-// matches whatever the Weather widget last saved.
-function readActivePlace() {
-  try {
-    const places = JSON.parse(localStorage.getItem('weatherPlaces') ?? '[]');
-    const activeId = JSON.parse(localStorage.getItem('weatherActive') ?? 'null');
-    return places.find((place) => place.id === activeId) ?? places[0] ?? null;
-  } catch {
-    return null;
-  }
-}
-
-// One line about today's weather, or '' if there is no place or the forecast can't load.
-async function describeToday() {
-  const place = readActivePlace();
+// One line about today's weather in place, or '' if there is no place or the forecast can't load.
+async function describeToday(place) {
   if (!place) return '';
   try {
     const { current, days } = await fetchForecast(place);
@@ -67,6 +54,10 @@ function DailyBriefWidget({ tasks, notes }) {
   const ai = useAI();
   const [saved, setSaved] = useLocalStorage('dailyBrief', null); // { text, at }
   const [gathering, setGathering] = useState(false);
+  // The place the Weather widget is showing; shared storage keeps the two in step.
+  const [places] = useLocalStorage('weatherPlaces', []);
+  const [activeId] = useLocalStorage('weatherActive', null);
+  const place = places.find((p) => p.id === activeId) ?? places[0] ?? null;
 
   // Keep a finished brief; a stopped or failed one is not worth keeping.
   useEffect(() => {
@@ -75,7 +66,7 @@ function DailyBriefWidget({ tasks, notes }) {
 
   async function brief() {
     setGathering(true);
-    const weather = await describeToday();
+    const weather = await describeToday(place);
     setGathering(false);
     ai.send({
       system: SYSTEM_PROMPT,
