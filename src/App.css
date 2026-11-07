@@ -127,11 +127,9 @@ h1 {
   margin: 0;
 }
 
-/* Empty dashboard: the message and the starter layouts, set flush left. */
-.dashboard-empty {
-  align-items: flex-start !important;
-  padding: 2.5rem 0 !important;
-  text-align: left !important;
+/* Empty board: the message and the starter layouts, set flush left across the full width. */
+.widget-state.dashboard-empty {
+  padding: 2.5rem 0;
 }
 
 .dashboard-empty .widget-state-message {
@@ -143,12 +141,21 @@ h1 {
   letter-spacing: -0.03em;
 }
 
+/* The actions row would shrink to its content, which squeezed the layouts into one narrow column. */
+.dashboard-empty .widget-state-actions {
+  align-self: stretch;
+}
+
+/* Phones: one ruled list. Wider: one row of equal ruled columns, however many layouts there are,
+   so every option gets the same rules and the same inset (no wrapping, which left the first
+   option unruled and the rest boxed). */
 .starter-layouts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   width: 100%;
   margin-top: 1rem;
   border-top: 1px solid var(--border);
+  counter-reset: starter;
 }
 
 .starter-layout {
@@ -171,10 +178,6 @@ h1 {
   letter-spacing: 0.08em;
 }
 
-.starter-layouts {
-  counter-reset: starter;
-}
-
 .starter-layout strong {
   font-size: 1.25rem;
   letter-spacing: -0.025em;
@@ -194,14 +197,22 @@ h1 {
   text-underline-offset: 3px;
 }
 
-/* Side by side on wider screens, each layout in its own ruled column. */
 @media (min-width: 640px) {
+  .starter-layouts {
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    grid-template-columns: none;
+  }
+
   .starter-layout {
-    padding: 1rem var(--gutter) 1rem 0;
+    padding: 1rem var(--gutter);
+  }
+
+  .starter-layout:first-child {
+    padding-left: 0;
   }
 
   .starter-layout + .starter-layout {
-    padding-left: var(--gutter);
     border-left: 1px solid var(--border);
   }
 }
