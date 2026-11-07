@@ -1,4 +1,5 @@
 import CompletionChart from './CompletionChart';
+import ProgressBar from '../ProgressBar/ProgressBar';
 import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
 import { countDue } from '../../utils/countTasks';
@@ -49,16 +50,7 @@ function SummaryWidget({
         ))}
       </ul>
       <div className="summary-progress-row">
-        <div
-          className="summary-progress"
-          role="progressbar"
-          aria-label="Tasks completed"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={percent}
-        >
-          <div className="summary-progress-fill" style={{ width: `${percent}%` }} />
-        </div>
+        <ProgressBar value={percent} label="Tasks completed" className="summary-progress" />
         <p className="summary-caption">
           {completed} of {total} done ({percent}%)
         </p>
