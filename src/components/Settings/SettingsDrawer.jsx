@@ -1,6 +1,7 @@
 import { useId, useRef } from 'react';
 import useDismiss from '../../hooks/useDismiss';
 import useFocusTrap from '../../hooks/useFocusTrap';
+import DataSection from './DataSection';
 import './SettingsDrawer.css';
 
 const THEMES = [
@@ -30,7 +31,15 @@ const AI_STATUS = {
 //   onResetLayout(): put every widget back at its default size and place (it offers Undo)
 //   onClose()
 //   ai: { status, model, recheck } from useAIHealth
-function SettingsDrawer({ theme, onThemeChange, onResetLayout, onClose, ai = { status: 'not-configured' } }) {
+//   notify: shows a toast (from useToasts), for backups and Undo
+function SettingsDrawer({
+  theme,
+  onThemeChange,
+  onResetLayout,
+  onClose,
+  ai = { status: 'not-configured' },
+  notify = () => {},
+}) {
   const aiStatus = AI_STATUS[ai.status] ?? AI_STATUS['not-configured'];
   const panelRef = useRef(null);
   const headingId = useId();
@@ -95,6 +104,8 @@ function SettingsDrawer({ theme, onThemeChange, onResetLayout, onClose, ai = { s
             </button>
           )}
         </section>
+
+        <DataSection notify={notify} />
 
         <section className="drawer-section">
           <h3>Keyboard</h3>

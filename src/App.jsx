@@ -294,6 +294,7 @@ function App() {
           onResetLayout={resetLayout}
           onClose={() => setSettingsOpen(false)}
           ai={aiHealth}
+          notify={notify}
         />
       )}
       <ToastRegion toasts={toasts} onDismiss={dismiss} />
