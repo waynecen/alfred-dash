@@ -5,6 +5,7 @@ import useTasks from './hooks/useTasks';
 import useEvents from './hooks/useEvents';
 import useHabits from './hooks/useHabits';
 import useGoals from './hooks/useGoals';
+import useReviews from './hooks/useReviews';
 import useBoards from './hooks/useBoards';
 import useShortcuts from './hooks/useShortcuts';
 import useToday from './hooks/useToday';
@@ -19,6 +20,7 @@ import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
 import CommandPalette from './components/CommandPalette/CommandPalette';
 import SettingsDrawer from './components/Settings/SettingsDrawer';
 import ShortcutsDialog from './components/ShortcutsDialog/ShortcutsDialog';
+import WeeklyReview from './components/WeeklyReview/WeeklyReview';
 import ToastRegion from './components/Toast/ToastRegion';
 import WidgetState from './components/WidgetState/WidgetState';
 import { WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
@@ -64,6 +66,8 @@ function App() {
   const { habits, habitLog, actions: habitActions } = useHabits(notify);
   // Goals; a tasks goal reads its progress from the tasks.
   const { goals, actions: goalActions } = useGoals(notify);
+  // Weekly reviews saved so far.
+  const { reviews, saveReview } = useReviews();
   // The pages of widgets. Each board has its own widgets, in order, and where each one sits:
   // { [id]: { x, y, w, h } } in grid cells. Widgets without a spot go in the first free one.
   const boards = useBoards(notify);
@@ -81,6 +85,7 @@ function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const today = useToday();
   const [settings] = useSettings();
   // The focus timer keeps time here, so it runs (and announces the end of a phase) on any board.
@@ -276,6 +281,7 @@ function App() {
         resetLayout,
         openSettings: () => setSettingsOpen(true),
         openShortcuts: () => setShortcutsOpen(true),
+        openReview: () => setReviewOpen(true),
         switchBoard: boards.switchTo,
         addBoard: boards.addBoard,
         renameBoard: (name) => boards.renameBoard(board.id, name),
@@ -425,6 +431,24 @@ function App() {
           </WidgetState>
         )}
       </div>
+      {reviewOpen && (
+        <WeeklyReview
+          tasks={tasks}
+          habits={habits}
+          habitLog={habitLog}
+          sessions={focus.sessions}
+          goals={goals}
+          reviews={reviews}
+          actions={{
+            rescheduleTask: taskActions.rescheduleTask,
+            updateTasks: taskActions.updateTasks,
+            toggleTask: taskActions.toggleTask,
+            notify,
+          }}
+          onSave={saveReview}
+          onClose={() => setReviewOpen(false)}
+        />
+      )}
       {paletteOpen && <CommandPalette getCommands={getCommands} onClose={closePalette} />}
       {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}
       {settingsOpen && (

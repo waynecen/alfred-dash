@@ -13,6 +13,7 @@ import { describeRecurrence } from '../data/tasks';
 //   boards: [{ id, name }]     activeBoardId: the board on screen (rename, delete and move act on it)
 //   weekStart: 1 for Monday, 0 for Sunday, for dates such as "next week" in a typed task
 //   focus: the focus timer ({ phase, running, paused }), with actions.focusTimer { toggle, stop }
+//   actions.openReview(): opens the weekly review
 //   habitsToday: [{ id, name }], the habits due today and not yet done, with
 //     actions.toggleHabitDay(id) to tick one off and actions.addHabit({ name }) for "habit …"
 export function buildCommands({
@@ -128,6 +129,16 @@ export function buildCommands({
     if (focus.phase !== 'idle') {
       commands.push({ id: 'timer-stop', group: 'Focus', label: 'Stop the focus timer', keywords: 'pomodoro end cancel', run: timer.stop });
     }
+  }
+
+  if (actions.openReview) {
+    commands.push({
+      id: 'weekly-review',
+      group: 'Review',
+      label: 'Start weekly review',
+      keywords: 'week look back reflect retro plan habits goals',
+      run: actions.openReview,
+    });
   }
 
   // Habits still to do today, ticked off without finding the widget.

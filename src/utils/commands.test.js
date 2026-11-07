@@ -146,6 +146,15 @@ describe('buildCommands focus timer', () => {
   });
 });
 
+describe('buildCommands review', () => {
+  it('starts the weekly review', () => {
+    const actions = { openReview: vi.fn() };
+    const commands = buildCommands({ widgets: {}, shownIds: [], actions });
+    commands.find((command) => command.label === 'Start weekly review').run();
+    expect(actions.openReview).toHaveBeenCalled();
+  });
+});
+
 describe('buildCommands habits', () => {
   it('ticks off a habit due today, and adds one from "habit …"', () => {
     const actions = { toggleHabitDay: vi.fn(), addHabit: vi.fn() };
