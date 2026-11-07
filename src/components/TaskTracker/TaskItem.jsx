@@ -4,13 +4,20 @@ import DueDate from './DueDate';
 import TaskDetails from './TaskDetails';
 import { describeRecurrence } from '../../data/tasks';
 
-// A line under the task's text: its tags (each one filters the list to it) and how it repeats.
-// Nothing at all when the task has neither, so plain tasks keep a single line.
-function TaskMeta({ task, onFilterTag }) {
+// A line under the task's text: how far along its steps are, its tags (each one filters the list
+// to it) and how it repeats. Nothing at all when there is none of these, so plain tasks keep a
+// single line.
+//   stepCount: { done, total } | undefined
+function TaskMeta({ task, stepCount, onFilterTag }) {
   const tags = task.tags ?? [];
-  if (tags.length === 0 && !task.recurrence) return null;
+  if (tags.length === 0 && !task.recurrence && !stepCount) return null;
   return (
     <div className="task-meta">
+      {stepCount && (
+        <span className="task-steps" aria-label={`${stepCount.done} of ${stepCount.total} steps done`}>
+          {stepCount.done}/{stepCount.total} steps
+        </span>
+      )}
       {tags.map((tag) => (
         <button
           key={tag}
@@ -41,6 +48,9 @@ function TaskItem({
   onDragEnd,
   onStep,
   onFilterTag,
+  onAddStep,
+  depth = 0,
+  stepCount,
   today,
 }) {
   // Tasks saved before priorities existed have none, so treat them as medium.
@@ -92,7 +102,13 @@ function TaskItem({
     }
   }
 
-  const rowClass = ['task-row', task.completed && 'completed', isDragging && 'dragging', expanded && 'expanded']
+  const rowClass = [
+    'task-row',
+    task.completed && 'completed',
+    isDragging && 'dragging',
+    expanded && 'expanded',
+    depth > 0 && 'subtask',
+  ]
     .filter(Boolean)
     .join(' ');
 
@@ -160,7 +176,7 @@ function TaskItem({
             {task.text}
           </button>
         )}
-        <TaskMeta task={task} onFilterTag={onFilterTag} />
+        <TaskMeta task={task} stepCount={stepCount} onFilterTag={onFilterTag} />
       </td>
       <td className="col-priority">
         <select
@@ -248,7 +264,13 @@ function TaskItem({
       {row}
       <tr className="task-detail-row">
         <td colSpan={7}>
-          <TaskDetails id={detailsId} task={task} onUpdate={onUpdate} />
+          <TaskDetails
+            id={detailsId}
+            task={task}
+            onUpdate={onUpdate}
+            // Steps go one level deep, so a step can't have steps of its own.
+            onAddStep={task.parentId == null && onAddStep ? (text) => onAddStep(task.id, text) : undefined}
+          />
         </td>
       </tr>
     </>

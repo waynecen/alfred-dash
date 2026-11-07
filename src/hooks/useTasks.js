@@ -79,17 +79,27 @@ function useTasks(notify) {
     update(id, () => fields);
   }
 
+  // Deleting a task deletes its steps too, and Undo brings them all back where they were.
   function deleteTask(id) {
-    const index = tasks.findIndex((task) => task.id === id);
-    if (index === -1) return;
-    const task = tasks[index];
-    setTasks((current) => current.filter((t) => t.id !== id));
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    const gone = (t) => t.id === id || t.parentId === id;
+    // Each removed task with its place, first to last, so putting them back in that order
+    // returns every one to its own place.
+    const removed = tasks.flatMap((t, index) => (gone(t) ? [{ t, index }] : []));
+    setTasks((current) => current.filter((t) => !gone(t)));
+    const steps = removed.length - 1;
     notify({
-      message: `Deleted “${task.text}”`,
+      message: steps > 0 ? `Deleted “${task.text}” and ${steps} step${steps === 1 ? '' : 's'}` : `Deleted “${task.text}”`,
       actionLabel: 'Undo',
       // Functional updates, so anything done since the delete is kept.
       onAction: () =>
-        setTasks((current) => (current.some((t) => t.id === id) ? current : insertAt(current, index, task))),
+        setTasks((current) =>
+          removed.reduce(
+            (list, { t, index }) => (list.some((other) => other.id === t.id) ? list : insertAt(list, index, t)),
+            current
+          )
+        ),
     });
   }
 

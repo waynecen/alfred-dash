@@ -40,6 +40,9 @@ function TaskList({
   onDelete,
   onMove,
   onFilterTag,
+  onAddStep,
+  depths,
+  stepCounts,
   today,
 }) {
   const emptyMessage =
@@ -98,6 +101,9 @@ function TaskList({
               onPriorityChange={onPriorityChange}
               onUpdate={onUpdate}
               onFilterTag={onFilterTag}
+              onAddStep={onAddStep}
+              depth={depths?.get(task.id) ?? 0}
+              stepCount={stepCounts?.get(task.id)}
               today={today}
               onDelete={onDelete}
               isDragging={dragId === task.id}

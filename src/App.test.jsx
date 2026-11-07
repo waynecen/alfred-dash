@@ -80,6 +80,29 @@ describe('App', () => {
     expect(saved()[0]).toMatchObject({ completed: false, completedAt: null });
   });
 
+  it('adds steps under a task, counts them, and deletes them with it', async () => {
+    render(<App />);
+    await addTask('Plan trip');
+    await addTask('Other');
+    await userEvent.click(screen.getByRole('button', { name: 'Details: Plan trip' }));
+    await userEvent.type(screen.getByLabelText('Add a step'), 'Book flights{Enter}');
+    await userEvent.type(screen.getByLabelText('Add a step'), 'Pack{Enter}');
+
+    // The steps sit straight under their task, before the task added after it.
+    const shown = [...document.querySelectorAll('.task-text')].map((el) => el.textContent);
+    expect(shown).toEqual(['Plan trip', 'Book flights', 'Pack', 'Other']);
+    expect(screen.getByLabelText('0 of 2 steps done')).toBeInTheDocument();
+    await userEvent.click(screen.getByLabelText('Mark complete: Pack'));
+    expect(screen.getByLabelText('1 of 2 steps done')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete task: Plan trip' }));
+    expect(screen.getByText('Deleted “Plan trip” and 2 steps')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pack' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    const restored = [...document.querySelectorAll('.task-text')].map((el) => el.textContent);
+    expect(restored).toEqual(['Plan trip', 'Book flights', 'Pack', 'Other']);
+  });
+
   describe('sorting the table', () => {
     // The task descriptions in the order the rows are shown.
     const shownOrder = () =>

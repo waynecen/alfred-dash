@@ -261,7 +261,7 @@
 }
 
 .task-row:hover td {
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  background-color: color-mix(in srgb, var(--surface) 60%, transparent);
 }
 
 .task-row input[type='checkbox'] {
@@ -549,7 +549,7 @@
 
 .task-row.expanded td,
 .task-detail-row td {
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  background-color: color-mix(in srgb, var(--surface) 60%, transparent);
 }
 
 .task-detail-row td {
@@ -641,4 +641,36 @@
   .details-button svg {
     transition: none;
   }
+}
+
+/* Steps: indented under their task behind a short hairline, set a size down. */
+.task-row.subtask .col-description {
+  padding-left: 1.75rem;
+  background-image: linear-gradient(var(--rule-soft), var(--rule-soft));
+  background-position: 1rem 0;
+  background-repeat: no-repeat;
+  background-size: 1px 100%;
+}
+
+.task-row.subtask .task-text {
+  font-size: 0.9rem;
+}
+
+/* No rule between a task and its steps: one hairline closes the whole group. */
+.task-row:has(+ .task-row.subtask) td,
+.task-detail-row:has(+ .task-row.subtask) td {
+  border-bottom-color: transparent;
+}
+
+.task-steps {
+  color: var(--text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-details-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
 }

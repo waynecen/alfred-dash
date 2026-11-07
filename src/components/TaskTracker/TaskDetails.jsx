@@ -7,12 +7,14 @@ const REPEAT_UNITS = [
   { value: 'month', label: 'months' },
 ];
 
-// Everything about a task that doesn't fit in its row: notes, due date, tags and repeat.
+// Everything about a task that doesn't fit in its row: notes, steps, due date, tags and repeat.
 // Text fields save when they lose focus (or on Enter, for one-line fields), so typing doesn't
 // write to storage on every key; pickers save straight away.
 //   id: for the row's aria-controls
-function TaskDetails({ id, task, onUpdate }) {
+//   onAddStep: adds a step under this task; left out for a step, since steps go one level deep
+function TaskDetails({ id, task, onUpdate, onAddStep }) {
   const [notes, setNotes] = useState(task.notes ?? '');
+  const [step, setStep] = useState('');
   const [tags, setTags] = useState(formatTags(task.tags));
   const field = (name) => `${id}-${name}`;
   const recurrence = task.recurrence;
@@ -35,16 +37,35 @@ function TaskDetails({ id, task, onUpdate }) {
 
   return (
     <div className="task-details" id={id}>
-      <div className="task-details-field task-details-notes">
-        <label htmlFor={field('notes')}>Notes</label>
-        <textarea
-          id={field('notes')}
-          value={notes}
-          rows={3}
-          onChange={(event) => setNotes(event.target.value)}
-          onBlur={saveNotes}
-          placeholder="Anything worth remembering"
-        />
+      <div className="task-details-main">
+        <div className="task-details-field task-details-notes">
+          <label htmlFor={field('notes')}>Notes</label>
+          <textarea
+            id={field('notes')}
+            value={notes}
+            rows={3}
+            onChange={(event) => setNotes(event.target.value)}
+            onBlur={saveNotes}
+            placeholder="Anything worth remembering"
+          />
+        </div>
+        {onAddStep && (
+          <div className="task-details-field">
+            <label htmlFor={field('step')}>Add a step</label>
+            <input
+              id={field('step')}
+              type="text"
+              value={step}
+              onChange={(event) => setStep(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' || !step.trim()) return;
+                onAddStep(step.trim());
+                setStep(''); // ready for the next one
+              }}
+              placeholder="Press Enter to add it under this task"
+            />
+          </div>
+        )}
       </div>
       <div className="task-details-side">
         <div className="task-details-field">

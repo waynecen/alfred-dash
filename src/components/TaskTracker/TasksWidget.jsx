@@ -6,6 +6,7 @@ import countTasks, { countDue, countTags } from '../../utils/countTasks';
 import filterTasks from '../../utils/filterTasks';
 import sortTasks from '../../utils/sortTasks';
 import moveTask from '../../utils/moveTask';
+import groupTasks, { countSteps } from '../../utils/groupTasks';
 import useToday from '../../hooks/useToday';
 import './TaskTracker.css';
 
@@ -40,7 +41,10 @@ function TasksWidget({ tasks, onAdd, onToggle, onEdit, onPriorityChange, onUpdat
   }
 
   // Work out which tasks to show. We don't store this, we calculate it each render.
-  const visibleTasks = sortTasks(filterTasks(tasks, shownFilter, today), sort);
+  // Steps sit under their parent, however the list is sorted.
+  const rows = groupTasks(sortTasks(filterTasks(tasks, shownFilter, today), sort));
+  const visibleTasks = rows.map((row) => row.task);
+  const depths = new Map(rows.map((row) => [row.task.id, row.depth]));
 
   return (
     <div className="task-tracker">
@@ -62,6 +66,12 @@ function TasksWidget({ tasks, onAdd, onToggle, onEdit, onPriorityChange, onUpdat
         onPriorityChange={onPriorityChange}
         onUpdate={onUpdate}
         onFilterTag={(tag) => setFilter((current) => ({ ...current, tag }))}
+        // A step starts at its task's priority.
+        onAddStep={(parentId, text) =>
+          onAdd(text, tasks.find((task) => task.id === parentId)?.priority ?? 'medium', { parentId })
+        }
+        depths={depths}
+        stepCounts={countSteps(tasks)}
         today={today}
         onDelete={onDelete}
         onMove={handleMove}
