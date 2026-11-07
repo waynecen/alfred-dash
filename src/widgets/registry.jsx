@@ -36,6 +36,7 @@ export const WIDGETS = {
         onToggle={actions.toggleTask}
         onEdit={actions.editTask}
         onPriorityChange={actions.changePriority}
+        onUpdate={actions.updateTask}
         onDelete={actions.deleteTask}
         onReorder={actions.reorderTasks}
       />

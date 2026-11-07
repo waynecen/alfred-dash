@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import TaskItem from './TaskItem';
@@ -11,11 +11,12 @@ function setup(overrides = {}) {
     onEdit: vi.fn(),
     onPriorityChange: vi.fn(),
     onDelete: vi.fn(),
+    onUpdate: vi.fn(),
   };
   render(
     <table>
       <tbody>
-        <TaskItem task={{ ...task, ...overrides }} {...handlers} />
+        <TaskItem task={{ ...task, ...overrides }} today="2026-11-07" {...handlers} />
       </tbody>
     </table>
   );
@@ -92,5 +93,26 @@ describe('TaskItem', () => {
       await userEvent.type(input, '   {Enter}');
       expect(onEdit).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('TaskItem due date', () => {
+  it('shows the due day relative to today and marks it overdue', () => {
+    setup({ dueDate: '2026-11-06' });
+    expect(screen.getByRole('button', { name: 'Due date: Write tests, Yesterday, overdue' })).toBeInTheDocument();
+  });
+
+  it('offers to add a date when there is none', () => {
+    setup();
+    expect(screen.getByRole('button', { name: 'Due date: Write tests, none' })).toHaveTextContent('Add date');
+  });
+
+  it('saves a picked date and clears it', () => {
+    const { onUpdate } = setup({ dueDate: '2026-11-08' });
+    const input = document.querySelector('input[type="date"]');
+    fireEvent.change(input, { target: { value: '2026-11-13' } });
+    expect(onUpdate).toHaveBeenCalledWith(1, { dueDate: '2026-11-13' });
+    fireEvent.change(input, { target: { value: '' } });
+    expect(onUpdate).toHaveBeenLastCalledWith(1, { dueDate: null });
   });
 });

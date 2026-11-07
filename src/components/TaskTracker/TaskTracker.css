@@ -146,6 +146,11 @@
   padding-left: calc(1rem + 1px);
 }
 
+/* Likewise the Due label, over the date button's padding and border. */
+.task-table th.col-due {
+  padding-left: calc(0.8rem + 1px);
+}
+
 /* Label and sort button on one centred line, so headings with and without a button match. */
 .th-content {
   display: inline-flex;
@@ -171,6 +176,10 @@
 
 .col-priority {
   width: 7rem;
+}
+
+.col-due {
+  width: 6.5rem;
 }
 
 .col-created {
@@ -353,4 +362,68 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* Due date: a label that opens the native picker. The picker's own input sits under the label,
+   invisible, so the picker opens where the label is. */
+.due-date {
+  position: relative;
+  display: inline-block;
+}
+
+.due-date-button {
+  padding: 0.2rem 0.3rem;
+  border-color: transparent;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.due-date-button:hover {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* Weight, not colour: overdue is bold and underlined, today is bold, later is plain ink. */
+.due-overdue {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.due-today {
+  font-weight: 700;
+}
+
+.due-none,
+.due-done {
+  color: var(--muted);
+}
+
+/* "Add date" only shows on the row being pointed at or worked in, so empty rows stay quiet. */
+.due-none {
+  opacity: 0;
+}
+
+.task-row:hover .due-none,
+.due-none:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .due-none {
+    opacity: 1;
+  }
+}
+
+.due-date-input {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
 }

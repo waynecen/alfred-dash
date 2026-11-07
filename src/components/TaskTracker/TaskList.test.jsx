@@ -23,7 +23,7 @@ const tasks = [
 describe('TaskList', () => {
   it('labels every column', () => {
     setup();
-    for (const name of ['Done', 'Description', 'Priority', 'Created', 'Actions']) {
+    for (const name of ['Done', 'Description', 'Priority', 'Due', 'Created', 'Actions']) {
       expect(screen.getByRole('columnheader', { name: new RegExp(name) })).toBeInTheDocument();
     }
   });
@@ -52,12 +52,13 @@ describe('TaskList', () => {
   });
 
   describe('sort buttons', () => {
-    it('sit beside Description, Priority and Created only', () => {
+    it('sit beside Description, Priority, Due and Created only', () => {
       setup();
       expect(screen.getByRole('button', { name: 'Sort by description' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Sort by priority' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Sort by due' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Sort by created' })).toBeInTheDocument();
-      expect(screen.getAllByRole('button', { name: /^Sort by/ })).toHaveLength(3);
+      expect(screen.getAllByRole('button', { name: /^Sort by/ })).toHaveLength(4);
     });
 
     it('report the clicked column', async () => {

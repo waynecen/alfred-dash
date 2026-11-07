@@ -44,6 +44,11 @@ function useTasks(notify) {
     update(id, () => ({ priority }));
   }
 
+  // Sets any of a task's fields, e.g. updateTask(id, { dueDate: '2026-11-13' }).
+  function updateTask(id, fields) {
+    update(id, () => fields);
+  }
+
   function deleteTask(id) {
     const index = tasks.findIndex((task) => task.id === id);
     if (index === -1) return;
@@ -65,7 +70,7 @@ function useTasks(notify) {
 
   return {
     tasks,
-    actions: { addTask, addTasks, toggleTask, editTask, changePriority, deleteTask, reorderTasks },
+    actions: { addTask, addTasks, toggleTask, editTask, changePriority, updateTask, deleteTask, reorderTasks },
   };
 }
 

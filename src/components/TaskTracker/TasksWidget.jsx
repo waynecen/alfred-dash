@@ -6,10 +6,13 @@ import countTasks from '../../utils/countTasks';
 import filterTasks from '../../utils/filterTasks';
 import sortTasks from '../../utils/sortTasks';
 import moveTask from '../../utils/moveTask';
+import useToday from '../../hooks/useToday';
 import './TaskTracker.css';
 
 // The content of the Tasks widget. The card and title come from <Widget>.
-function TasksWidget({ tasks, onAdd, onToggle, onEdit, onPriorityChange, onDelete, onReorder }) {
+function TasksWidget({ tasks, onAdd, onToggle, onEdit, onPriorityChange, onUpdate, onDelete, onReorder }) {
+  // Due labels ("Today", "Tomorrow") move on at midnight.
+  const today = useToday();
   // The filter and sort are temporary UI state, so plain useState is enough (no need to save them).
   const [status, setStatus] = useState('all');
   // null means "the order tasks were added in"; otherwise { key, direction }.
@@ -46,6 +49,8 @@ function TasksWidget({ tasks, onAdd, onToggle, onEdit, onPriorityChange, onDelet
         onToggle={onToggle}
         onEdit={onEdit}
         onPriorityChange={onPriorityChange}
+        onUpdate={onUpdate}
+        today={today}
         onDelete={onDelete}
         onMove={handleMove}
       />

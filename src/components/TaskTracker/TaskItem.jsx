@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
 import formatCreatedDate from '../../utils/formatCreatedDate';
+import DueDate from './DueDate';
 
 function TaskItem({
   task,
   onToggle,
   onEdit,
   onPriorityChange,
+  onUpdate,
   onDelete,
   isDragging,
   onDragStart,
@@ -13,6 +15,7 @@ function TaskItem({
   onDrop,
   onDragEnd,
   onStep,
+  today,
 }) {
   // Tasks saved before priorities existed have none, so treat them as medium.
   const priority = task.priority ?? 'medium';
@@ -140,6 +143,15 @@ function TaskItem({
           <option value="medium">Medium</option>
           <option value="high">High</option>
         </select>
+      </td>
+      <td className="col-due">
+        <DueDate
+          value={task.dueDate ?? null}
+          today={today}
+          completed={task.completed}
+          taskText={task.text}
+          onChange={(dueDate) => onUpdate(task.id, { dueDate })}
+        />
       </td>
       <td className="col-created">
         {/* Tasks saved before this feature have no createdAt, but their id is a timestamp too. */}
