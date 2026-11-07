@@ -285,6 +285,35 @@
   border-color: var(--border);
 }
 
+/* Tags and repeat, under the text and indented to start where it does. */
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.6rem;
+  padding: 0 calc(0.5rem + 1px);
+  font-size: 0.7rem;
+}
+
+.task-tag {
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.task-tag:hover {
+  background: transparent;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.task-repeat {
+  color: var(--muted);
+}
+
 .task-row.completed .task-text {
   text-decoration: line-through;
   color: var(--muted);

@@ -2,6 +2,30 @@ import { useState, useRef } from 'react';
 import formatCreatedDate from '../../utils/formatCreatedDate';
 import DueDate from './DueDate';
 import TaskDetails from './TaskDetails';
+import { describeRecurrence } from '../../data/tasks';
+
+// A line under the task's text: its tags (each one filters the list to it) and how it repeats.
+// Nothing at all when the task has neither, so plain tasks keep a single line.
+function TaskMeta({ task, onFilterTag }) {
+  const tags = task.tags ?? [];
+  if (tags.length === 0 && !task.recurrence) return null;
+  return (
+    <div className="task-meta">
+      {tags.map((tag) => (
+        <button
+          key={tag}
+          type="button"
+          className="task-tag"
+          onClick={() => onFilterTag?.(tag)}
+          aria-label={`Show tasks tagged ${tag}`}
+        >
+          #{tag}
+        </button>
+      ))}
+      {task.recurrence && <span className="task-repeat">{describeRecurrence(task.recurrence)}</span>}
+    </div>
+  );
+}
 
 function TaskItem({
   task,
@@ -16,6 +40,7 @@ function TaskItem({
   onDrop,
   onDragEnd,
   onStep,
+  onFilterTag,
   today,
 }) {
   // Tasks saved before priorities existed have none, so treat them as medium.
@@ -135,6 +160,7 @@ function TaskItem({
             {task.text}
           </button>
         )}
+        <TaskMeta task={task} onFilterTag={onFilterTag} />
       </td>
       <td className="col-priority">
         <select

@@ -61,6 +61,7 @@ function TasksWidget({ tasks, onAdd, onToggle, onEdit, onPriorityChange, onUpdat
         onEdit={onEdit}
         onPriorityChange={onPriorityChange}
         onUpdate={onUpdate}
+        onFilterTag={(tag) => setFilter((current) => ({ ...current, tag }))}
         today={today}
         onDelete={onDelete}
         onMove={handleMove}

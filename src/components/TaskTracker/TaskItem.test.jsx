@@ -166,3 +166,23 @@ describe('TaskItem details', () => {
     expect(onUpdate).toHaveBeenLastCalledWith(1, { recurrence: null });
   });
 });
+
+describe('TaskItem tags and repeat', () => {
+  it('shows them under the text, and a tag filters the list to it', async () => {
+    const onFilterTag = vi.fn();
+    render(
+      <table>
+        <tbody>
+          <TaskItem
+            task={{ ...task, tags: ['home'], recurrence: { every: 'week', interval: 2 } }}
+            today="2026-11-07"
+            onFilterTag={onFilterTag}
+          />
+        </tbody>
+      </table>
+    );
+    expect(screen.getByText('Every 2 weeks')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Show tasks tagged home' }));
+    expect(onFilterTag).toHaveBeenCalledWith('home');
+  });
+});

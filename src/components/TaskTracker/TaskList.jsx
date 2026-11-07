@@ -39,6 +39,7 @@ function TaskList({
   onUpdate,
   onDelete,
   onMove,
+  onFilterTag,
   today,
 }) {
   const emptyMessage =
@@ -96,6 +97,7 @@ function TaskList({
               onEdit={onEdit}
               onPriorityChange={onPriorityChange}
               onUpdate={onUpdate}
+              onFilterTag={onFilterTag}
               today={today}
               onDelete={onDelete}
               isDragging={dragId === task.id}
