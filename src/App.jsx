@@ -87,6 +87,8 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  // A question for the Assistant widget from "Ask Claude" in the palette: { text, n }.
+  const [assistantRequest, setAssistantRequest] = useState(null);
   const today = useToday();
   const [settings] = useSettings();
   // The focus timer keeps time here, so it runs (and announces the end of a phase) on any board.
@@ -111,6 +113,8 @@ function App() {
   const [focusRequest, setFocusRequest] = useState(null);
   // Checked each time Settings opens, so the AI status there is current.
   const aiHealth = useAIHealth(settingsOpen);
+  // And while the palette is open, so it only offers "Ask Claude" when Claude can answer.
+  const paletteAI = useAIHealth(paletteOpen);
 
   // The CSS variables are switched by an attribute on <html>. After the first paint, the switch
   // runs as a view transition so the page cross-fades (timing in App.css); browsers without
@@ -179,6 +183,16 @@ function App() {
     { key: ']', run: () => stepBoard(1) },
     ...boards.boards.slice(0, 9).map((b, index) => ({ key: String(index + 1), run: () => boards.switchTo(b.id) })),
   ]);
+
+  // Sends a question to the Assistant, bringing it into view first: on this board if it is here,
+  // on the first board that has it, or added to this one.
+  function askClaude(text) {
+    const home = widgetIds.includes('assistant') ? board : boards.boards.find((b) => b.widgetIds.includes('assistant'));
+    if (home && home.id !== board.id) boards.switchTo(home.id);
+    if (home) focusWidget('assistant');
+    else addWidget('assistant');
+    setAssistantRequest((current) => ({ text, n: (current?.n ?? 0) + 1 }));
+  }
 
   function focusWidget(id) {
     setFocusRequest((request) => ({ id, n: (request?.n ?? 0) + 1 }));
@@ -264,7 +278,18 @@ function App() {
     notes,
     focus,
     counts: countTasks(tasks),
-    actions: { ...taskActions, ...eventActions, ...habitActions, ...goalActions, focusTimer: focusActions, setNotes, notify },
+    assistantRequest,
+    actions: {
+      ...taskActions,
+      ...eventActions,
+      ...habitActions,
+      ...goalActions,
+      focusTimer: focusActions,
+      setNotes,
+      notify,
+      // The Assistant took the palette's question: don't send it again.
+      assistantRequestHandled: (n) => setAssistantRequest((current) => (current?.n === n ? null : current)),
+    },
   };
 
   const getCommands = (query) =>
@@ -277,6 +302,7 @@ function App() {
       activeBoardId: board.id,
       weekStart: settings.weekStart,
       focus,
+      aiReady: paletteAI.status === 'connected',
       habitsToday: habitsDueOn(habits, today).filter((habit) => !doneOn(habitLog, habit, today)),
       actions: {
         focusTimer: focusActions,
@@ -291,6 +317,7 @@ function App() {
         openSettings: () => setSettingsOpen(true),
         openShortcuts: () => setShortcutsOpen(true),
         openReview: () => setReviewOpen(true),
+        askClaude,
         switchBoard: boards.switchTo,
         addBoard: boards.addBoard,
         renameBoard: (name) => boards.renameBoard(board.id, name),
