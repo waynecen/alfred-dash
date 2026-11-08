@@ -357,7 +357,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
             {STEPS.map((name, index) => (
               <li key={name}>
                 <button type="button" aria-current={index === step ? 'step' : undefined} onClick={() => setStep(index)}>
-                  <span className="review-step-number">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="review-step-number">{String(index + 1).padStart(2, '0')}</span>{' '}
                   {name}
                 </button>
               </li>
@@ -366,7 +366,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
 
           <section className="review-step" aria-labelledby={`${headingId}-step`}>
             <h3 id={`${headingId}-step`} ref={heading} tabIndex={-1} data-autofocus>
-              <span className="review-step-number">{String(step + 1).padStart(2, '0')}</span>
+              <span className="review-step-number">{String(step + 1).padStart(2, '0')}</span>{' '}
               {STEPS[step]}
             </h3>
             {steps[step]}
