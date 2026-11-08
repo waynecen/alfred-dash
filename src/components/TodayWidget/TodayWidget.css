@@ -66,6 +66,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* A checkbox needs no more than its own width; titles in a list of them still line up. */
+.today-item-when.today-item-check {
+  width: auto;
+}
+
 .today-item-when input {
   width: 1rem;
   height: 1rem;

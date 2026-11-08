@@ -80,7 +80,7 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
 
   const renderTask = (task, late) => (
     <li key={task.id} className={task.completed ? 'today-item is-done' : 'today-item'}>
-      <span className="today-item-when">
+      <span className="today-item-when today-item-check">
         <input
           type="checkbox"
           checked={task.completed}
@@ -146,7 +146,7 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
                 const { current } = habitStreaks(habit, habitLog[habit.id], today);
                 return (
                   <li key={habit.id} className={done ? 'today-item is-done' : 'today-item'}>
-                    <span className="today-item-when">
+                    <span className="today-item-when today-item-check">
                       <input
                         type="checkbox"
                         checked={done}
