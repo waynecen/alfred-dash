@@ -1,4 +1,4 @@
-import { parseISODate } from '../utils/dates';
+import { parseISODate, toISODate } from '../utils/dates';
 
 // The shape of a habit, saved under the 'habits' key, and the days each one was done, under
 // 'habitLog'.
@@ -27,6 +27,13 @@ export const scheduleDays = (schedule) => (schedule === DAILY ? [0, 1, 2, 3, 4, 
 
 // Whether the habit is due on a day ('YYYY-MM-DD').
 export const isScheduled = (habit, iso) => habit.schedule === DAILY || habit.schedule.includes(parseISODate(iso).getDay());
+
+// The habits due on a day: not archived, made by then, and scheduled for it.
+export const habitsDueOn = (habits, date) =>
+  habits.filter((habit) => !habit.archived && isScheduled(habit, date) && toISODate(habit.createdAt) <= date);
+
+// Whether a habit was done on a day.
+export const doneOn = (habitLog, habit, date) => (habitLog[habit.id] ?? []).includes(date);
 
 // A weekday's name in the user's language: weekdayName(1) is 'Mon'. 7 January 2024 was a Sunday.
 export const weekdayName = (day, weekday = 'short') =>

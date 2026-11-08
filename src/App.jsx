@@ -27,8 +27,8 @@ import { WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
 import { buildCommands } from './utils/commands';
 import countTasks from './utils/countTasks';
 import insertAt from './utils/insertAt';
-import { parseISODate, startOfWeek, toISODate } from './utils/dates';
-import { isScheduled } from './data/habits';
+import { parseISODate, startOfWeek } from './utils/dates';
+import { doneOn, habitsDueOn } from './data/habits';
 import { isReviewed, reviewWeek } from './data/reviews';
 import { formatClock } from './data/focus';
 
@@ -277,13 +277,7 @@ function App() {
       activeBoardId: board.id,
       weekStart: settings.weekStart,
       focus,
-      habitsToday: habits.filter(
-        (habit) =>
-          !habit.archived &&
-          isScheduled(habit, today) &&
-          toISODate(habit.createdAt) <= today &&
-          !(habitLog[habit.id] ?? []).includes(today)
-      ),
+      habitsToday: habitsDueOn(habits, today).filter((habit) => !doneOn(habitLog, habit, today)),
       actions: {
         focusTimer: focusActions,
         toggleHabitDay: habitActions.toggleHabitDay,

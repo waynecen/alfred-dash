@@ -4,9 +4,9 @@ import useSettings from '../../hooks/useSettings';
 import { hourCycle } from '../../data/settings';
 import { describeEventTime, eventsOn } from '../../data/events';
 import { formatClock } from '../../data/focus';
-import { isScheduled } from '../../data/habits';
+import { doneOn, habitsDueOn } from '../../data/habits';
 import { habitStreaks } from '../../utils/streaks';
-import { parseISODate, relativeDay, toISODate } from '../../utils/dates';
+import { parseISODate, relativeDay } from '../../utils/dates';
 import parseQuickAdd from '../../utils/parseQuickAdd';
 import { plural } from '../../utils/text';
 import './TodayWidget.css';
@@ -52,8 +52,8 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
   const openToday = dueToday.filter((task) => !task.completed).length;
   // The habits due today (made by today), and those still to tick off.
   const keptHabits = habits.filter((habit) => !habit.archived);
-  const habitsToday = keptHabits.filter((habit) => isScheduled(habit, today) && toISODate(habit.createdAt) <= today);
-  const habitDone = (habit) => (habitLog[habit.id] ?? []).includes(today);
+  const habitsToday = habitsDueOn(habits, today);
+  const habitDone = (habit) => doneOn(habitLog, habit, today);
   const habitsLeft = habitsToday.filter((habit) => !habitDone(habit)).length;
 
   const line = draft.trim() ? readLine(draft, today, weekStart) : null;
