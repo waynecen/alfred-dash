@@ -2,7 +2,8 @@
 import http from 'node:http';
 import { vi } from 'vitest';
 import Anthropic from '@anthropic-ai/sdk';
-import { createAiHandler, parseStreamRequest } from './aiHandler.js';
+import { createAiHandler, parseStreamRequest, replayable } from './aiHandler.js';
+import { ASSISTANT_TOOLS } from './assistantTools.js';
 
 // A stand-in for the Anthropic client: its stream yields the given events, then a final message.
 function fakeClient({ events = [], final = {}, error } = {}) {
@@ -166,12 +167,34 @@ describe('AI proxy', () => {
 describe('parseStreamRequest', () => {
   const parse = (body) => parseStreamRequest(JSON.stringify(body));
 
-  it('keeps only role and content, and defaults effort to medium', () => {
+  it('keeps only role and content, and defaults effort to medium and tools off', () => {
     expect(parse({ messages: [{ role: 'user', content: 'Hi', extra: 1 }] })).toEqual({
       messages: [{ role: 'user', content: 'Hi' }],
       system: undefined,
       effort: 'medium',
+      tools: false,
     });
+  });
+
+  it('takes a chat with tools: thinking, proposals and their results, each block rebuilt', () => {
+    const messages = [
+      { role: 'user', content: [{ type: 'text', text: 'Add milk' }] },
+      {
+        role: 'assistant',
+        content: [
+          { type: 'thinking', thinking: '', signature: 'sig' },
+          { type: 'text', text: 'Here you go.', citations: null },
+          { type: 'tool_use', id: 'toolu_1', name: 'add_tasks', input: { tasks: [{ text: 'Buy milk' }] }, extra: true },
+        ],
+      },
+      { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'toolu_1', content: 'Applied.' }, { type: 'text', text: 'Thanks' }] },
+    ];
+    expect(parse({ messages, tools: true }).messages[1].content).toEqual([
+      { type: 'thinking', thinking: '', signature: 'sig' },
+      { type: 'text', text: 'Here you go.' },
+      { type: 'tool_use', id: 'toolu_1', name: 'add_tasks', input: { tasks: [{ text: 'Buy milk' }] } },
+    ]);
+    expect(() => parse({ messages })).toThrow(/tools: true/);
   });
 
   it.each([
@@ -183,7 +206,91 @@ describe('parseStreamRequest', () => {
     ['an assistant last', JSON.stringify({ messages: [{ role: 'user', content: 'x' }, { role: 'assistant', content: 'y' }] })],
     ['an unknown effort', JSON.stringify({ messages: [{ role: 'user', content: 'x' }], effort: 'max' })],
     ['too many messages', JSON.stringify({ messages: Array.from({ length: 101 }, () => ({ role: 'user', content: 'x' })) })],
+    ['a block a user cannot send', JSON.stringify({ messages: [{ role: 'user', content: [{ type: 'thinking', thinking: 'x', signature: 's' }] }], tools: true })],
+    [
+      'a tool that is not the assistant’s',
+      JSON.stringify({
+        messages: [
+          { role: 'user', content: 'x' },
+          { role: 'assistant', content: [{ type: 'tool_use', id: 't', name: 'rm_rf', input: {} }] },
+          { role: 'user', content: 'y' },
+        ],
+        tools: true,
+      }),
+    ],
+    ['tools that are not a boolean', JSON.stringify({ messages: [{ role: 'user', content: 'x' }], tools: 'yes' })],
   ])('rejects %s with a 400', (_name, raw) => {
     expect(() => parseStreamRequest(raw)).toThrow(expect.objectContaining({ status: 400 }));
+  });
+});
+
+describe('AI proxy with tools', () => {
+  const toolUse = (input, id = 'toolu_1') => ({ type: 'tool_use', id, name: 'add_tasks', input });
+  const chat = { ...hello, tools: true };
+
+  it('offers the assistant’s tools only when asked', async () => {
+    const { client, calls } = fakeClient();
+    await start({ client });
+    await (await post(chat)).text();
+    await (await post(hello)).text();
+    expect(calls[0].tools).toEqual(ASSISTANT_TOOLS);
+    expect(calls[1]).not.toHaveProperty('tools');
+  });
+
+  it('sends each proposal once the reply is done, checked, with the content to send back', async () => {
+    const thinking = { type: 'thinking', thinking: '', signature: 'sig' };
+    const good = toolUse({ tasks: [{ text: 'Buy milk', priority: 'high', colour: 'red' }] });
+    const bad = toolUse({ tasks: [{ text: 'Pay', due_date: 'friday' }] }, 'toolu_2');
+    const { client } = fakeClient({
+      events: [{ type: 'content_block_start', content_block: { type: 'tool_use' } }],
+      final: { stop_reason: 'tool_use', content: [thinking, good, bad] },
+    });
+    await start({ client });
+    const events = await readEvents(await post(chat));
+    expect(events.map((e) => e.event)).toEqual(['status', 'tool_use', 'tool_use', 'done']);
+    expect(events[0].data).toEqual({ phase: 'proposing' });
+    expect(events[1].data).toEqual({ id: 'toolu_1', name: 'add_tasks', input: { tasks: [{ text: 'Buy milk', priority: 'high' }] } });
+    expect(events[2].data).toMatchObject({ id: 'toolu_2', error: expect.stringContaining('due_date') });
+    // The content goes back as Claude wrote it, inputs untouched.
+    expect(events[3].data.content).toEqual([thinking, good, bad]);
+  });
+
+  it('marks proposals from a reply cut off at max_tokens, rather than offering them', async () => {
+    const { client } = fakeClient({ final: { stop_reason: 'max_tokens', content: [toolUse({ tasks: [{ text: 'Bu' }] })] } });
+    await start({ client });
+    const events = await readEvents(await post(chat));
+    expect(events.find((e) => e.event === 'tool_use').data.error).toMatch(/cut off/);
+  });
+});
+
+describe('replayable', () => {
+  it('keeps what can be sent back, and drops empty text', () => {
+    expect(
+      replayable([
+        { type: 'thinking', thinking: 'x', signature: 's' },
+        { type: 'text', text: ' ' },
+        { type: 'text', text: 'Hi', citations: null },
+        { type: 'something_new', value: 1 },
+      ])
+    ).toEqual([
+      { type: 'thinking', thinking: 'x', signature: 's' },
+      { type: 'text', text: 'Hi' },
+    ]);
+  });
+
+  it('after a fallback, keeps only the text from before the switch', () => {
+    const content = [
+      { type: 'thinking', thinking: '', signature: 'a' },
+      { type: 'text', text: 'Partial ' },
+      { type: 'tool_use', id: 't1', name: 'add_tasks', input: {} },
+      { type: 'fallback', from: { model: 'x' }, to: { model: 'y' } },
+      { type: 'thinking', thinking: '', signature: 'b' },
+      { type: 'text', text: 'rest' },
+    ];
+    expect(replayable(content)).toEqual([
+      { type: 'text', text: 'Partial ' },
+      { type: 'thinking', thinking: '', signature: 'b' },
+      { type: 'text', text: 'rest' },
+    ]);
   });
 });

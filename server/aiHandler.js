@@ -1,19 +1,25 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { ASSISTANT_TOOLS, TOOL_NAMES, checkToolInput } from './assistantTools.js';
 
 // The dashboard's door to Claude. The browser never sees the API key: it sends a conversation
 // here, and this code (running in Node, next to the key) calls the Anthropic API and streams the
 // reply back as Server-Sent Events.
 //
 //   GET  /api/ai/health   -> { configured, model }
-//   POST /api/ai/stream   { messages: [{ role, content }], system?, effort? }
+//   POST /api/ai/stream   { messages: [{ role, content }], system?, effort?, tools? }
 //        -> text/event-stream of:
-//           event: status  data: { phase: 'thinking' | 'writing' }
-//           event: text    data: { text }                 (a piece of the reply)
-//           event: done    data: { stopReason, model, usage, refusal? }
-//           event: error   data: { message, status? }
+//           event: status    data: { phase: 'thinking' | 'writing' | 'proposing' }
+//           event: text      data: { text }               (a piece of the reply)
+//           event: tool_use  data: { id, name, input, error? }   (with tools: a proposed change)
+//           event: done      data: { stopReason, model, usage, refusal?, content? }
+//           event: error     data: { message, status? }
 //
-// The model and token ceiling are chosen here, not by the browser, so a page can't run up the
-// bill with a bigger model.
+// With tools: true, Claude may propose changes with the assistant's tools (assistantTools.js).
+// They reach the browser only once the reply is complete, each checked against its tool, and the
+// done event carries the reply's content blocks for the browser to send back next turn, unchanged.
+//
+// The model, token ceiling and tools are chosen here, not by the browser, so a page can't run up
+// the bill with a bigger model or hand Claude tools of its own.
 
 export const DEFAULT_MODEL = 'claude-opus-5-5';
 const MAX_TOKENS = 64000; // streaming, so a high ceiling can't time out; you pay only for what is used
@@ -21,7 +27,7 @@ const EFFORTS = ['low', 'medium', 'high'];
 const DEFAULT_EFFORT = 'medium';
 
 // Limits on what the browser may send, so a bad or hostile request can't make a huge call.
-const MAX_BODY_BYTES = 256 * 1024;
+const MAX_BODY_BYTES = 1024 * 1024; // a long chat sends back its thinking blocks and snapshots
 const MAX_MESSAGES = 100;
 const MAX_SYSTEM_CHARS = 20000;
 // At most this many replies stream at once, so a page stuck in a loop can't run up the bill.
@@ -68,35 +74,110 @@ function readBody(req) {
   });
 }
 
+const badRequest = (message) => Object.assign(new Error(message), { status: 400 });
+const isText = (value) => typeof value === 'string';
+const isObject = (value) => typeof value === 'object' && value !== null && !Array.isArray(value);
+
+// One content block from the browser, rebuilt from only the fields it may carry. A user sends
+// text, and with tools the results of the proposals Claude made; an assistant turn comes back as
+// it was sent out (text, thinking, tool calls).
+function parseBlock(role, block, tools) {
+  switch (`${role}:${block?.type}`) {
+    case 'user:text':
+    case 'assistant:text':
+      if (!isText(block.text) || !block.text.trim()) throw badRequest('A text block needs text.');
+      return { type: 'text', text: block.text };
+    case 'assistant:thinking':
+      if (!isText(block.thinking) || !isText(block.signature)) throw badRequest('A thinking block needs its text and signature.');
+      return { type: 'thinking', thinking: block.thinking, signature: block.signature };
+    case 'assistant:redacted_thinking':
+      if (!isText(block.data)) throw badRequest('A redacted thinking block needs its data.');
+      return { type: 'redacted_thinking', data: block.data };
+    case 'assistant:tool_use':
+      if (!tools) throw badRequest('Tool calls need tools: true.');
+      if (!isText(block.id) || !TOOL_NAMES.has(block.name) || !isObject(block.input)) {
+        throw badRequest('A tool call needs an id, one of the assistant’s tools, and an input object.');
+      }
+      return { type: 'tool_use', id: block.id, name: block.name, input: block.input };
+    case 'user:tool_result':
+      if (!tools) throw badRequest('Tool results need tools: true.');
+      if (!isText(block.tool_use_id) || !isText(block.content) || !block.content.trim()) {
+        throw badRequest('A tool result needs the tool_use_id it answers and some text.');
+      }
+      return { type: 'tool_result', tool_use_id: block.tool_use_id, content: block.content, ...(block.is_error === true && { is_error: true }) };
+    default:
+      throw badRequest(`A ${role} message can't hold a ${block?.type} block.`);
+  }
+}
+
+function parseContent(role, content, tools) {
+  if (isText(content)) {
+    if (!content.trim()) throw badRequest('Each content must be non-empty.');
+    return content;
+  }
+  if (!Array.isArray(content) || content.length === 0) throw badRequest('Each content must be text or a non-empty list of blocks.');
+  return content.map((block) => parseBlock(role, block, tools));
+}
+
 // Checks the browser's request and returns the API parameters, or throws a 400 with the reason.
 export function parseStreamRequest(raw) {
-  const bad = (message) => Object.assign(new Error(message), { status: 400 });
   let body;
   try {
     body = JSON.parse(raw);
   } catch {
-    throw bad('Body must be JSON.');
+    throw badRequest('Body must be JSON.');
   }
-  const { messages, system, effort = DEFAULT_EFFORT } = body ?? {};
+  const { messages, system, effort = DEFAULT_EFFORT, tools = false } = body ?? {};
 
-  if (!Array.isArray(messages) || messages.length === 0) throw bad('messages must be a non-empty array.');
-  if (messages.length > MAX_MESSAGES) throw bad(`At most ${MAX_MESSAGES} messages.`);
+  if (typeof tools !== 'boolean') throw badRequest('tools must be true or false.');
+  if (!Array.isArray(messages) || messages.length === 0) throw badRequest('messages must be a non-empty array.');
+  if (messages.length > MAX_MESSAGES) throw badRequest(`At most ${MAX_MESSAGES} messages.`);
   for (const message of messages) {
-    if (message?.role !== 'user' && message?.role !== 'assistant') throw bad('Each role must be "user" or "assistant".');
-    if (typeof message.content !== 'string' || !message.content.trim()) throw bad('Each content must be non-empty text.');
+    if (message?.role !== 'user' && message?.role !== 'assistant') throw badRequest('Each role must be "user" or "assistant".');
   }
-  if (messages[0].role !== 'user') throw bad('The first message must be from the user.');
-  if (messages.at(-1).role !== 'user') throw bad('The last message must be from the user.');
-  if (system !== undefined && (typeof system !== 'string' || system.length > MAX_SYSTEM_CHARS)) {
-    throw bad(`system must be text of at most ${MAX_SYSTEM_CHARS} characters.`);
+  if (messages[0].role !== 'user') throw badRequest('The first message must be from the user.');
+  if (messages.at(-1).role !== 'user') throw badRequest('The last message must be from the user.');
+  if (system !== undefined && (!isText(system) || system.length > MAX_SYSTEM_CHARS)) {
+    throw badRequest(`system must be text of at most ${MAX_SYSTEM_CHARS} characters.`);
   }
-  if (!EFFORTS.includes(effort)) throw bad(`effort must be one of ${EFFORTS.join(', ')}.`);
+  if (!EFFORTS.includes(effort)) throw badRequest(`effort must be one of ${EFFORTS.join(', ')}.`);
 
   return {
-    messages: messages.map(({ role, content }) => ({ role, content })),
+    messages: messages.map(({ role, content }) => ({ role, content: parseContent(role, content, tools) })),
     system: system || undefined,
     effort,
+    tools,
   };
+}
+
+// What of a finished reply goes back to the API next turn, as the browser will send it. Blocks
+// are kept as they came, but only those the conversation can carry, and no empty text. When a
+// fallback model took over partway (a fallback block marks where), only the text from before
+// that point stays: the declined model's thinking and tool calls are left out.
+export function replayable(content) {
+  const boundary = content.findLastIndex((block) => block.type === 'fallback');
+  const kept = boundary === -1 ? content : [...content.slice(0, boundary).filter((b) => b.type === 'text'), ...content.slice(boundary + 1)];
+  return kept.flatMap((block) => {
+    switch (block.type) {
+      case 'text':
+        return block.text.trim() ? [{ type: 'text', text: block.text }] : [];
+      case 'thinking':
+        return [{ type: 'thinking', thinking: block.thinking, signature: block.signature }];
+      case 'redacted_thinking':
+        return [{ type: 'redacted_thinking', data: block.data }];
+      case 'tool_use':
+        return [{ type: 'tool_use', id: block.id, name: block.name, input: block.input }];
+      default:
+        return [];
+    }
+  });
+}
+
+// Why the tool calls in a reply can't be carried out as they stand, if they can't.
+function cutShort(stopReason) {
+  if (stopReason === 'max_tokens') return 'The reply was cut off before this proposal was complete.';
+  if (stopReason === 'refusal') return 'The reply was declined, so this proposal was not finished.';
+  return null;
 }
 
 // A short message the dashboard can show, without leaking anything sensitive.
@@ -107,6 +188,8 @@ function describeError(error) {
   if (error instanceof Anthropic.BadRequestError) return { status: 400, message: `The Anthropic API rejected the request: ${error.message}` };
   if (error instanceof Anthropic.APIConnectionError) return { status: 502, message: 'Could not reach the Anthropic API. Check your connection.' };
   if (error instanceof Anthropic.APIError) return { status: error.status ?? 502, message: 'The Anthropic API had a problem. Try again.' };
+  // A proposal's input streams as it is written; one that ends up as broken JSON can't be read.
+  if (error instanceof SyntaxError) return { status: 502, message: 'A proposed change came back garbled. Try again.' };
   return { status: 500, message: 'Something went wrong in the AI proxy.' };
 }
 
@@ -143,6 +226,7 @@ export function createAiHandler({ apiKey, model = DEFAULT_MODEL, client } = {}) 
       messages: params.messages,
       ...(params.system && { system: params.system }),
       output_config: { effort: params.effort },
+      ...(params.tools && { tools: ASSISTANT_TOOLS }),
       ...(supportsFallback(model) && { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }),
     };
     // The user closed the widget or pressed Stop: stop paying for tokens nobody will read.
@@ -156,18 +240,30 @@ export function createAiHandler({ apiKey, model = DEFAULT_MODEL, client } = {}) 
       call = anthropic.beta.messages.stream(request);
       for await (const event of call) {
         if (event.type === 'content_block_start') {
-          if (event.content_block.type === 'thinking') send('status', { phase: 'thinking' });
-          if (event.content_block.type === 'text') send('status', { phase: 'writing' });
+          const { type } = event.content_block;
+          if (type === 'thinking') send('status', { phase: 'thinking' });
+          if (type === 'text') send('status', { phase: 'writing' });
+          if (type === 'tool_use') send('status', { phase: 'proposing' });
         } else if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
           send('text', { text: event.delta.text });
         }
       }
       const message = await call.finalMessage();
+      const content = params.tools ? replayable(message.content ?? []) : undefined;
+      // Each proposal, checked. One cut short by the reply's end still goes to the browser, marked,
+      // so its answer (an error) keeps the conversation whole.
+      const unfinished = cutShort(message.stop_reason);
+      for (const block of content ?? []) {
+        if (block.type !== 'tool_use') continue;
+        const checked = unfinished ? { error: unfinished } : checkToolInput(block.name, block.input);
+        send('tool_use', { id: block.id, name: block.name, input: checked.input ?? block.input, ...(checked.error && { error: checked.error }) });
+      }
       send('done', {
         stopReason: message.stop_reason,
         model: message.model, // differs from the configured one when a fallback answered
         usage: { inputTokens: message.usage.input_tokens, outputTokens: message.usage.output_tokens },
         ...(message.stop_reason === 'refusal' && { refusal: message.stop_details?.category ?? null }),
+        ...(content && { content }),
       });
     } catch (error) {
       if (res.destroyed) return; // the browser went away; nothing to tell it
