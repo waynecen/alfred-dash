@@ -7,6 +7,10 @@ export const AI_STATUS = {
     label: 'Not connected',
     note: 'Add ANTHROPIC_API_KEY to a .env file (see .env.example), then restart npm run dev.',
   },
+  locked: {
+    label: 'Locked',
+    note: 'The AI on this site needs its access key. Enter it in Settings, under AI assistant.',
+  },
   offline: {
     label: 'Proxy not running',
     note: 'The AI proxy runs with npm run dev. Start it, then check again.',

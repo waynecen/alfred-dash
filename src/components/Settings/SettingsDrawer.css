@@ -144,3 +144,28 @@
     animation: none;
   }
 }
+
+/* The hosted AI's access key: a password field and its button, sharing an edge. */
+.drawer-access {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.drawer-access-row {
+  display: flex;
+}
+
+.drawer-access-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+
+.drawer-access-row button {
+  margin-left: -1px;
+}

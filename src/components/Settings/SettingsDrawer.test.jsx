@@ -110,3 +110,15 @@ describe('SettingsDrawer', () => {
     expect(opener).toHaveFocus();
   });
 });
+
+describe('SettingsDrawer on a hosted site', () => {
+  it('takes the access key a locked AI asks for, and keeps it in this browser', async () => {
+    const recheck = vi.fn();
+    render(<SettingsDrawer theme="light" onThemeChange={vi.fn()} onResetLayout={vi.fn()} onClose={vi.fn()} ai={{ status: 'locked', recheck }} />);
+    expect(screen.getByText('Locked')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Access key'), 'open sesame');
+    await userEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+    expect(localStorage.getItem('aiAccessKey')).toBe('open sesame');
+    expect(recheck).toHaveBeenCalled();
+  });
+});

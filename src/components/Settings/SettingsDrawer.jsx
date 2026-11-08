@@ -5,6 +5,7 @@ import useFocusTrap from '../../hooks/useFocusTrap';
 import useSettings from '../../hooks/useSettings';
 import DataSection from './DataSection';
 import { describeAIStatus } from '../../data/aiStatus';
+import { getAccessKey, setAccessKey } from '../../utils/aiAccess';
 import './SettingsDrawer.css';
 
 const THEMES = [
@@ -59,6 +60,34 @@ function NoticesSection({ enabled, onChange }) {
       </label>
       {note && <p className="drawer-note">{note}</p>}
     </section>
+  );
+}
+
+// The access key a hosted dashboard's AI asks for, kept in this browser only.
+function AccessKeyForm({ onSaved }) {
+  const [value, setValue] = useState('');
+  const id = useId();
+  return (
+    <form
+      className="drawer-access"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!value.trim()) return;
+        setAccessKey(value.trim());
+        setValue('');
+        onSaved?.();
+      }}
+    >
+      <label htmlFor={id} className="label">
+        Access key
+      </label>
+      <div className="drawer-access-row">
+        <input id={id} type="password" value={value} onChange={(event) => setValue(event.target.value)} autoComplete="current-password" />
+        <button type="submit" disabled={!value.trim()}>
+          Unlock
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -188,9 +217,26 @@ function SettingsDrawer({
             {ai.status === 'connected' ? `Using ${ai.model}. ` : ''}
             {aiStatus.note}
           </p>
-          {ai.recheck && ai.status !== 'connected' && ai.status !== 'checking' && (
-            <button type="button" onClick={ai.recheck}>
-              Check again
+          {ai.status === 'locked' ? (
+            <AccessKeyForm onSaved={ai.recheck} />
+          ) : (
+            ai.recheck &&
+            ai.status !== 'connected' &&
+            ai.status !== 'checking' && (
+              <button type="button" onClick={ai.recheck}>
+                Check again
+              </button>
+            )
+          )}
+          {ai.status === 'connected' && getAccessKey() && (
+            <button
+              type="button"
+              onClick={() => {
+                setAccessKey('');
+                ai.recheck?.();
+              }}
+            >
+              Forget the access key
             </button>
           )}
         </section>
