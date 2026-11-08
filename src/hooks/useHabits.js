@@ -1,27 +1,13 @@
+import useCollection from './useCollection';
 import useLocalStorage from './useLocalStorage';
 import { createHabit, normalizeSchedule } from '../data/habits';
 import { toISODate } from '../utils/dates';
-import insertAt from '../utils/insertAt';
 
-// The habits, the days each was done, and everything that changes them. Like useTasks, every
-// change is a functional update, so two changes in the same moment never undo each other.
+// The habits, the days each was done, and everything that changes them.
 //   notify: shows a toast, used to offer Undo after archiving or deleting
 function useHabits(notify) {
-  const [habits, setHabits] = useLocalStorage('habits', []);
+  const { items: habits, add, update, remove } = useCollection('habits', notify, (habit) => habit.name);
   const [habitLog, setLog] = useLocalStorage('habitLog', {});
-
-  const update = (id, fields) => setHabits((current) => current.map((habit) => (habit.id === id ? { ...habit, ...fields } : habit)));
-
-  // fields: { name, schedule }. Returns the new habit's id.
-  function addHabit(fields) {
-    const now = Date.now();
-    let id;
-    setHabits((current) => {
-      id = Math.max(now, ...current.map((habit) => habit.id + 1));
-      return [...current, createHabit(fields, id, now)];
-    });
-    return id;
-  }
 
   function updateHabit(id, fields) {
     update(id, 'schedule' in fields ? { ...fields, schedule: normalizeSchedule(fields.schedule) } : fields);
@@ -50,23 +36,23 @@ function useHabits(notify) {
 
   // Deleting forgets the days done too; Undo brings both back.
   function deleteHabit(id) {
-    const index = habits.findIndex((h) => h.id === id);
-    if (index === -1) return;
-    const habit = habits[index];
     const days = habitLog[id];
-    setHabits((current) => current.filter((h) => h.id !== id));
-    setLog(({ [id]: _gone, ...rest }) => rest);
-    notify({
-      message: `Deleted “${habit.name}”`,
-      actionLabel: 'Undo',
-      onAction: () => {
-        setHabits((current) => (current.some((h) => h.id === id) ? current : insertAt(current, index, habit)));
-        if (days) setLog((current) => ({ ...current, [id]: days }));
-      },
-    });
+    const habit = remove(id, { onUndo: () => days && setLog((current) => ({ ...current, [id]: days })) });
+    if (habit) setLog(({ [id]: _gone, ...rest }) => rest);
   }
 
-  return { habits, habitLog, actions: { addHabit, updateHabit, toggleHabitDay, archiveHabit, deleteHabit } };
+  return {
+    habits,
+    habitLog,
+    actions: {
+      // fields: { name, schedule }. Returns the new habit's id.
+      addHabit: (fields) => add((id, now) => createHabit(fields, id, now)),
+      updateHabit,
+      toggleHabitDay,
+      archiveHabit,
+      deleteHabit,
+    },
+  };
 }
 
 export default useHabits;
