@@ -9,7 +9,8 @@ import ProgressBar from '../ProgressBar/ProgressBar';
 import { describeProgress, goalProgress, isReached } from '../../data/goals';
 import { focusByDay, habitsIn, overdueTasks, reviewStats, reviewWeek, tasksDoneIn, topFocusTask } from '../../data/reviews';
 import { habitStreaks } from '../../utils/streaks';
-import { addDays, parseISODate, relativeDay, startOfWeek, toISODate } from '../../utils/dates';
+import { addDays, formatDay, parseISODate, relativeDay, startOfNextWeek, toISODate } from '../../utils/dates';
+import { plural } from '../../utils/text';
 import './WeeklyReview.css';
 
 const STEPS = ['Done', 'Overdue', 'Habits', 'Focus', 'Goals', 'Reflect'];
@@ -20,8 +21,6 @@ const SYSTEM_PROMPT = `You help one person look back on their week, from what th
 Write a short reflection of at most 120 words, in plain text with no Markdown, as three short paragraphs: what went well, what slipped, and one concrete suggestion for next week.
 Be specific and kind. Use only what is given; never invent tasks, habits or numbers.`;
 
-const dayLabel = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
-const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 // "2–8 November", in the user's own order, or a plain "2 Nov – 8 Nov" where ranges can't be formatted.
 function describeRange({ from, to }) {
@@ -55,7 +54,7 @@ function buildPrompt({ week, partial, done, late, habitRows, focusDays, goalRows
     `Tasks done (${done.length}): ${list(done.map((task) => task.text), 15) || 'none'}.`,
     `Overdue now (${late.length}): ${list(late.map((task) => task.text), 10) || 'none'}.`,
     `Habits: ${habitRows.map(({ habit, due, done: hit, streak }) => `${habit.name}, ${hit} of ${due} days, streak ${streak}`).join('; ') || 'none'}.`,
-    `Focus minutes by day: ${focusDays.map((day) => `${dayLabel(day.date, { weekday: 'short' })} ${day.count}`).join(', ')}.`,
+    `Focus minutes by day: ${focusDays.map((day) => `${formatDay(day.date, { weekday: 'short' })} ${day.count}`).join(', ')}.`,
     `Goals: ${goalRows.map(({ goal, figure }) => `${goal.title}, ${figure}`).join('; ') || 'none'}.`,
     `Their own notes: ${notes.trim() || '(none)'}`,
   ].join('\n');
@@ -66,7 +65,7 @@ function Figure({ value, label }) {
   return (
     <p className="review-figure">
       <strong>{value}</strong>
-      <span>{label}</span>
+      <span className="label">{label}</span>
     </p>
   );
 }
@@ -159,7 +158,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
   }
 
   const tomorrow = addDays(today, 1);
-  const nextWeek = addDays(startOfWeek(today, weekStart), 7);
+  const nextWeek = startOfNextWeek(today, weekStart);
 
   // An overdue task moved on (or done) leaves the list; focus goes to the next one, not to the page.
   function moveOn(task, run) {
@@ -183,7 +182,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
           {done.slice(0, SHOWN_DONE).map((task) => (
             <li key={task.id} className="review-row">
               <span className="review-row-title">{task.text}</span>
-              <span className="review-row-meta">{dayLabel(toISODate(task.completedAt), { weekday: 'short' })}</span>
+              <span className="review-row-meta label">{formatDay(toISODate(task.completedAt), { weekday: 'short' })}</span>
             </li>
           ))}
         </ul>
@@ -211,7 +210,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
             {late.map((task) => (
               <li key={task.id} className="review-row">
                 <span className="review-row-title">{task.text}</span>
-                <span className="review-row-meta">{relativeDay(task.dueDate, parseISODate(today))}</span>
+                <span className="review-row-meta label">{relativeDay(task.dueDate, parseISODate(today))}</span>
                 <span className="review-row-actions">
                   <button type="button" onClick={() => moveOn(task, () => actions.rescheduleTask(task.id, tomorrow))} aria-label={`Move to tomorrow: ${task.text}`}>
                     Tomorrow
@@ -243,7 +242,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
           {habitRows.map(({ habit, due, done: hit, streak }) => (
             <li key={habit.id} className="review-row review-row-bar">
               <span className="review-row-title">{habit.name}</span>
-              <span className="review-row-meta">
+              <span className="review-row-meta label">
                 {hit} of {due} · {plural(streak, 'day')} in a row
               </span>
               <ProgressBar value={hit} max={Math.max(due, 1)} label={habit.name} valueText={`${hit} of ${due} days`} className="review-row-progress" />
@@ -287,10 +286,10 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
           {goalRows.map(({ goal, progress, reached, figure }) => (
             <li key={goal.id} className="review-row review-row-bar">
               <span className="review-row-title">{goal.title}</span>
-              <span className="review-row-meta">
+              <span className="review-row-meta label">
                 {reached ? 'Reached · ' : ''}
                 {figure}
-                {goal.dueDate && !reached ? ` · by ${dayLabel(goal.dueDate, { day: 'numeric', month: 'short' })}` : ''}
+                {goal.dueDate && !reached ? ` · by ${formatDay(goal.dueDate, { day: 'numeric', month: 'short' })}` : ''}
               </span>
               <ProgressBar value={progress.done} max={Math.max(progress.total, 1)} label={goal.title} valueText={figure} className="review-row-progress" />
             </li>
@@ -304,7 +303,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
     // Reflect
     <>
       <div className="review-notes">
-        <label htmlFor={notesId}>Notes for the week</label>
+        <label htmlFor={notesId} className="label">Notes for the week</label>
         <textarea
           id={notesId}
           rows={5}
@@ -344,7 +343,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
         <header className="review-header">
           <p className="review-kicker">
             Weekly review{partial ? ' · this week so far' : ''}
-            {saved ? ` · saved ${dayLabel(toISODate(saved.savedAt), { weekday: 'short', day: 'numeric', month: 'short' })}` : ''}
+            {saved ? ` · saved ${formatDay(toISODate(saved.savedAt), { weekday: 'short', day: 'numeric', month: 'short' })}` : ''}
           </p>
           <h2 id={headingId}>{describeRange(week)}</h2>
           <button type="button" className="icon-button review-close" onClick={close} aria-label="Close the review">
@@ -357,7 +356,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
             {STEPS.map((name, index) => (
               <li key={name}>
                 <button type="button" aria-current={index === step ? 'step' : undefined} onClick={() => setStep(index)}>
-                  <span className="review-step-number">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="review-step-number">{String(index + 1).padStart(2, '0')}</span>{' '}
                   {name}
                 </button>
               </li>
@@ -366,7 +365,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
 
           <section className="review-step" aria-labelledby={`${headingId}-step`}>
             <h3 id={`${headingId}-step`} ref={heading} tabIndex={-1} data-autofocus>
-              <span className="review-step-number">{String(step + 1).padStart(2, '0')}</span>
+              <span className="review-step-number">{String(step + 1).padStart(2, '0')}</span>{' '}
               {STEPS[step]}
             </h3>
             {steps[step]}
@@ -386,7 +385,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
               Save review
             </button>
           )}
-          <span className="review-count">
+          <span className="review-count label">
             {step + 1} of {STEPS.length}
           </span>
         </footer>

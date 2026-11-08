@@ -168,3 +168,24 @@ describe('buildCommands habits', () => {
     expect(actions.addHabit).toHaveBeenCalledWith({ name: 'Read 20 minutes' });
   });
 });
+
+describe('buildCommands ask Claude', () => {
+  const labels = (query, aiReady) =>
+    buildCommands({ widgets: {}, shownIds: [], actions: { addTask: vi.fn(), askClaude: vi.fn() }, query, aiReady })
+      .filter((command) => command.always)
+      .map((command) => command.id);
+
+  it('offers to ask Claude only when Claude can answer, after Add task unless it is a question', () => {
+    expect(labels('Call the bank', false)).toEqual(['add-task']);
+    expect(labels('Call the bank', true)).toEqual(['add-task', 'ask-claude']);
+    expect(labels('What is overdue?', true)).toEqual(['ask-claude', 'add-task']);
+  });
+
+  it('sends the text as typed', () => {
+    const actions = { askClaude: vi.fn() };
+    const ask = buildCommands({ widgets: {}, shownIds: [], actions, query: ' Plan my week? ', aiReady: true }).find((c) => c.id === 'ask-claude');
+    expect(ask.label).toBe('Ask Claude: “Plan my week?”');
+    ask.run();
+    expect(actions.askClaude).toHaveBeenCalledWith('Plan my week?');
+  });
+});

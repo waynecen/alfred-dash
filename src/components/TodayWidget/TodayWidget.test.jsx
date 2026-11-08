@@ -53,7 +53,7 @@ describe('TodayWidget', () => {
 
   it('starts the focus timer', async () => {
     const actions = setup({ focus: { phase: 'idle', running: false, paused: false, minutesToday: 25, left: 0, label: 'Ready' } });
-    expect(screen.getByText('min so far').previousSibling).toHaveTextContent('25');
+    expect(screen.getByText('min so far')).toHaveTextContent('25 min so far');
     await userEvent.click(screen.getByRole('button', { name: 'Start focus' }));
     expect(actions.focusTimer.toggle).toHaveBeenCalled();
   });

@@ -1,26 +1,30 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
 import DatePicker from '../DatePicker/DatePicker';
 import ProgressBar from '../ProgressBar/ProgressBar';
+import AddLine from '../AddLine/AddLine';
+import InlineEditor from '../InlineEditor/InlineEditor';
+import useRestoreFocus from '../../hooks/useRestoreFocus';
 import WidgetState from '../WidgetState/WidgetState';
 import { describeProgress, goalProgress, isReached, parseGoal } from '../../data/goals';
 import { parseTags } from '../../data/tasks';
-import { daysBetween, parseISODate } from '../../utils/dates';
+import { daysBetween, formatDay, parseISODate } from '../../utils/dates';
+import { plural } from '../../utils/text';
 import './GoalsWidget.css';
 
-const dayLabel = (iso, options = { day: 'numeric', month: 'short' }) => parseISODate(iso).toLocaleDateString(undefined, options);
+const SHORT_DATE = { day: 'numeric', month: 'short' };
 
 // When a goal is due, and how long is left: 'By 31 Dec · 54 days left', 'By 6 Nov · 1 day late'.
 // A goal already reached just keeps its date.
 function describeDue(dueDate, today, reached) {
   if (!dueDate) return null;
-  const by = `By ${dayLabel(dueDate)}`;
+  const by = `By ${formatDay(dueDate, SHORT_DATE)}`;
   if (reached) return by;
   const left = daysBetween(today, dueDate);
-  if (left > 0) return `${by} · ${left} day${left === 1 ? '' : 's'} left`;
+  if (left > 0) return `${by} · ${plural(left, 'day')} left`;
   if (left === 0) return `${by} · due today`;
-  return `${by} · ${-left} day${left === -1 ? '' : 's'} late`;
+  return `${by} · ${plural(-left, 'day')} late`;
 }
 
 // The goals, each with how far it has come as a figure and a bar, the ones still to reach first
@@ -48,7 +52,7 @@ function GoalsWidget({ goals, tasks, actions }) {
       {rows.length ? (
         <>
           <p className="goals-summary">
-            {rows.length} goal{rows.length === 1 ? '' : 's'} · {reached} reached
+            {plural(rows.length, 'goal')} · {reached} reached
           </p>
           <ul className="goals-list">
             {rows.map((row) => (
@@ -72,13 +76,8 @@ function GoalsWidget({ goals, tasks, actions }) {
 function GoalItem({ goal, progress, reached, today, actions }) {
   const [editing, setEditing] = useState(false);
   const titleButton = useRef(null);
-  const wasEditing = useRef(false);
-
   // Back from the editor, focus returns to the title that opened it.
-  useEffect(() => {
-    if (wasEditing.current && !editing) titleButton.current?.focus();
-    wasEditing.current = editing;
-  }, [editing]);
+  useRestoreFocus(editing, titleButton);
 
   if (editing) {
     return (
@@ -116,7 +115,7 @@ function GoalItem({ goal, progress, reached, today, actions }) {
       <ProgressBar value={progress.done} max={Math.max(progress.total, 1)} label={goal.title} valueText={figure} />
       {(meta.length > 0 || goal.kind === 'count') && (
         <div className="goal-foot">
-          <span className={late ? 'goal-meta is-late' : 'goal-meta'}>{meta.join(' · ')}</span>
+          <span className={late ? 'goal-meta label is-late' : 'goal-meta label'}>{meta.join(' · ')}</span>
           {goal.kind === 'count' && (
             <span className="goal-stepper">
               <button
@@ -150,8 +149,7 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
   const id = useId();
   const field = (name) => `${id}-${name}`;
 
-  function handleSubmit(event) {
-    event.preventDefault();
+  function save() {
     const fields = { title: title.trim() || goal.title, dueDate };
     if (goal.kind === 'count') {
       fields.target = Math.max(1, Number(target) || goal.target);
@@ -164,42 +162,45 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
   }
 
   return (
-    <form
+    <InlineEditor
       className="goal-editor"
-      onSubmit={handleSubmit}
-      onKeyDown={(event) => {
-        if (event.key !== 'Escape') return;
-        event.stopPropagation();
-        onCancel();
-      }}
+      onSave={save}
+      onCancel={onCancel}
+      actions={
+        <button type="button" className="editor-quiet editor-danger" onClick={onDelete}>
+          Delete
+        </button>
+      }
     >
       <div className="goal-editor-field goal-editor-wide">
-        <label htmlFor={field('title')}>Goal</label>
+        <label className="label" htmlFor={field('title')}>Goal</label>
         <input id={field('title')} type="text" value={title} onChange={(event) => setTitle(event.target.value)} autoFocus autoComplete="off" />
       </div>
       {goal.kind === 'count' ? (
         <>
           <div className="goal-editor-field">
-            <label htmlFor={field('progress')}>Done</label>
+            <label className="label" htmlFor={field('progress')}>Done</label>
             <input id={field('progress')} type="number" min={0} step="any" value={progress} onChange={(event) => setProgress(event.target.value)} />
           </div>
           <div className="goal-editor-field">
-            <label htmlFor={field('target')}>Of</label>
+            <label className="label" htmlFor={field('target')}>Of</label>
             <input id={field('target')} type="number" min={1} step="any" value={target} onChange={(event) => setTarget(event.target.value)} />
           </div>
           <div className="goal-editor-field">
-            <label htmlFor={field('unit')}>Unit</label>
+            <label className="label" htmlFor={field('unit')}>Unit</label>
             <input id={field('unit')} type="text" value={unit} onChange={(event) => setUnit(event.target.value)} placeholder="books" autoComplete="off" />
           </div>
         </>
       ) : (
         <div className="goal-editor-field">
-          <label htmlFor={field('tag')}>Tasks tagged</label>
+          <label className="label" htmlFor={field('tag')}>Tasks tagged</label>
           <input id={field('tag')} type="text" value={tag} onChange={(event) => setTag(event.target.value)} autoComplete="off" />
         </div>
       )}
       <div className="goal-editor-field">
-        <label htmlFor={field('due')}>By</label>
+        <label className="label" htmlFor={field('due')}>
+          By
+        </label>
         <DatePicker
           value={dueDate}
           today={today}
@@ -207,22 +208,10 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
           title={`Date to reach “${goal.title}” by`}
           buttonProps={{ id: field('due'), className: 'goal-editor-date' }}
         >
-          {dueDate ? dayLabel(dueDate, { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date'}
+          {dueDate ? formatDay(dueDate, { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date'}
         </DatePicker>
       </div>
-      <div className="goal-editor-actions">
-        <button type="submit" className="goal-editor-save">
-          Save
-        </button>
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
-        <span className="goal-editor-spacer" />
-        <button type="button" className="goal-editor-delete" onClick={onDelete}>
-          Delete
-        </button>
-      </div>
-    </form>
+    </InlineEditor>
   );
 }
 
@@ -230,44 +219,27 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
 // follow those tasks, and a date sets when it is due.
 function AddGoal({ onAdd, today, weekStart }) {
   const [draft, setDraft] = useState('');
-  const id = useId();
   const parsed = draft.trim() ? parseGoal(draft, { now: parseISODate(today), weekStart }) : null;
-
-  function handleSubmit(event) {
-    event.preventDefault();
-    if (!parsed?.title) return;
-    onAdd(parsed);
-    setDraft('');
-  }
 
   let preview = '';
   if (parsed?.title) {
     preview = parsed.kind === 'tasks' ? `Tasks tagged #${parsed.tag}` : `Count to ${parsed.target}${parsed.unit ? ` ${parsed.unit}` : ''}`;
-    if (parsed.dueDate) preview += ` · by ${dayLabel(parsed.dueDate)}`;
+    if (parsed.dueDate) preview += ` · by ${formatDay(parsed.dueDate, SHORT_DATE)}`;
   }
 
   return (
-    <>
-      <form className="goals-add" onSubmit={handleSubmit}>
-        <label htmlFor={id} className="visually-hidden">
-          New goal
-        </label>
-        <input
-          id={id}
-          type="text"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="New goal, e.g. “Read 12 books by dec 31”"
-          autoComplete="off"
-        />
-        <button type="submit" disabled={!parsed?.title}>
-          Add
-        </button>
-      </form>
-      <p className="goals-add-preview" aria-live="polite">
-        {preview}
-      </p>
-    </>
+    <AddLine
+      label="New goal"
+      placeholder="New goal, e.g. “Read 12 books by dec 31”"
+      value={draft}
+      onChange={setDraft}
+      onSubmit={() => {
+        onAdd(parsed);
+        setDraft('');
+      }}
+      canAdd={Boolean(parsed?.title)}
+      preview={preview}
+    />
   );
 }
 

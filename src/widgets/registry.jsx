@@ -10,6 +10,8 @@ import ClockWidget from '../components/ClockWidget/ClockWidget';
 import TodayWidget from '../components/TodayWidget/TodayWidget';
 import HabitsWidget from '../components/HabitsWidget/HabitsWidget';
 import GoalsWidget from '../components/GoalsWidget/GoalsWidget';
+import AssistantWidget from '../components/AssistantWidget/AssistantWidget';
+import AIGate from '../components/AIGate/AIGate';
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list
@@ -119,12 +121,34 @@ export const WIDGETS = {
     defaultSize: { w: 4, h: 6 },
     render: () => <ClockWidget />,
   },
+  // The AI widgets wait behind AIGate, which says how to set the assistant up when it can't be reached.
+  assistant: {
+    title: 'Assistant',
+    category: 'AI',
+    description: 'Ask Claude about your day; it proposes changes, and nothing changes until you apply them',
+    defaultSize: { w: 4, h: 12 },
+    render: ({ tasks, events, habits, habitLog, goals, focus, notes, actions, assistantRequest }) => (
+      <AIGate>
+        <AssistantWidget
+          data={{ tasks, events, habits, habitLog, goals, focus, notes }}
+          actions={actions}
+          notify={actions.notify}
+          request={assistantRequest}
+          onRequestHandled={actions.assistantRequestHandled}
+        />
+      </AIGate>
+    ),
+  },
   brief: {
     title: 'Daily Brief',
     category: 'AI',
-    description: 'A short plan for today from your tasks, notes and weather',
+    description: 'A short plan for today from your tasks, events, habits, notes and weather',
     defaultSize: { w: 4, h: 6 },
-    render: ({ tasks, notes }) => <DailyBriefWidget tasks={tasks} notes={notes} />,
+    render: ({ tasks, notes, events, habits, habitLog }) => (
+      <AIGate>
+        <DailyBriefWidget tasks={tasks} notes={notes} events={events} habits={habits} habitLog={habitLog} />
+      </AIGate>
+    ),
   },
   taskAssistant: {
     title: 'Task Assistant',
@@ -132,12 +156,9 @@ export const WIDGETS = {
     description: 'Break a task into steps, or turn your notes into tasks',
     defaultSize: { w: 4, h: 8 },
     render: ({ tasks, notes, actions }) => (
-      <TaskAssistantWidget
-        tasks={tasks}
-        notes={notes}
-        onAddTasks={actions.addTasks}
-        notify={actions.notify}
-      />
+      <AIGate>
+        <TaskAssistantWidget tasks={tasks} notes={notes} onAddTasks={actions.addTasks} notify={actions.notify} />
+      </AIGate>
     ),
   },
 };

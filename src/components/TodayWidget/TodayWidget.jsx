@@ -4,10 +4,12 @@ import useSettings from '../../hooks/useSettings';
 import { hourCycle } from '../../data/settings';
 import { describeEventTime, eventsOn } from '../../data/events';
 import { formatClock } from '../../data/focus';
-import { isScheduled } from '../../data/habits';
+import { doneOn, habitsDueOn } from '../../data/habits';
 import { habitStreaks } from '../../utils/streaks';
-import { parseISODate, relativeDay, toISODate } from '../../utils/dates';
+import { parseISODate, relativeDay } from '../../utils/dates';
 import parseQuickAdd from '../../utils/parseQuickAdd';
+import { plural } from '../../utils/text';
+import AddLine from '../AddLine/AddLine';
 import './TodayWidget.css';
 
 // The clock time now, as 'HH:MM', updated each minute, to tell past events from coming ones.
@@ -51,15 +53,13 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
   const openToday = dueToday.filter((task) => !task.completed).length;
   // The habits due today (made by today), and those still to tick off.
   const keptHabits = habits.filter((habit) => !habit.archived);
-  const habitsToday = keptHabits.filter((habit) => isScheduled(habit, today) && toISODate(habit.createdAt) <= today);
-  const habitDone = (habit) => (habitLog[habit.id] ?? []).includes(today);
+  const habitsToday = habitsDueOn(habits, today);
+  const habitDone = (habit) => doneOn(habitLog, habit, today);
   const habitsLeft = habitsToday.filter((habit) => !habitDone(habit)).length;
 
   const line = draft.trim() ? readLine(draft, today, weekStart) : null;
 
-  function handleAdd(event) {
-    event.preventDefault();
-    if (!line) return;
+  function handleAdd() {
     const { kind, parsed, date } = line;
     if (kind === 'event') {
       actions.addEvent({ title: parsed.text, date, start: parsed.time, end: parsed.endTime });
@@ -72,15 +72,15 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
 
   const date = parseISODate(today);
   const summary = [
-    schedule.length ? `${schedule.length} event${schedule.length === 1 ? '' : 's'}` : null,
+    schedule.length ? plural(schedule.length, 'event') : null,
     openToday ? `${openToday} due` : null,
     overdue.length ? `${overdue.length} overdue` : null,
-    habitsLeft ? `${habitsLeft} habit${habitsLeft === 1 ? '' : 's'} to go` : null,
+    habitsLeft ? `${plural(habitsLeft, 'habit')} to go` : null,
   ].filter(Boolean);
 
   const renderTask = (task, late) => (
     <li key={task.id} className={task.completed ? 'today-item is-done' : 'today-item'}>
-      <span className="today-item-when">
+      <span className="today-item-when today-item-check">
         <input
           type="checkbox"
           checked={task.completed}
@@ -97,14 +97,14 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
     <div className="today">
       <header className="today-head">
         <p className="today-date">
-          <span className="today-weekday">{date.toLocaleDateString(undefined, { weekday: 'long' })}</span>
+          <span className="today-weekday label">{date.toLocaleDateString(undefined, { weekday: 'long' })}</span>
           {date.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}
         </p>
         <p className="today-summary">{summary.length ? summary.join(' · ') : 'Nothing scheduled'}</p>
       </header>
 
       <section className="today-section" aria-labelledby={`${id}-schedule`}>
-        <h4 id={`${id}-schedule`}>Schedule</h4>
+        <h4 className="label" id={`${id}-schedule`}>Schedule</h4>
         {schedule.length ? (
           <ul className="today-list">
             {schedule.map((event) => {
@@ -125,7 +125,7 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
       </section>
 
       <section className="today-section" aria-labelledby={`${id}-due`}>
-        <h4 id={`${id}-due`}>Due</h4>
+        <h4 className="label" id={`${id}-due`}>Due</h4>
         {overdue.length || dueToday.length ? (
           <ul className="today-list">
             {overdue.map((task) => renderTask(task, true))}
@@ -138,7 +138,7 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
 
       {keptHabits.length > 0 && (
         <section className="today-section" aria-labelledby={`${id}-habits`}>
-          <h4 id={`${id}-habits`}>Habits</h4>
+          <h4 className="label" id={`${id}-habits`}>Habits</h4>
           {habitsToday.length ? (
             <ul className="today-list">
               {habitsToday.map((habit) => {
@@ -146,7 +146,7 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
                 const { current } = habitStreaks(habit, habitLog[habit.id], today);
                 return (
                   <li key={habit.id} className={done ? 'today-item is-done' : 'today-item'}>
-                    <span className="today-item-when">
+                    <span className="today-item-when today-item-check">
                       <input
                         type="checkbox"
                         checked={done}
@@ -168,7 +168,7 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
 
       {focus && (
         <section className="today-section today-focus" aria-labelledby={`${id}-focus`}>
-          <h4 id={`${id}-focus`}>Focus</h4>
+          <h4 className="label" id={`${id}-focus`}>Focus</h4>
           <p className="today-focus-line">
             {focus.phase === 'idle' ? (
               <span>
@@ -187,28 +187,22 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
         </section>
       )}
 
-      <form className="today-add" onSubmit={handleAdd}>
-        <label htmlFor={`${id}-add`} className="visually-hidden">
-          Add a task or an event
-        </label>
-        <input
-          id={`${id}-add`}
-          type="text"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Add for today: “Call bank” or “Lunch 1pm”"
-          autoComplete="off"
-        />
-        <button type="submit" disabled={!line}>
-          Add
-        </button>
-      </form>
-      <p className="today-add-preview" aria-live="polite">
-        {line &&
-          `${line.kind === 'event' ? 'Event' : 'Task'} · ${relativeDay(line.date, date)}${
-            line.kind === 'event' ? ` · ${describeEventTime({ start: line.parsed.time, end: line.parsed.endTime }, hour)}` : ''
-          }`}
-      </p>
+      <AddLine
+        className="today-add"
+        label="Add a task or an event"
+        placeholder="Add for today: “Call bank” or “Lunch 1pm”"
+        value={draft}
+        onChange={setDraft}
+        onSubmit={handleAdd}
+        canAdd={Boolean(line)}
+        preview={
+          line
+            ? `${line.kind === 'event' ? 'Event' : 'Task'} · ${relativeDay(line.date, date)}${
+                line.kind === 'event' ? ` · ${describeEventTime({ start: line.parsed.time, end: line.parsed.endTime }, hour)}` : ''
+              }`
+            : ''
+        }
+      />
     </div>
   );
 }

@@ -1,15 +1,16 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
 import WeekdayPicker from '../WeekdayPicker/WeekdayPicker';
+import AddLine from '../AddLine/AddLine';
+import InlineEditor from '../InlineEditor/InlineEditor';
+import useRestoreFocus from '../../hooks/useRestoreFocus';
 import WidgetState from '../WidgetState/WidgetState';
 import HabitHeatmap from './HabitHeatmap';
 import { DAILY, describeSchedule, isScheduled } from '../../data/habits';
 import { dayTally, habitStreaks } from '../../utils/streaks';
-import { addDays, parseISODate, toISODate } from '../../utils/dates';
+import { addDays, formatDay, toISODate } from '../../utils/dates';
 import './HabitsWidget.css';
-
-const dayLabel = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
 
 // The habits, each with the last seven days to tick off and its streak, then a line to add one.
 // On a wide widget the last twelve weeks show under them as a heatmap.
@@ -43,9 +44,9 @@ function HabitsWidget({ habits, log, actions }) {
                     key={day}
                     scope="col"
                     className={day === today ? 'habits-col-day is-today' : 'habits-col-day'}
-                    aria-label={day === today ? 'Today' : dayLabel(day, { weekday: 'long', day: 'numeric', month: 'long' })}
+                    aria-label={day === today ? 'Today' : formatDay(day, { weekday: 'long', day: 'numeric', month: 'long' })}
                   >
-                    {dayLabel(day, { weekday: 'narrow' })}
+                    {formatDay(day, { weekday: 'narrow' })}
                   </th>
                 ))}
                 <th scope="col" className="habits-col-streak">
@@ -84,15 +85,11 @@ function HabitRow({ habit, done, days, today, weekStart, actions }) {
   const [editing, setEditing] = useState(false);
   const cells = useRef([]);
   const editButton = useRef(null);
-  const wasEditing = useRef(false);
   const { current, best } = habitStreaks(habit, done, today);
   const made = toISODate(habit.createdAt);
 
-  // Back from the editor, focus returns to the button that opened it.
-  useEffect(() => {
-    if (wasEditing.current && !editing) editButton.current?.focus();
-    wasEditing.current = editing;
-  }, [editing]);
+  // Back from the editor, focus returns to the name that opened it.
+  useRestoreFocus(editing, editButton);
 
   if (editing) {
     return (
@@ -128,7 +125,7 @@ function HabitRow({ habit, done, days, today, weekStart, actions }) {
         <button ref={editButton} type="button" className="habit-name-button" onClick={() => setEditing(true)} title="Edit habit">
           {habit.name}
         </button>
-        {habit.schedule !== DAILY && <span className="habit-schedule">{describeSchedule(habit.schedule, weekStart)}</span>}
+        {habit.schedule !== DAILY && <span className="habit-schedule label">{describeSchedule(habit.schedule, weekStart)}</span>}
       </th>
       {days.map((day, index) => {
         const isDone = done.includes(day);
@@ -143,7 +140,7 @@ function HabitRow({ habit, done, days, today, weekStart, actions }) {
               type="button"
               className={`habit-check ${state}`}
               aria-pressed={isDone}
-              aria-label={`${habit.name}, ${day === today ? 'today' : dayLabel(day, { weekday: 'long', day: 'numeric', month: 'long' })}${due ? '' : ', not due'}`}
+              aria-label={`${habit.name}, ${day === today ? 'today' : formatDay(day, { weekday: 'long', day: 'numeric', month: 'long' })}${due ? '' : ', not due'}`}
               tabIndex={day === today ? 0 : -1}
               onClick={() => actions.toggleHabitDay(habit.id, day)}
               onKeyDown={(event) => handleKeyDown(event, index)}
@@ -166,42 +163,28 @@ function HabitEditor({ habit, weekStart, onSave, onCancel, onArchive, onDelete }
   const [schedule, setSchedule] = useState(habit.schedule);
   const id = useId();
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    onSave({ name: name.trim() || habit.name, schedule });
-  }
-
   return (
-    <form
+    <InlineEditor
       className="habit-editor"
-      onSubmit={handleSubmit}
-      onKeyDown={(event) => {
-        if (event.key !== 'Escape') return;
-        event.stopPropagation();
-        onCancel();
-      }}
+      onSave={() => onSave({ name: name.trim() || habit.name, schedule })}
+      onCancel={onCancel}
+      actions={
+        <>
+          <button type="button" className="editor-quiet" onClick={onArchive}>
+            Archive
+          </button>
+          <button type="button" className="editor-quiet editor-danger" onClick={onDelete}>
+            Delete
+          </button>
+        </>
+      }
     >
       <label htmlFor={id} className="visually-hidden">
         Habit name
       </label>
       <input id={id} type="text" value={name} onChange={(event) => setName(event.target.value)} autoFocus autoComplete="off" />
       <WeekdayPicker value={schedule} onChange={setSchedule} weekStart={weekStart} />
-      <div className="habit-editor-actions">
-        <button type="submit" className="habit-editor-save">
-          Save
-        </button>
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
-        <span className="habit-editor-spacer" />
-        <button type="button" className="habit-editor-quiet" onClick={onArchive}>
-          Archive
-        </button>
-        <button type="button" className="habit-editor-quiet habit-editor-delete" onClick={onDelete}>
-          Delete
-        </button>
-      </div>
-    </form>
+    </InlineEditor>
   );
 }
 
@@ -209,36 +192,17 @@ function HabitEditor({ habit, weekStart, onSave, onCancel, onArchive, onDelete }
 function AddHabit({ onAdd, weekStart }) {
   const [draft, setDraft] = useState('');
   const [schedule, setSchedule] = useState(DAILY);
-  const id = useId();
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    if (!draft.trim()) return;
+  function handleSubmit() {
     onAdd({ name: draft.trim(), schedule });
     setDraft('');
     setSchedule(DAILY);
   }
 
   return (
-    <form className="habits-add" onSubmit={handleSubmit}>
-      <div className="habits-add-line">
-        <label htmlFor={id} className="visually-hidden">
-          New habit
-        </label>
-        <input
-          id={id}
-          type="text"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="New habit, e.g. “Read 20 minutes”"
-          autoComplete="off"
-        />
-        <button type="submit" disabled={!draft.trim()}>
-          Add
-        </button>
-      </div>
+    <AddLine label="New habit" placeholder="New habit, e.g. “Read 20 minutes”" value={draft} onChange={setDraft} onSubmit={handleSubmit}>
       {draft.trim() && <WeekdayPicker value={schedule} onChange={setSchedule} weekStart={weekStart} label="Days the new habit is due" />}
-    </form>
+    </AddLine>
   );
 }
 
@@ -248,7 +212,7 @@ function ArchivedHabits({ habits, actions }) {
   const id = useId();
   return (
     <div className="habits-archived">
-      <button type="button" className="habits-archived-toggle" aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => setOpen(!open)}>
+      <button type="button" className="habits-archived-toggle label" aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => setOpen(!open)}>
         Archived ({habits.length})
       </button>
       {open && (
@@ -259,7 +223,7 @@ function ArchivedHabits({ habits, actions }) {
               <button type="button" onClick={() => actions.archiveHabit(habit.id, false)} aria-label={`Restore habit: ${habit.name}`}>
                 Restore
               </button>
-              <button type="button" className="habit-editor-delete" onClick={() => actions.deleteHabit(habit.id)} aria-label={`Delete habit: ${habit.name}`}>
+              <button type="button" className="editor-danger" onClick={() => actions.deleteHabit(habit.id)} aria-label={`Delete habit: ${habit.name}`}>
                 Delete
               </button>
             </li>

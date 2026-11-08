@@ -10,6 +10,7 @@ export const STORAGE_KEYS = [
   'habitLog', // { [habitId]: ['YYYY-MM-DD', …] }: the days each habit was done
   'goals', // [{ id, title, kind, target, progress, unit, tag, dueDate, createdAt }], see data/goals.js
   'reviews', // [{ week, notes, reflection, stats, savedAt }]: weekly reviews, see data/reviews.js
+  'assistantHistory', // { messages, actions }: the Assistant's chat, see hooks/useAssistant.js
   'reminders', // { sent: { [key]: true } }: reminders already given today, so none repeats
   'notes', // the Notes widget's text
   'boards', // [{ id, name, widgetIds, layout }], see data/boards.js

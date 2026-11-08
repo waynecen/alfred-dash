@@ -165,14 +165,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.review-figure span {
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .review-note {
   margin: 0;
   color: var(--muted);
@@ -208,11 +200,6 @@
 }
 
 .review-row-meta {
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -243,14 +230,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-}
-
-.review-notes label {
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .review-notes textarea {
@@ -314,11 +293,6 @@
 /* Back and Next sit together on the left, clear of the toasts that come up on the right. */
 .review-count {
   margin-left: auto;
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .review-next {

@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { formatClock } from '../../data/focus';
+import { plural } from '../../utils/text';
 import './FocusWidget.css';
 
 const LENGTH_FIELDS = [
@@ -14,7 +15,7 @@ function spoken(ms) {
   const total = Math.ceil(ms / 1000);
   const m = Math.floor(total / 60);
   const s = total % 60;
-  return [m && `${m} minute${m === 1 ? '' : 's'}`, s && `${s} second${s === 1 ? '' : 's'}`].filter(Boolean).join(' ') || '0 seconds';
+  return [m && plural(m, 'minute'), s && plural(s, 'second')].filter(Boolean).join(' ') || '0 seconds';
 }
 
 // The Focus widget: a big countdown set in the display size, what phase it is, and the controls.
@@ -60,7 +61,7 @@ function FocusWidget({ focus, actions, tasks }) {
           </button>
         )}
         <button type="button" onClick={actions.skip} disabled={idle}>
-          {focus.phase === 'work' ? 'Take a break' : 'Skip break'}
+          {focus.phase === 'work' || idle ? 'Take a break' : 'Skip break'}
         </button>
         <button type="button" onClick={actions.stop} disabled={idle}>
           Stop
@@ -68,7 +69,9 @@ function FocusWidget({ focus, actions, tasks }) {
       </div>
 
       <div className="focus-field">
-        <label htmlFor={`${id}-task`}>Working on</label>
+        <label htmlFor={`${id}-task`} className="label">
+          Working on
+        </label>
         <select
           id={`${id}-task`}
           value={task ? String(task.id) : ''}
@@ -84,7 +87,7 @@ function FocusWidget({ focus, actions, tasks }) {
       </div>
 
       <details className="focus-lengths">
-        <summary>Lengths</summary>
+        <summary className="label">Lengths</summary>
         <div className="focus-lengths-grid">
           {LENGTH_FIELDS.map((field) => (
             <label key={field.key} className="focus-length">

@@ -4,16 +4,16 @@ import useSettings from '../../hooks/useSettings';
 import { hourCycle } from '../../data/settings';
 import { describeEventTime, eventsOn } from '../../data/events';
 import { TASK_DRAG_TYPE } from '../../data/tasks';
-import { addDays, addMonths, parseISODate, relativeDay, startOfWeek } from '../../utils/dates';
+import { addDays, addMonths, formatDay, parseISODate, relativeDay, startOfWeek } from '../../utils/dates';
+import { plural } from '../../utils/text';
 import { firstOfMonth, monthWeeks, stepFor } from '../../utils/monthGrid';
 import parseQuickAdd from '../../utils/parseQuickAdd';
+import AddLine from '../AddLine/AddLine';
 import './CalendarWidget.css';
 
 // What a task being dragged from the Tasks widget carries, so a day can take it.
 export { TASK_DRAG_TYPE };
 
-const label = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
-const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 // A month (or a week) of local events, with the tasks due on each day beside them. Pick a day to
 // see and add to it; drop a task from the Tasks widget on a day to make it due then.
@@ -51,7 +51,7 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
   const openDueCount = (date) => dueOn(date).filter((task) => !task.completed).length;
 
   function describeDay(date) {
-    const parts = [label(date, { weekday: 'long', day: 'numeric', month: 'long' })];
+    const parts = [formatDay(date, { weekday: 'long', day: 'numeric', month: 'long' })];
     if (date === today) parts.push('today');
     const nEvents = eventsOn(events, date).length;
     const nTasks = openDueCount(date);
@@ -89,9 +89,7 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
   const parsed = parseQuickAdd(draft, { times: true, weekStart, now: parseISODate(today) });
   const draftDate = parsed.dueDate ?? selected;
 
-  function handleAdd(event) {
-    event.preventDefault();
-    if (!draft.trim()) return;
+  function handleAdd() {
     onAddEvent({ title: parsed.text, date: draftDate, start: parsed.time, end: parsed.endTime });
     setDraft('');
     if (draftDate !== selected) select(draftDate);
@@ -149,13 +147,13 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
       <div
         className="calendar-grid"
         role="grid"
-        aria-label={label(month, { month: 'long', year: 'numeric' })}
+        aria-label={formatDay(month, { month: 'long', year: 'numeric' })}
         onKeyDown={handleGridKey}
       >
         <div role="row" className="calendar-row calendar-weekdays">
           {weekdays.map((date) => (
-            <span key={date} role="columnheader" className="calendar-weekday" aria-label={label(date, { weekday: 'long' })}>
-              {label(date, { weekday: 'narrow' })}
+            <span key={date} role="columnheader" className="calendar-weekday" aria-label={formatDay(date, { weekday: 'long' })}>
+              {formatDay(date, { weekday: 'narrow' })}
             </span>
           ))}
         </div>
@@ -220,7 +218,7 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
     return (
       <ol
         className="calendar-week"
-        aria-label={`Week of ${label(start, { day: 'numeric', month: 'long' })}`}
+        aria-label={`Week of ${formatDay(start, { day: 'numeric', month: 'long' })}`}
         onKeyDown={handleGridKey}
       >
         {days.map((date) => (
@@ -228,8 +226,8 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
           <li key={date} className="calendar-week-day" data-drop={dropDate === date || undefined} {...dayDropProps(date)}>
             <div className="calendar-week-head">
               {renderDayCell(date, { inGrid: false })}
-              <span className="calendar-week-name" aria-hidden="true">
-                {label(date, { weekday: 'short' })}
+              <span className="calendar-week-name label" aria-hidden="true">
+                {formatDay(date, { weekday: 'short' })}
               </span>
             </div>
             {renderItems(date, { compact: true })}
@@ -245,11 +243,11 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
   };
   const heading =
     view === 'week'
-      ? `${label(startOfWeek(selected, weekStart), { day: 'numeric', month: 'short' })} – ${label(addDays(startOfWeek(selected, weekStart), 6), { day: 'numeric', month: 'short', year: 'numeric' })}`
-      : label(month, { month: 'long', year: 'numeric' });
+      ? `${formatDay(startOfWeek(selected, weekStart), { day: 'numeric', month: 'short' })} – ${formatDay(addDays(startOfWeek(selected, weekStart), 6), { day: 'numeric', month: 'short', year: 'numeric' })}`
+      : formatDay(month, { month: 'long', year: 'numeric' });
   // "Today · Sat 7 Nov", or just "Fri 20 Nov" for any other day.
   const near = relativeDay(selected, parseISODate(today));
-  const full = label(selected, { weekday: 'short', day: 'numeric', month: 'short' });
+  const full = formatDay(selected, { weekday: 'short', day: 'numeric', month: 'short' });
   const agendaHeading = ['Today', 'Tomorrow', 'Yesterday'].includes(near) ? `${near} · ${full}` : full;
 
   return (
@@ -285,31 +283,21 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
       {view === 'month' ? renderMonth() : renderWeek()}
 
       <section className="calendar-agenda" aria-labelledby={`${inputId}-day`}>
-        <h4 id={`${inputId}-day`} className="calendar-agenda-heading">
+        <h4 id={`${inputId}-day`} className="calendar-agenda-heading label">
           {agendaHeading}
         </h4>
         {view === 'month' && renderItems(selected)}
-        <form className="calendar-add" onSubmit={handleAdd}>
-          <label htmlFor={inputId} className="visually-hidden">
-            Add an event
-          </label>
-          <input
-            id={inputId}
-            type="text"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={`Add an event, e.g. “Dentist 3pm” or “Lunch fri noon”`}
-            autoComplete="off"
-          />
-          <button type="submit" disabled={!draft.trim()}>
-            Add
-          </button>
-        </form>
-        {/* What the line will add, before it is added. */}
-        <p className="calendar-add-preview" aria-live="polite">
-          {draft.trim() &&
-            `${parsed.text} · ${relativeDay(draftDate, parseISODate(today))}${parsed.time ? ` · ${describeEventTime({ start: parsed.time, end: parsed.endTime }, hour)}` : ' · All day'}`}
-        </p>
+        <AddLine
+          label="Add an event"
+          placeholder="Add an event, e.g. “Dentist 3pm” or “Lunch fri noon”"
+          value={draft}
+          onChange={setDraft}
+          onSubmit={handleAdd}
+          preview={
+            draft.trim() &&
+            `${parsed.text} · ${relativeDay(draftDate, parseISODate(today))}${parsed.time ? ` · ${describeEventTime({ start: parsed.time, end: parsed.endTime }, hour)}` : ' · All day'}`
+          }
+        />
       </section>
     </div>
   );

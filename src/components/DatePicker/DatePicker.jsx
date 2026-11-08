@@ -2,11 +2,9 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import useDismiss from '../../hooks/useDismiss';
 import useSettings from '../../hooks/useSettings';
-import { addDays, addMonths, parseISODate, startOfWeek, toISODate } from '../../utils/dates';
+import { addDays, addMonths, formatDay, startOfNextWeek, toISODate } from '../../utils/dates';
 import { firstOfMonth, monthWeeks, stepFor } from '../../utils/monthGrid';
 import './DatePicker.css';
-
-const label = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
 
 // How far the panel keeps from its button and from the window's edges, in pixels.
 const GAP = 4;
@@ -127,7 +125,7 @@ function DatePicker({ value, onChange, today = toISODate(), title = 'Choose a da
   const quick = [
     { name: 'Today', date: today },
     { name: 'Tomorrow', date: addDays(today, 1) },
-    { name: 'Next week', date: addDays(startOfWeek(today, weekStart), 7) },
+    { name: 'Next week', date: startOfNextWeek(today, weekStart) },
   ];
 
   function renderDay(date) {
@@ -147,7 +145,7 @@ function DatePicker({ value, onChange, today = toISODate(), title = 'Choose a da
         tabIndex={date === focusDate ? 0 : -1}
         aria-selected={date === value}
         aria-current={date === today ? 'date' : undefined}
-        aria-label={label(date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        aria-label={formatDay(date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         onClick={() => choose(date)}
       >
         <span className="date-picker-number">{Number(date.slice(8))}</span>
@@ -183,7 +181,7 @@ function DatePicker({ value, onChange, today = toISODate(), title = 'Choose a da
           >
             <div className="date-picker-bar">
               <h2 className="date-picker-heading" aria-live="polite">
-                {label(month, { month: 'long', year: 'numeric' })}
+                {formatDay(month, { month: 'long', year: 'numeric' })}
               </h2>
               <button type="button" className="date-picker-nav" onClick={() => setFocusDate((date) => addMonths(date, -1))} aria-label="Previous month">
                 ‹
@@ -193,11 +191,11 @@ function DatePicker({ value, onChange, today = toISODate(), title = 'Choose a da
               </button>
             </div>
 
-            <div className="date-picker-grid" role="grid" aria-label={label(month, { month: 'long', year: 'numeric' })} onKeyDown={handleGridKey}>
+            <div className="date-picker-grid" role="grid" aria-label={formatDay(month, { month: 'long', year: 'numeric' })} onKeyDown={handleGridKey}>
               <div role="row" className="date-picker-row">
                 {weeks[0].map((date) => (
-                  <span key={date} role="columnheader" className="date-picker-weekday" aria-label={label(date, { weekday: 'long' })}>
-                    {label(date, { weekday: 'narrow' })}
+                  <span key={date} role="columnheader" className="date-picker-weekday" aria-label={formatDay(date, { weekday: 'long' })}>
+                    {formatDay(date, { weekday: 'narrow' })}
                   </span>
                 ))}
               </div>
@@ -216,7 +214,7 @@ function DatePicker({ value, onChange, today = toISODate(), title = 'Choose a da
                   className={date === value ? 'is-chosen' : undefined}
                   aria-pressed={date === value}
                   onClick={() => choose(date)}
-                  title={label(date, { weekday: 'long', day: 'numeric', month: 'long' })}
+                  title={formatDay(date, { weekday: 'long', day: 'numeric', month: 'long' })}
                 >
                   {name}
                 </button>

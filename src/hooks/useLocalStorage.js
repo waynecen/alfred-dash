@@ -72,6 +72,22 @@ export function refreshStorage() {
   emit(null);
 }
 
+// A key's saved text, as storage holds it (null when nothing is saved), and a way to put back
+// text read earlier, telling every component that uses the key. Undo for the assistant's changes
+// uses these: it restores what the keys held, if nothing has changed them since.
+export const readSaved = (key) => readRaw(key);
+
+export function restoreSaved(key, raw) {
+  try {
+    if (raw === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, raw);
+  } catch {
+    // Storage may be full or disabled; there is nothing more to do.
+  }
+  cache.delete(key);
+  emit(key);
+}
+
 function useLocalStorage(key, initialValue) {
   // The default only matters the first time a key is read, so a new [] each render is fine.
   const initialRef = useRef(initialValue);

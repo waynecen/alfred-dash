@@ -41,7 +41,7 @@ function TaskDetails({ id, task, onUpdate, onAddStep }) {
     <div className="task-details" id={id}>
       <div className="task-details-main">
         <div className="task-details-field task-details-notes">
-          <label htmlFor={field('notes')}>Notes</label>
+          <label className="label" htmlFor={field('notes')}>Notes</label>
           <textarea
             id={field('notes')}
             value={notes}
@@ -53,7 +53,7 @@ function TaskDetails({ id, task, onUpdate, onAddStep }) {
         </div>
         {onAddStep && (
           <div className="task-details-field">
-            <label htmlFor={field('step')}>Add a step</label>
+            <label className="label" htmlFor={field('step')}>Add a step</label>
             <input
               id={field('step')}
               type="text"
@@ -71,7 +71,7 @@ function TaskDetails({ id, task, onUpdate, onAddStep }) {
       </div>
       <div className="task-details-side">
         <div className="task-details-field">
-          <label htmlFor={field('due')}>Due</label>
+          <label className="label" htmlFor={field('due')}>Due</label>
           <DatePicker
             value={task.dueDate ?? null}
             onChange={(dueDate) => onUpdate(task.id, { dueDate })}
@@ -90,7 +90,7 @@ function TaskDetails({ id, task, onUpdate, onAddStep }) {
           </DatePicker>
         </div>
         <div className="task-details-field">
-          <label htmlFor={field('tags')}>Tags</label>
+          <label className="label" htmlFor={field('tags')}>Tags</label>
           <input
             id={field('tags')}
             type="text"
@@ -102,7 +102,7 @@ function TaskDetails({ id, task, onUpdate, onAddStep }) {
           />
         </div>
         <fieldset className="task-details-field task-details-repeat">
-          <legend>Repeat</legend>
+          <legend className="label">Repeat</legend>
           {/* Reads "Every [2] [weeks]", or just "[Never]". */}
           <div className="task-details-repeat-row">
             {recurrence && (

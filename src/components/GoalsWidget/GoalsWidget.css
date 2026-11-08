@@ -76,11 +76,6 @@
 
 .goal-meta {
   min-width: 0;
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .goal-meta.is-late {
@@ -135,17 +130,18 @@
   min-width: 0;
 }
 
-.goal-editor-wide,
-.goal-editor-actions {
+.goal-editor-wide {
   grid-column: 1 / -1;
 }
 
-.goal-editor-field label {
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.goal-editor-field:has(.goal-editor-date) {
+  grid-column: span 2;
+}
+
+.goal-editor-date {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .goal-editor input,
@@ -167,90 +163,4 @@
   color: var(--text);
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-.goal-editor-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.goal-editor-actions button {
-  padding: 0.3rem 0.7rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.goal-editor-save {
-  background: var(--text);
-  color: var(--bg);
-}
-
-.goal-editor-spacer {
-  flex: 1;
-}
-
-.goal-editor-delete {
-  border-color: transparent;
-  color: var(--muted);
-}
-
-.goal-editor-delete:hover,
-.goal-editor-delete:focus-visible {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: var(--bg);
-}
-
-/* Add a goal: one ruled line and its button, then what the line will make. */
-.goals-add {
-  display: flex;
-  margin-top: auto;
-}
-
-.goals-add input {
-  flex: 1;
-  min-width: 0;
-  height: 2.25rem;
-  padding: 0 0.6rem;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.85rem;
-}
-
-.goals-add input::placeholder {
-  color: var(--muted);
-}
-
-.goals-add button {
-  height: 2.25rem;
-  margin-left: -1px;
-  background: var(--text);
-  border-color: var(--text);
-  color: var(--bg);
-  font-weight: 700;
-}
-
-.goals-add button:hover {
-  background: transparent;
-  color: var(--text);
-}
-
-.goals-add button:disabled {
-  background: transparent;
-  border-color: var(--border);
-  color: var(--muted);
-  cursor: default;
-}
-
-.goals-add-preview {
-  min-height: 1rem;
-  margin: -0.5rem 0 0;
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }

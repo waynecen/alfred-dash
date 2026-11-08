@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { parseISODate } from '../../utils/dates';
-
-const dayLabel = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
+import { formatDay } from '../../utils/dates';
 
 // A count for each day, as columns on one baseline: tasks done in the last week for the Summary,
 // focus minutes for the weekly review. One series in ink: the other days in graphite, the current
@@ -25,7 +23,7 @@ function CompletionChart({
   const total = days.reduce((sum, day) => sum + day.count, 0);
   const shown = active === null ? null : days[active];
   const readout = shown
-    ? `${dayLabel(shown.date, { weekday: 'short', day: 'numeric', month: 'short' })} · ${shown.count} ${unit}`
+    ? `${formatDay(shown.date, { weekday: 'short', day: 'numeric', month: 'short' })} · ${shown.count} ${unit}`
     : (summary ?? `${total} in ${days.length} days`);
 
   function handleKeyDown(event) {
@@ -42,7 +40,7 @@ function CompletionChart({
   return (
     <figure className="completion">
       <figcaption className="completion-head">
-        <span className="completion-title">{title}</span>
+        <span className="completion-title label">{title}</span>
         <span className="completion-readout" aria-live="polite">
           {readout}
         </span>
@@ -70,7 +68,7 @@ function CompletionChart({
             <span className="completion-track">
               {day.count > 0 && <span className="completion-bar" style={{ height: `${(day.count / max) * 100}%` }} />}
             </span>
-            <span className="completion-day">{dayLabel(day.date, { weekday: 'narrow' })}</span>
+            <span className="completion-day">{formatDay(day.date, { weekday: 'narrow' })}</span>
           </div>
         ))}
       </div>
@@ -81,7 +79,7 @@ function CompletionChart({
         <tbody>
           {days.map((day) => (
             <tr key={day.date}>
-              <th scope="row">{dayLabel(day.date, { weekday: 'long', day: 'numeric', month: 'long' })}</th>
+              <th scope="row">{formatDay(day.date, { weekday: 'long', day: 'numeric', month: 'long' })}</th>
               <td>{day.count}</td>
             </tr>
           ))}

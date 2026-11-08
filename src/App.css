@@ -260,6 +260,19 @@ button:hover {
   color: var(--bg);
 }
 
+/* A button that can't be used now looks it: graphite on a light rule, and no fill on hover.
+   Components with a disabled look of their own keep it (their rules are more specific). */
+button:disabled {
+  border-color: var(--rule-soft);
+  color: var(--muted);
+  cursor: default;
+}
+
+button:disabled:hover {
+  background: transparent;
+  color: var(--muted);
+}
+
 /* Inputs: square and ruled, with no fill of their own, so they sit on whatever they are in. */
 input,
 select,
@@ -276,6 +289,26 @@ textarea {
 
 *::-webkit-scrollbar {
   display: none;
+}
+
+/* A label tag (DESIGN.md): 10px, bold, spaced capitals, in graphite. Section and column heads,
+   field labels and small metadata all wear it. */
+.label {
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Text for screen readers only: there to be read, not seen. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* Visible focus ring for keyboard users. */

@@ -106,9 +106,10 @@ describe('App', () => {
   describe('bulk actions', () => {
     const saved = () => JSON.parse(localStorage.getItem('tasks'));
     const shiftClick = async (name) => {
-      await userEvent.keyboard('{Shift>}');
-      await userEvent.click(screen.getByRole('button', { name }));
-      await userEvent.keyboard('{/Shift}');
+      const user = userEvent.setup();
+      await user.keyboard('{Shift>}');
+      await user.click(screen.getByRole('button', { name }));
+      await user.keyboard('{/Shift}');
     };
 
     it('selects a range with Shift-click and acts on all of it, with one Undo', async () => {

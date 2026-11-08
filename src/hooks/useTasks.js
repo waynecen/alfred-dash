@@ -2,6 +2,8 @@ import useLocalStorage from './useLocalStorage';
 import { createTask, describeNext, nextTaskFields } from '../data/tasks';
 import insertAt from '../utils/insertAt';
 import { toISODate } from '../utils/dates';
+import { plural } from '../utils/text';
+import nextId from '../utils/nextId';
 
 // The task list, saved in the browser, and everything that changes it. Every change is a
 // functional update, so changes made in the same moment (by a widget, the AI, a timer) never
@@ -15,14 +17,19 @@ function useTasks(notify) {
     setTasks((current) => current.map((task) => (task.id === id ? { ...task, ...change(task) } : task)));
 
   // Adds several tasks at once: items is [{ text, priority, ...any other task fields }].
+  // Returns the new tasks' ids, in order.
   function addTasks(items) {
-    if (items.length === 0) return;
+    if (items.length === 0) return [];
     const now = Date.now();
+    let ids = [];
     setTasks((current) => {
       // Ids are timestamps; step past any already taken so a batch never repeats one.
-      let nextId = Math.max(now, ...current.map((task) => task.id + 1));
-      return [...current, ...items.map((item) => createTask(item, nextId++, now))];
+      let id = nextId(current, now);
+      const added = items.map((item) => createTask(item, id++, now));
+      ids = added.map((task) => task.id);
+      return [...current, ...added];
     });
+    return ids;
   }
 
   // extra: any other task fields, e.g. { dueDate, tags, recurrence } from quick-add.
@@ -43,7 +50,7 @@ function useTasks(notify) {
     setTasks((current) => {
       added = [];
       ticked = [];
-      let nextId = Math.max(now, ...current.map((t) => t.id + 1));
+      let id = nextId(current, now);
       const list = [];
       for (const task of current) {
         if (!wanted.has(task.id) || task.completed) {
@@ -53,7 +60,7 @@ function useTasks(notify) {
         ticked.push(task.id);
         list.push({ ...task, completed: true, completedAt: now });
         if (task.recurrence) {
-          const next = createTask(nextTaskFields(task, today), nextId++, now);
+          const next = createTask(nextTaskFields(task, today), id++, now);
           added.push({ id: next.id, dueDate: next.dueDate });
           list.push(next);
         }
@@ -87,10 +94,13 @@ function useTasks(notify) {
   }
 
   // Ticks off several tasks at once, with one Undo for all of them.
-  function completeTasks(ids) {
+  //   quiet: no toast, for a caller that offers its own Undo (the assistant). Returns the ids ticked.
+  function completeTasks(ids, { quiet = false } = {}) {
     const { ticked, undo } = complete(ids);
-    if (ticked.length === 0) return;
-    notify({ message: `Completed ${plural(ticked.length, 'task')}`, actionLabel: 'Undo', onAction: undo });
+    if (ticked.length > 0 && !quiet) {
+      notify({ message: `Completed ${plural(ticked.length, 'task')}`, actionLabel: 'Undo', onAction: undo });
+    }
+    return ticked;
   }
 
   function editTask(id, text) {
@@ -191,7 +201,5 @@ function useTasks(notify) {
     },
   };
 }
-
-const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 export default useTasks;

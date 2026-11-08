@@ -1,0 +1,41 @@
+/* Save and Cancel, then the quiet actions pushed to the end of the row. */
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  grid-column: 1 / -1; /* the whole row, when the editor is a grid of fields */
+}
+
+.editor-actions button {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.editor-save {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.editor-spacer {
+  flex: 1;
+}
+
+.editor-quiet {
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.editor-quiet:hover {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.editor-danger:hover,
+.editor-danger:focus-visible {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg);
+}

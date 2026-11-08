@@ -4,18 +4,18 @@ import useSettings from '../../hooks/useSettings';
 import { hourCycle, temperatureSymbol } from '../../data/settings';
 import { useAI } from '../../hooks/useAI';
 import WidgetState from '../WidgetState/WidgetState';
-import { formatOpenTasks } from '../../utils/buildTaskContext';
+import { formatOpenTasks, formatToday } from '../../utils/dashboardContext';
 import { fetchForecast, describeWeather } from '../../utils/weather';
 import './DailyBriefWidget.css';
 
 // Notes beyond this are cut, so a long notepad can't make a huge request.
 const MAX_NOTES_CHARS = 4000;
 
-const SYSTEM_PROMPT = `You write a short daily brief for one person, from their task list, notes and weather.
+const SYSTEM_PROMPT = `You write a short daily brief for one person, from their task list, today's events and habits, notes and weather.
 Write at most 150 words of plain text with no Markdown symbols other than "- " bullets, in three short sections, each starting with its heading on its own line:
-Focus first: the one to three tasks that matter most today, and why in a few words.
+Focus first: the one to three tasks that matter most today (overdue and due today count most), and why in a few words; fit them around today's events.
 Also today: other tasks worth fitting in, if any.
-Heads-up: anything from the notes or the weather worth knowing (an umbrella, a deadline). Leave this section out if there is nothing.
+Heads-up: anything worth knowing from the events, the habits still to do, the notes or the weather (an umbrella, a deadline). Leave this section out if there is nothing.
 Use only the tasks and notes given; never invent tasks. If there are no open tasks, say so in a friendly line and suggest using the time well.`;
 
 // One line about today's weather in place, in the user's unit, or '' if there is no place or the
@@ -36,7 +36,7 @@ async function describeToday(place, temperatureUnit) {
   }
 }
 
-function buildPrompt({ tasks, notes, weather, timeFormat }) {
+function buildPrompt({ tasks, notes, weather, timeFormat, day }) {
   const now = new Date();
   const date = now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
   const time = now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', ...hourCycle(timeFormat) });
@@ -44,6 +44,7 @@ function buildPrompt({ tasks, notes, weather, timeFormat }) {
   return [
     `It is ${date}, ${time}.`,
     `Open tasks:\n${formatOpenTasks(tasks) || '(none)'}`,
+    formatToday(day, now),
     `Notes:\n${trimmedNotes || '(none)'}`,
     weather,
   ]
@@ -54,7 +55,8 @@ function buildPrompt({ tasks, notes, weather, timeFormat }) {
 const isToday = (timestamp) => new Date(timestamp).toDateString() === new Date().toDateString();
 
 // A one-click plan for the day. The last brief is kept, so a reload doesn't pay for a new one.
-function DailyBriefWidget({ tasks, notes }) {
+//   tasks, notes: what to plan from    events, habits, habitLog: today's schedule and habits
+function DailyBriefWidget({ tasks, notes, events = [], habits = [], habitLog = {} }) {
   const ai = useAI();
   const [saved, setSaved] = useLocalStorage('dailyBrief', null); // { text, at }
   const [gathering, setGathering] = useState(false);
@@ -75,7 +77,7 @@ function DailyBriefWidget({ tasks, notes }) {
     setGathering(false);
     ai.send({
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: buildPrompt({ tasks, notes, weather, timeFormat }) }],
+      messages: [{ role: 'user', content: buildPrompt({ tasks, notes, weather, timeFormat, day: { events, habits, habitLog } }) }],
       effort: 'low',
     });
   }
