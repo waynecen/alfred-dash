@@ -61,7 +61,7 @@ function FocusWidget({ focus, actions, tasks }) {
           </button>
         )}
         <button type="button" onClick={actions.skip} disabled={idle}>
-          {focus.phase === 'work' ? 'Take a break' : 'Skip break'}
+          {focus.phase === 'work' || idle ? 'Take a break' : 'Skip break'}
         </button>
         <button type="button" onClick={actions.stop} disabled={idle}>
           Stop
