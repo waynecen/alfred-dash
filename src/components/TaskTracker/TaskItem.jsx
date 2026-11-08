@@ -129,6 +129,7 @@ function TaskItem({
   const row = (
     <tr
       className={rowClass}
+      data-task-id={task.id}
       onDragOver={(event) => {
         event.preventDefault(); // lets this row accept a drop
         onDragOver();
