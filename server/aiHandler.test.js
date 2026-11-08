@@ -294,3 +294,56 @@ describe('replayable', () => {
     ]);
   });
 });
+
+describe('AI proxy, hosted', () => {
+  // A request as a hosted page would send it: to the site's own host, not this computer.
+  const hosted = (path, { method = 'GET', key, origin = 'https://dash.example.com', body } = {}) =>
+    new Promise((resolve, reject) => {
+      const request = http.request(
+        `${base}${path}`,
+        {
+          method,
+          headers: {
+            Host: 'dash.example.com',
+            ...(origin && { Origin: origin }),
+            ...(key && { 'X-Dashboard-Key': key }),
+            ...(body && { 'Content-Type': 'application/json' }),
+          },
+        },
+        (response) => {
+          let text = '';
+          response.on('data', (chunk) => (text += chunk));
+          response.on('end', () => resolve({ status: response.statusCode, text }));
+        }
+      );
+      request.on('error', reject);
+      request.end(body ? JSON.stringify(body) : undefined);
+    });
+
+  it('stays shut, saying only that it is locked, without the access key', async () => {
+    await start({ client: fakeClient().client, accessKey: 'open sesame' });
+    const health = await hosted('/api/ai/health');
+    expect(JSON.parse(health.text)).toEqual({ configured: true, model: null, locked: true });
+    expect((await hosted('/api/ai/stream', { method: 'POST', body: hello })).status).toBe(401);
+    expect((await hosted('/api/ai/stream', { method: 'POST', body: hello, key: 'guess' })).status).toBe(401);
+  });
+
+  it('stays shut when the site has no access key set at all', async () => {
+    await start({ client: fakeClient().client });
+    expect((await hosted('/api/ai/stream', { method: 'POST', body: hello, key: 'anything' })).status).toBe(401);
+  });
+
+  it('answers its own pages that send the key', async () => {
+    await start({ client: fakeClient({ events: textEvents('Hi') }).client, accessKey: 'open sesame' });
+    expect(JSON.parse((await hosted('/api/ai/health', { key: 'open sesame' })).text)).toMatchObject({ configured: true, model: 'claude-opus-5-5' });
+    const reply = await hosted('/api/ai/stream', { method: 'POST', body: hello, key: 'open sesame' });
+    expect(reply.status).toBe(200);
+    expect(reply.text).toContain('event: done');
+  });
+
+  it('turns away other websites, key or not', async () => {
+    await start({ client: fakeClient().client, accessKey: 'open sesame' });
+    const response = await hosted('/api/ai/stream', { method: 'POST', body: hello, key: 'open sesame', origin: 'https://evil.example' });
+    expect(response.status).toBe(403);
+  });
+});

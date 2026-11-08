@@ -1,11 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { ASSISTANT_TOOLS, TOOL_NAMES, checkToolInput } from './assistantTools.js';
 
 // The dashboard's door to Claude. The browser never sees the API key: it sends a conversation
 // here, and this code (running in Node, next to the key) calls the Anthropic API and streams the
 // reply back as Server-Sent Events.
 //
-//   GET  /api/ai/health   -> { configured, model }
+//   GET  /api/ai/health   -> { configured, model, locked? }   (locked: hosted, without the access key)
 //   POST /api/ai/stream   { messages: [{ role, content }], system?, effort?, tools? }
 //        -> text/event-stream of:
 //           event: status    data: { phase: 'thinking' | 'writing' | 'proposing' }
@@ -37,18 +38,36 @@ const MAX_CONCURRENT_STREAMS = 3;
 // classifiers wrongly decline on Anthropic's recommended fallback model, instead of failing.
 const supportsFallback = (model) => !model.startsWith('claude-haiku');
 
-// Only pages served from this machine may call the proxy. Checking Host stops DNS-rebinding
-// tricks; checking Origin stops other websites open in the same browser.
+// Who may use the proxy, which spends your API credit:
+//   on this computer (npm run dev): pages served from this computer, as before; the Host check
+//     stops DNS-rebinding tricks, the Origin check other websites open in the same browser
+//   hosted (on Vercel): only pages from the same site, and only with the access key the site's
+//     owner set (AI_ACCESS_KEY). With no key set, a hosted proxy stays shut.
+// Returns 'ok', 'forbidden' (another website) or 'locked' (no access key, or the wrong one).
 const LOCAL_HOST = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
-function isLocalRequest(req) {
-  if (!LOCAL_HOST.test(req.headers.host ?? '')) return false;
+export const ACCESS_HEADER = 'x-dashboard-key';
+
+function originHost(req) {
   const origin = req.headers.origin;
-  if (!origin) return true; // same-origin GETs and non-browser tools such as curl
+  if (!origin) return null; // same-origin GETs and non-browser tools such as curl
   try {
-    return LOCAL_HOST.test(new URL(origin).host);
+    return new URL(origin).host;
   } catch {
-    return false;
+    return '';
   }
+}
+
+// Compares two secrets in the same time whatever they are, so timing gives nothing away.
+const digest = (text) => createHash('sha256').update(text).digest();
+const sameSecret = (a, b) => timingSafeEqual(digest(a), digest(b));
+
+function checkAccess(req, accessKey) {
+  const host = req.headers.host ?? '';
+  const from = originHost(req);
+  if (LOCAL_HOST.test(host)) return from === null || LOCAL_HOST.test(from) ? 'ok' : 'forbidden';
+  if (from !== null && from !== host) return 'forbidden';
+  const given = req.headers[ACCESS_HEADER];
+  return accessKey && typeof given === 'string' && sameSecret(given, accessKey) ? 'ok' : 'locked';
 }
 
 function sendJson(res, status, body) {
@@ -198,7 +217,8 @@ function describeError(error) {
 //   apiKey: the Anthropic key (from .env); without it, health says not configured
 //   model: which model to use (default Claude Opus 5.5)
 //   client: an Anthropic client, injectable for tests
-export function createAiHandler({ apiKey, model = DEFAULT_MODEL, client } = {}) {
+//   accessKey: what a hosted page must send (AI_ACCESS_KEY); not needed on this computer
+export function createAiHandler({ apiKey, model = DEFAULT_MODEL, client, accessKey } = {}) {
   const configured = Boolean(client || apiKey);
   const anthropic = client ?? (apiKey ? new Anthropic({ apiKey }) : null);
   let active = 0; // streams in progress
@@ -281,13 +301,19 @@ export function createAiHandler({ apiKey, model = DEFAULT_MODEL, client } = {}) 
       else sendJson(res, 404, { error: 'Not found.' });
       return;
     }
-    if (!isLocalRequest(req)) {
-      sendJson(res, 403, { error: 'The AI proxy only accepts requests from this computer.' });
+    const access = checkAccess(req, accessKey);
+    if (access === 'forbidden') {
+      sendJson(res, 403, { error: 'The AI proxy only answers the dashboard’s own pages.' });
       return;
     }
 
     if (path === '/api/ai/health' && req.method === 'GET') {
-      sendJson(res, 200, { configured, model });
+      // Locked, it says only that: not even which model is behind it.
+      sendJson(res, 200, access === 'locked' ? { configured, model: null, locked: true } : { configured, model });
+      return;
+    }
+    if (access === 'locked') {
+      sendJson(res, 401, { error: 'This site’s AI needs its access key: enter it in Settings.', locked: true });
       return;
     }
     if (path === '/api/ai/stream' && req.method === 'POST') {
