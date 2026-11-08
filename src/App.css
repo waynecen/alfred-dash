@@ -260,6 +260,19 @@ button:hover {
   color: var(--bg);
 }
 
+/* A button that can't be used now looks it: graphite on a light rule, and no fill on hover.
+   Components with a disabled look of their own keep it (their rules are more specific). */
+button:disabled {
+  border-color: var(--rule-soft);
+  color: var(--muted);
+  cursor: default;
+}
+
+button:disabled:hover {
+  background: transparent;
+  color: var(--muted);
+}
+
 /* Inputs: square and ruled, with no fill of their own, so they sit on whatever they are in. */
 input,
 select,
