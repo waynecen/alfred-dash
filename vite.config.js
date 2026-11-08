@@ -22,6 +22,15 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [react(), aiProxy(env)],
+    build: {
+      rollupOptions: {
+        output: {
+          // React in a file of its own: it changes far less often than the app, so after a new
+          // deploy a returning visitor's browser still has it cached.
+          manualChunks: (id) => (/node_modules\/(react|react-dom|scheduler)\//.test(id) ? 'react' : undefined),
+        },
+      },
+    },
     test: {
       environment: 'jsdom',
       setupFiles: './src/test/setup.js',
