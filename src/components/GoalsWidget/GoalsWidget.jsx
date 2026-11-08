@@ -198,7 +198,9 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
         </div>
       )}
       <div className="goal-editor-field">
-        <label className="label" htmlFor={field('due')}>By</label>
+        <label className="label" htmlFor={field('due')}>
+          By
+        </label>
         <DatePicker
           value={dueDate}
           today={today}

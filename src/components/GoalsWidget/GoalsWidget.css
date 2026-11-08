@@ -134,6 +134,16 @@
   grid-column: 1 / -1;
 }
 
+.goal-editor-field:has(.goal-editor-date) {
+  grid-column: span 2;
+}
+
+.goal-editor-date {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .goal-editor input,
 .goal-editor-date {
   min-width: 0;
