@@ -1,9 +1,10 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
 import WeekdayPicker from '../WeekdayPicker/WeekdayPicker';
 import AddLine from '../AddLine/AddLine';
-import EditorActions from '../EditorActions/EditorActions';
+import InlineEditor from '../InlineEditor/InlineEditor';
+import useRestoreFocus from '../../hooks/useRestoreFocus';
 import WidgetState from '../WidgetState/WidgetState';
 import HabitHeatmap from './HabitHeatmap';
 import { DAILY, describeSchedule, isScheduled } from '../../data/habits';
@@ -84,15 +85,11 @@ function HabitRow({ habit, done, days, today, weekStart, actions }) {
   const [editing, setEditing] = useState(false);
   const cells = useRef([]);
   const editButton = useRef(null);
-  const wasEditing = useRef(false);
   const { current, best } = habitStreaks(habit, done, today);
   const made = toISODate(habit.createdAt);
 
-  // Back from the editor, focus returns to the button that opened it.
-  useEffect(() => {
-    if (wasEditing.current && !editing) editButton.current?.focus();
-    wasEditing.current = editing;
-  }, [editing]);
+  // Back from the editor, focus returns to the name that opened it.
+  useRestoreFocus(editing, editButton);
 
   if (editing) {
     return (
@@ -166,35 +163,28 @@ function HabitEditor({ habit, weekStart, onSave, onCancel, onArchive, onDelete }
   const [schedule, setSchedule] = useState(habit.schedule);
   const id = useId();
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    onSave({ name: name.trim() || habit.name, schedule });
-  }
-
   return (
-    <form
+    <InlineEditor
       className="habit-editor"
-      onSubmit={handleSubmit}
-      onKeyDown={(event) => {
-        if (event.key !== 'Escape') return;
-        event.stopPropagation();
-        onCancel();
-      }}
+      onSave={() => onSave({ name: name.trim() || habit.name, schedule })}
+      onCancel={onCancel}
+      actions={
+        <>
+          <button type="button" className="editor-quiet" onClick={onArchive}>
+            Archive
+          </button>
+          <button type="button" className="editor-quiet editor-danger" onClick={onDelete}>
+            Delete
+          </button>
+        </>
+      }
     >
       <label htmlFor={id} className="visually-hidden">
         Habit name
       </label>
       <input id={id} type="text" value={name} onChange={(event) => setName(event.target.value)} autoFocus autoComplete="off" />
       <WeekdayPicker value={schedule} onChange={setSchedule} weekStart={weekStart} />
-      <EditorActions onCancel={onCancel}>
-        <button type="button" className="editor-quiet" onClick={onArchive}>
-          Archive
-        </button>
-        <button type="button" className="editor-quiet editor-danger" onClick={onDelete}>
-          Delete
-        </button>
-      </EditorActions>
-    </form>
+    </InlineEditor>
   );
 }
 

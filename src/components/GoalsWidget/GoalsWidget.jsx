@@ -1,10 +1,11 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
 import DatePicker from '../DatePicker/DatePicker';
 import ProgressBar from '../ProgressBar/ProgressBar';
 import AddLine from '../AddLine/AddLine';
-import EditorActions from '../EditorActions/EditorActions';
+import InlineEditor from '../InlineEditor/InlineEditor';
+import useRestoreFocus from '../../hooks/useRestoreFocus';
 import WidgetState from '../WidgetState/WidgetState';
 import { describeProgress, goalProgress, isReached, parseGoal } from '../../data/goals';
 import { parseTags } from '../../data/tasks';
@@ -75,13 +76,8 @@ function GoalsWidget({ goals, tasks, actions }) {
 function GoalItem({ goal, progress, reached, today, actions }) {
   const [editing, setEditing] = useState(false);
   const titleButton = useRef(null);
-  const wasEditing = useRef(false);
-
   // Back from the editor, focus returns to the title that opened it.
-  useEffect(() => {
-    if (wasEditing.current && !editing) titleButton.current?.focus();
-    wasEditing.current = editing;
-  }, [editing]);
+  useRestoreFocus(editing, titleButton);
 
   if (editing) {
     return (
@@ -153,8 +149,7 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
   const id = useId();
   const field = (name) => `${id}-${name}`;
 
-  function handleSubmit(event) {
-    event.preventDefault();
+  function save() {
     const fields = { title: title.trim() || goal.title, dueDate };
     if (goal.kind === 'count') {
       fields.target = Math.max(1, Number(target) || goal.target);
@@ -167,14 +162,15 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
   }
 
   return (
-    <form
+    <InlineEditor
       className="goal-editor"
-      onSubmit={handleSubmit}
-      onKeyDown={(event) => {
-        if (event.key !== 'Escape') return;
-        event.stopPropagation();
-        onCancel();
-      }}
+      onSave={save}
+      onCancel={onCancel}
+      actions={
+        <button type="button" className="editor-quiet editor-danger" onClick={onDelete}>
+          Delete
+        </button>
+      }
     >
       <div className="goal-editor-field goal-editor-wide">
         <label htmlFor={field('title')}>Goal</label>
@@ -213,12 +209,7 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
           {dueDate ? formatDay(dueDate, { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date'}
         </DatePicker>
       </div>
-      <EditorActions onCancel={onCancel}>
-        <button type="button" className="editor-quiet editor-danger" onClick={onDelete}>
-          Delete
-        </button>
-      </EditorActions>
-    </form>
+    </InlineEditor>
   );
 }
 
