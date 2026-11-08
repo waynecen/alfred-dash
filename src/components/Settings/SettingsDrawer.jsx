@@ -4,6 +4,7 @@ import useDismiss from '../../hooks/useDismiss';
 import useFocusTrap from '../../hooks/useFocusTrap';
 import useSettings from '../../hooks/useSettings';
 import DataSection from './DataSection';
+import { describeAIStatus } from '../../data/aiStatus';
 import './SettingsDrawer.css';
 
 const THEMES = [
@@ -61,20 +62,6 @@ function NoticesSection({ enabled, onChange }) {
   );
 }
 
-// What the AI section says for each useAIHealth status.
-const AI_STATUS = {
-  checking: { label: 'Checking…', note: 'Looking for the local AI proxy.' },
-  connected: { label: 'Connected', note: 'Your API key stays in the local proxy and never reaches this page.' },
-  'not-configured': {
-    label: 'Not connected',
-    note: 'Add ANTHROPIC_API_KEY to a .env file (see .env.example), then restart npm run dev.',
-  },
-  offline: {
-    label: 'Proxy not running',
-    note: 'The AI proxy runs with npm run dev. Start it, then check again.',
-  },
-};
-
 // A panel that slides in from the right with the dashboard's preferences. It is a modal dialog:
 // focus stays inside while it is open, Escape or a click outside closes it, and focus goes back
 // to the Settings button.
@@ -91,7 +78,7 @@ function SettingsDrawer({
   ai = { status: 'not-configured' },
   notify = () => {},
 }) {
-  const aiStatus = AI_STATUS[ai.status] ?? AI_STATUS['not-configured'];
+  const aiStatus = describeAIStatus(ai.status);
   // Units and the clock are read where they are shown, so they are changed straight from here.
   const [settings, updateSettings] = useSettings();
   const panelRef = useRef(null);
