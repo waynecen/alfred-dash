@@ -81,7 +81,7 @@ function WeatherWidget() {
       </div>
 
       {adding || !active ? (
-        <PlaceSearch onPick={addPlace} onCancel={places.length ? () => setAdding(false) : null} />
+        <PlaceSearch onPick={addPlace} onCancel={places.length ? () => setAdding(false) : null} autoFocus={adding} />
       ) : (
         <Forecast key={active.id} place={active} />
       )}
@@ -89,7 +89,9 @@ function WeatherWidget() {
   );
 }
 
-function PlaceSearch({ onPick, onCancel }) {
+// autoFocus: when someone asked to add a place; never on its own when the page loads, which would
+// take focus from wherever the user is.
+function PlaceSearch({ onPick, onCancel, autoFocus = false }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | loading | error
@@ -115,7 +117,7 @@ function PlaceSearch({ onPick, onCancel }) {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search for a city"
           aria-label="City"
-          autoFocus
+          autoFocus={autoFocus}
         />
         <button type="submit" disabled={status === 'loading'}>
           {status === 'loading' ? 'Searching…' : 'Search'}
