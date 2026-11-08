@@ -6,7 +6,9 @@ import { ASSISTANT_TOOLS, TOOL_NAMES, checkToolInput } from './assistantTools.js
 // here, and this code (running in Node, next to the key) calls the Anthropic API and streams the
 // reply back as Server-Sent Events.
 //
-//   GET  /api/ai/health   -> { configured, model, locked? }   (locked: hosted, without the access key)
+//   GET  /api/ai/health   -> { configured, model, ownKey? }  or, locked, { locked: true, sharedKey }
+//        (locked: hosted, with neither the visitor's own API key nor the site's access key;
+//         sharedKey: whether the site's owner offers their key to holders of the access key)
 //   POST /api/ai/stream   { messages: [{ role, content }], system?, effort?, tools? }
 //        -> text/event-stream of:
 //           event: status    data: { phase: 'thinking' | 'writing' | 'proposing' }
@@ -38,14 +40,27 @@ const MAX_CONCURRENT_STREAMS = 3;
 // classifiers wrongly decline on Anthropic's recommended fallback model, instead of failing.
 const supportsFallback = (model) => !model.startsWith('claude-haiku');
 
-// Who may use the proxy, which spends your API credit:
-//   on this computer (npm run dev): pages served from this computer, as before; the Host check
-//     stops DNS-rebinding tricks, the Origin check other websites open in the same browser
-//   hosted (on Vercel): only pages from the same site, and only with the access key the site's
-//     owner set (AI_ACCESS_KEY). With no key set, a hosted proxy stays shut.
-// Returns 'ok', 'forbidden' (another website) or 'locked' (no access key, or the wrong one).
+// Whose API credit a request spends:
+//   the visitor's own: a page may send its user's Anthropic key (X-Anthropic-Key, entered in
+//     Settings). The call is made with that key and that key only; it is never stored or logged.
+//   the server's (ANTHROPIC_API_KEY): on this computer (npm run dev), for pages served from this
+//     computer; hosted, only with the access key the site's owner set (AI_ACCESS_KEY). With no
+//     access key set, a hosted site never spends the server's key.
+// Either way only pages from the same site are answered: the Host check stops DNS-rebinding
+// tricks, the Origin check other websites open in the same browser.
+// checkAccess returns 'ok' (may use the server's key), 'forbidden' (another website) or 'locked'.
 const LOCAL_HOST = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
 export const ACCESS_HEADER = 'x-dashboard-key';
+export const OWN_KEY_HEADER = 'x-anthropic-key';
+
+// The visitor's own key, if the request carries a plausible one: one line of printable text, so
+// nothing odd reaches the SDK's headers. Whether Anthropic accepts it is for the API to say.
+export function ownKey(req) {
+  const given = req.headers[OWN_KEY_HEADER];
+  if (typeof given !== 'string') return null;
+  const key = given.trim();
+  return /^[!-~]{20,400}$/.test(key) ? key : null;
+}
 
 function originHost(req) {
   const origin = req.headers.origin;
@@ -200,9 +215,14 @@ function cutShort(stopReason) {
 }
 
 // A short message the dashboard can show, without leaking anything sensitive.
-function describeError(error) {
-  if (error instanceof Anthropic.AuthenticationError) return { status: 401, message: 'The Anthropic API key was rejected. Check ANTHROPIC_API_KEY in .env.' };
+function describeError(error, own) {
+  if (error instanceof Anthropic.AuthenticationError) {
+    return { status: 401, message: own ? 'Your Anthropic API key was rejected. Check it in Settings, under AI assistant.' : 'The Anthropic API key was rejected. Check ANTHROPIC_API_KEY in .env.' };
+  }
   if (error instanceof Anthropic.PermissionDeniedError) return { status: 403, message: 'This API key cannot use the configured model.' };
+  if (own && error instanceof Anthropic.APIError && error.status === 402) {
+    return { status: 402, message: 'Your Anthropic account is out of credit. Add some in the Anthropic Console.' };
+  }
   if (error instanceof Anthropic.RateLimitError) return { status: 429, message: 'Rate limited by the Anthropic API. Try again in a moment.' };
   if (error instanceof Anthropic.BadRequestError) return { status: 400, message: `The Anthropic API rejected the request: ${error.message}` };
   if (error instanceof Anthropic.APIConnectionError) return { status: 502, message: 'Could not reach the Anthropic API. Check your connection.' };
@@ -217,13 +237,21 @@ function describeError(error) {
 //   apiKey: the Anthropic key (from .env); without it, health says not configured
 //   model: which model to use (default Claude Opus 5.5)
 //   client: an Anthropic client, injectable for tests
-//   accessKey: what a hosted page must send (AI_ACCESS_KEY); not needed on this computer
-export function createAiHandler({ apiKey, model = DEFAULT_MODEL, client, accessKey } = {}) {
+//   accessKey: what a hosted page must send to use apiKey (AI_ACCESS_KEY); not needed on this computer
+//   clientFor: makes a client for a visitor's own key, injectable for tests
+export function createAiHandler({
+  apiKey,
+  model = DEFAULT_MODEL,
+  client,
+  accessKey,
+  clientFor = (key) => new Anthropic({ apiKey: key }),
+} = {}) {
   const configured = Boolean(client || apiKey);
   const anthropic = client ?? (apiKey ? new Anthropic({ apiKey }) : null);
   let active = 0; // streams in progress
 
-  async function stream(req, res) {
+  // anthropic: the client to call with; own: whether it is the visitor's key (for error wording)
+  async function stream(req, res, { anthropic, own }) {
     let params;
     try {
       params = parseStreamRequest(await readBody(req));
@@ -287,7 +315,7 @@ export function createAiHandler({ apiKey, model = DEFAULT_MODEL, client, accessK
       });
     } catch (error) {
       if (res.destroyed) return; // the browser went away; nothing to tell it
-      send('error', describeError(error));
+      send('error', describeError(error, own));
     } finally {
       finished = true;
       if (!res.destroyed) res.end();
@@ -307,13 +335,20 @@ export function createAiHandler({ apiKey, model = DEFAULT_MODEL, client, accessK
       return;
     }
 
+    // A visitor's own key goes first: with it, the server's key is never touched.
+    const visitorKey = ownKey(req);
+
     if (path === '/api/ai/health' && req.method === 'GET') {
-      // Locked, it says only that: not even which model is behind it.
-      sendJson(res, 200, access === 'locked' ? { configured, model: null, locked: true } : { configured, model });
+      // It doesn't call Anthropic to test a visitor's key (that would cost a request every check):
+      // a bad key shows up, clearly worded, on the first reply. Locked, it says nothing more, not
+      // even which model is behind it.
+      if (visitorKey) sendJson(res, 200, { configured: true, model, ownKey: true });
+      else if (access === 'locked') sendJson(res, 200, { configured: false, model: null, locked: true, sharedKey: Boolean(configured && accessKey) });
+      else sendJson(res, 200, { configured, model });
       return;
     }
-    if (access === 'locked') {
-      sendJson(res, 401, { error: 'This site’s AI needs its access key: enter it in Settings.', locked: true });
+    if (!visitorKey && access === 'locked') {
+      sendJson(res, 401, { error: 'This site’s AI needs your Anthropic API key: enter it in Settings.', locked: true });
       return;
     }
     if (path === '/api/ai/stream' && req.method === 'POST') {
@@ -321,7 +356,8 @@ export function createAiHandler({ apiKey, model = DEFAULT_MODEL, client, accessK
         sendJson(res, 415, { error: 'Send JSON (Content-Type: application/json).' });
         return;
       }
-      if (!anthropic) {
+      const caller = visitorKey ? clientFor(visitorKey) : anthropic;
+      if (!caller) {
         sendJson(res, 503, { error: 'The AI assistant is not set up: add ANTHROPIC_API_KEY to .env and restart.' });
         return;
       }
@@ -331,7 +367,7 @@ export function createAiHandler({ apiKey, model = DEFAULT_MODEL, client, accessK
       }
       active++;
       try {
-        await stream(req, res);
+        await stream(req, res, { anthropic: caller, own: Boolean(visitorKey) });
       } finally {
         active--;
       }

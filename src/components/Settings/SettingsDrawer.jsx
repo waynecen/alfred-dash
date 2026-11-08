@@ -5,7 +5,7 @@ import useFocusTrap from '../../hooks/useFocusTrap';
 import useSettings from '../../hooks/useSettings';
 import DataSection from './DataSection';
 import { describeAIStatus } from '../../data/aiStatus';
-import { getAccessKey, setAccessKey } from '../../utils/aiAccess';
+import { getAccessKey, getOwnApiKey, looksLikeApiKey, setAccessKey, setOwnApiKey } from '../../utils/aiAccess';
 import './SettingsDrawer.css';
 
 const THEMES = [
@@ -63,32 +63,135 @@ function NoticesSection({ enabled, onChange }) {
   );
 }
 
-// The access key a hosted dashboard's AI asks for, kept in this browser only.
-function AccessKeyForm({ onSaved }) {
+// One secret, typed into a password field and kept in this browser only (utils/aiAccess.js).
+//   label, action: the field's label and the button's
+//   check(value): a problem to show instead of saving, or null
+//   onSave(value)
+function KeyForm({ label, action, placeholder, check = () => null, onSave }) {
   const [value, setValue] = useState('');
+  const [problem, setProblem] = useState(null);
   const id = useId();
   return (
     <form
       className="drawer-access"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!value.trim()) return;
-        setAccessKey(value.trim());
+        const key = value.trim();
+        if (!key) return;
+        const issue = check(key);
+        setProblem(issue);
+        if (issue) return;
         setValue('');
-        onSaved?.();
+        onSave(key);
       }}
     >
       <label htmlFor={id} className="label">
-        Access key
+        {label}
       </label>
       <div className="drawer-access-row">
-        <input id={id} type="password" value={value} onChange={(event) => setValue(event.target.value)} autoComplete="current-password" />
+        <input
+          id={id}
+          type="password"
+          value={value}
+          placeholder={placeholder}
+          spellCheck={false}
+          autoComplete="off"
+          aria-invalid={problem ? true : undefined}
+          aria-describedby={problem ? `${id}-problem` : undefined}
+          onChange={(event) => {
+            setValue(event.target.value);
+            setProblem(null);
+          }}
+        />
         <button type="submit" disabled={!value.trim()}>
-          Unlock
+          {action}
         </button>
       </div>
+      {problem && (
+        <p id={`${id}-problem`} className="drawer-note" role="alert">
+          {problem}
+        </p>
+      )}
     </form>
   );
+}
+
+// The last few characters of a key, so you can tell which one is saved without showing it.
+const keyTail = (key) => `…${key.slice(-4)}`;
+
+// What the AI section offers, by how the AI is reached:
+//   with your own key: which key, and a button to remove it
+//   needing a key (hosted, or nothing in .env): a field for your own key, and the access key's
+//     field too when the site's owner offers theirs
+//   through the access key: a button to forget it
+function AIKeys({ ai }) {
+  const own = getOwnApiKey();
+  const done = () => ai.recheck?.();
+  if (own) {
+    return (
+      <>
+        <p className="drawer-note">
+          Using your own API key ({keyTail(own)}). Requests are billed to your Anthropic account. The key is kept in this browser and sent only to this site’s AI proxy, which passes it to Anthropic without storing it.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setOwnApiKey('');
+            done();
+          }}
+        >
+          Remove my API key
+        </button>
+      </>
+    );
+  }
+  if (ai.status === 'locked' || ai.status === 'not-configured') {
+    return (
+      <>
+        <KeyForm
+          label="Your Anthropic API key"
+          action="Save"
+          placeholder="sk-ant-…"
+          check={(key) => (looksLikeApiKey(key) ? null : 'That doesn’t look like an Anthropic API key. They start with sk-ant-.')}
+          onSave={(key) => {
+            setOwnApiKey(key);
+            done();
+          }}
+        />
+        <p className="drawer-note">
+          Create one in the{' '}
+          <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
+            Anthropic Console
+          </a>
+          . It stays in this browser; anyone who can use this browser can use it, so don’t save it on a shared computer.
+        </p>
+        {ai.status === 'locked' && ai.sharedKey && (
+          <KeyForm
+            label="Or the site’s access key"
+            action="Unlock"
+            onSave={(key) => {
+              setAccessKey(key);
+              done();
+            }}
+          />
+        )}
+      </>
+    );
+  }
+  if (ai.status === 'connected' && getAccessKey()) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setAccessKey('');
+          done();
+        }}
+      >
+        Forget the access key
+      </button>
+    );
+  }
+  return null;
 }
 
 // A panel that slides in from the right with the dashboard's preferences. It is a modal dialog:
@@ -215,28 +318,12 @@ function SettingsDrawer({
           </h3>
           <p className="drawer-note">
             {ai.status === 'connected' ? `Using ${ai.model}. ` : ''}
-            {aiStatus.note}
+            {ai.ownKey ? '' : aiStatus.note}
           </p>
-          {ai.status === 'locked' ? (
-            <AccessKeyForm onSaved={ai.recheck} />
-          ) : (
-            ai.recheck &&
-            ai.status !== 'connected' &&
-            ai.status !== 'checking' && (
-              <button type="button" onClick={ai.recheck}>
-                Check again
-              </button>
-            )
-          )}
-          {ai.status === 'connected' && getAccessKey() && (
-            <button
-              type="button"
-              onClick={() => {
-                setAccessKey('');
-                ai.recheck?.();
-              }}
-            >
-              Forget the access key
+          <AIKeys ai={ai} />
+          {ai.recheck && (ai.status === 'offline' || ai.status === 'not-configured') && (
+            <button type="button" onClick={ai.recheck}>
+              Check again
             </button>
           )}
         </section>

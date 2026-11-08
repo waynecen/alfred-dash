@@ -5,7 +5,9 @@ export const tabId = (boardId) => `board-tab-${boardId}`;
 
 // The row of boards under the masthead, following the ARIA tabs pattern: the arrow keys (and
 // Home and End) move between boards and show them, Tab moves on to the board itself.
-// Double-click a board, or press F2 on it, to rename it.
+// Like a browser's tabs: each board has a close button (×), shown on the board on screen and on
+// hover; a middle click or the Delete key on a board closes it too (with Undo). The last board
+// can't be closed. Double-click a board, or press F2 on it, to rename it.
 //   boards: [{ id, name }]     activeId     panelId: the id of the element the boards fill
 //   onSwitch(id)  onAdd()  onRename(id, name)  onDelete(id)
 function BoardTabs({ boards, activeId, panelId, onSwitch, onAdd, onRename, onDelete }) {
@@ -39,6 +41,12 @@ function BoardTabs({ boards, activeId, panelId, onSwitch, onAdd, onRename, onDel
     } else if (event.key === 'F2') {
       event.preventDefault();
       startRename(boards[index]);
+    } else if (event.key === 'Delete' && boards.length > 1) {
+      event.preventDefault();
+      // Focus follows to the board that takes its place, the one to the right if there is one.
+      const next = boards[index + 1] ?? boards[index - 1];
+      onDelete(boards[index].id);
+      requestAnimationFrame(() => document.getElementById(tabId(next.id))?.focus());
     }
   }
 
@@ -69,8 +77,8 @@ function BoardTabs({ boards, activeId, panelId, onSwitch, onAdd, onRename, onDel
               onBlur={finishRename}
             />
           ) : (
+            <div key={board.id} className="board-tab-wrap" data-active={board.id === active.id || undefined}>
             <button
-              key={board.id}
               id={tabId(board.id)}
               type="button"
               role="tab"
@@ -81,31 +89,38 @@ function BoardTabs({ boards, activeId, panelId, onSwitch, onAdd, onRename, onDel
               title={index < 9 ? `${board.name} (press ${index + 1})` : board.name}
               onClick={() => onSwitch(board.id)}
               onDoubleClick={() => startRename(board)}
+              onAuxClick={(event) => {
+                if (event.button === 1 && boards.length > 1) onDelete(board.id);
+              }}
+              onMouseDown={(event) => {
+                if (event.button === 1) event.preventDefault(); // no autoscroll on middle click
+              }}
               onKeyDown={(event) => handleTabKeyDown(event, index)}
             >
               {board.name}
             </button>
+            {boards.length > 1 && (
+              // Out of the Tab order, as in a browser: the keyboard closes a board with Delete.
+              <button
+                type="button"
+                className="board-close"
+                tabIndex={-1}
+                aria-label={`Close board ${board.name}`}
+                title="Close board (Delete)"
+                onClick={() => onDelete(board.id)}
+              >
+                <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
+                </svg>
+              </button>
+            )}
+            </div>
           )
         )}
       </div>
       <button type="button" className="board-action board-add" aria-label="New board" title="New board" onClick={onAdd}>
         +
       </button>
-      <div className="board-actions">
-        <button type="button" className="board-action" onClick={() => startRename(active)}>
-          Rename
-        </button>
-        {boards.length > 1 && (
-          <button
-            type="button"
-            className="board-action"
-            aria-label={`Delete board ${active.name}`}
-            onClick={() => onDelete(active.id)}
-          >
-            Delete
-          </button>
-        )}
-      </div>
     </nav>
   );
 }

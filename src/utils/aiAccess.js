@@ -1,27 +1,46 @@
-// The access key a hosted dashboard's AI proxy asks for (the site owner sets it as AI_ACCESS_KEY
-// on Vercel). It is kept in this browser only: it isn't one of the saved lists, so backups never
-// carry it and other devices need it entered again. On your own computer no key is needed.
-const KEY = 'aiAccessKey';
+// The two keys a browser can hand the AI proxy, both kept in this browser only. Neither is one of
+// the saved lists, so backups never carry them and other devices need them entered again.
+//   your own Anthropic API key: the proxy calls Claude with it, so you pay for your own use and
+//     nobody else's. It is sent to the proxy with each AI request and goes no further than
+//     Anthropic; the proxy doesn't store or log it.
+//   the site's access key (AI_ACCESS_KEY): lets you use the site owner's key instead, if they
+//     gave it to you. On your own computer neither is needed.
+const ACCESS = 'aiAccessKey';
+const OWN = 'aiOwnApiKey';
 
-export function getAccessKey() {
+function read(name) {
   try {
-    return localStorage.getItem(KEY) ?? '';
+    return localStorage.getItem(name) ?? '';
   } catch {
     return '';
   }
 }
 
-export function setAccessKey(value) {
+function write(name, value) {
   try {
-    if (value) localStorage.setItem(KEY, value);
-    else localStorage.removeItem(KEY);
+    if (value) localStorage.setItem(name, value);
+    else localStorage.removeItem(name);
   } catch {
-    // Storage blocked: the key lasts until the page closes, which is all we can do.
+    // Storage blocked: nothing is kept, and the AI stays locked.
   }
 }
 
-// The headers every request to the AI proxy carries.
+export const getAccessKey = () => read(ACCESS);
+export const setAccessKey = (value) => write(ACCESS, value);
+export const getOwnApiKey = () => read(OWN);
+export const setOwnApiKey = (value) => write(OWN, value);
+
+// What the user typed looks like an Anthropic key (they start "sk-ant-"). Only a hint for the
+// form: the API has the last word.
+export const looksLikeApiKey = (value) => /^sk-ant-\S{10,}$/.test(value.trim());
+
+// The headers every request to the AI proxy carries. With your own key, that one is used; the
+// access key is sent too only when you have no key of your own.
 export function aiHeaders(extra = {}) {
-  const key = getAccessKey();
-  return { ...extra, ...(key && { 'X-Dashboard-Key': key }) };
+  const own = getOwnApiKey();
+  const access = getAccessKey();
+  return {
+    ...extra,
+    ...(own ? { 'X-Anthropic-Key': own } : access && { 'X-Dashboard-Key': access }),
+  };
 }

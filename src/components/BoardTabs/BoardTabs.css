@@ -33,8 +33,25 @@
   color: var(--muted);
 }
 
-.board-tab:first-child {
-  padding-left: 0;
+/* A board and its close button, side by side like a browser tab. */
+.board-tab-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.board-tab-wrap:first-child .board-tab {
+  padding-left: 0.75rem;
+}
+
+/* With a close button, the board's name leaves it room: a clear gap, then the ×. */
+.board-tab-wrap:has(.board-close) .board-tab {
+  padding-right: 2.5rem;
+}
+
+/* Hover tints the whole tab, the × included, so it is plain which board the pointer is on. */
+.board-tab-wrap:hover {
+  background: var(--surface);
 }
 
 .board-tab:hover {
@@ -57,8 +74,37 @@
   background: var(--text);
 }
 
-.board-tab:first-child[aria-selected='true']::after {
-  left: 0;
+
+/* The ×: shown on the board on screen and on the one under the pointer, hidden (but still there
+   to click) on the rest, as browsers do. */
+.board-close {
+  position: absolute;
+  right: 0.625rem;
+  display: grid;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  opacity: 0;
+}
+
+.board-tab-wrap[data-active] .board-close,
+.board-tab-wrap:hover .board-close {
+  opacity: 1;
+}
+
+.board-close:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* No hover on touch screens: there the × is always shown. */
+@media (hover: none) {
+  .board-close {
+    opacity: 1;
+  }
 }
 
 .board-rename {
@@ -84,17 +130,24 @@
   text-underline-offset: 3px;
 }
 
+/* New board: a small square button of its own, centred on the tabs' row. */
 .board-add {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-left: 0.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
   font-size: 1rem;
+  font-weight: 400;
   letter-spacing: 0;
+  line-height: 1;
 }
 
-/* Rename and Delete act on the board on screen, so they sit at the far end of the bar. */
-.board-actions {
-  display: flex;
-  margin-left: auto;
-}
-
-.board-actions .board-action:last-child {
-  padding-right: 0;
+.board-add:hover {
+  background: var(--text);
+  color: var(--bg);
+  text-decoration: none;
 }

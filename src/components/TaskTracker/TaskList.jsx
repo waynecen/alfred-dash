@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import TaskItem from './TaskItem';
 import moveTask from '../../utils/moveTask';
 
@@ -25,6 +25,30 @@ function SortableHeader({ label, columnKey, sort, onSort, className }) {
       </span>
     </th>
   );
+}
+
+// Rows that change place slide there instead of jumping (FLIP): after each render, every row is
+// measured, and one that moved starts where it was and glides to where it is. Dragging a task
+// swaps rows as it passes them, so they visibly make way up or down. offsetTop ignores transforms,
+// so a row caught mid-slide is measured where it really is. Off for people who ask for less motion.
+const SLIDE = { duration: 180, easing: 'cubic-bezier(0.2, 0, 0, 1)' };
+
+function useRowSlide(body, order) {
+  const tops = useRef(new Map());
+  useLayoutEffect(() => {
+    const rows = body.current?.querySelectorAll('tr[data-task-id]') ?? [];
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const next = new Map();
+    for (const row of rows) {
+      const top = row.offsetTop;
+      const before = tops.current.get(row.dataset.taskId);
+      next.set(row.dataset.taskId, top);
+      if (still || before === undefined || before === top || !row.animate) continue;
+      row.getAnimations?.().forEach((animation) => animation.cancel());
+      row.animate([{ transform: `translateY(${before - top}px)` }, { transform: 'translateY(0)' }], SLIDE);
+    }
+    tops.current = next;
+  }, [body, order]);
 }
 
 // A table of tasks. The Description, Priority, Due and Created headings sort the list.
@@ -58,6 +82,8 @@ function TaskList({
   // Each row passed over swaps places with the dragged one, starting from the order on screen,
   // so dragging back over a row undoes the move. The order is only saved on drop.
   const shownTasks = liveTasks ?? tasks;
+  const body = useRef(null);
+  useRowSlide(body, shownTasks);
 
   function startDrag(id) {
     setDragId(id);
@@ -92,7 +118,7 @@ function TaskList({
             <th scope="col" className="col-actions">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={body}>
           {shownTasks.map((task, index) => (
             // key helps React track which row is which when the list changes.
             <TaskItem
