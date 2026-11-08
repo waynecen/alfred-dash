@@ -2,16 +2,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { readEvents } from '../utils/sse';
 import { aiHeaders } from '../utils/aiAccess';
 
-// Talks to the AI proxy (server/aiHandler.js). The browser never holds an API key: it only sends
-// the conversation to /api/ai and reads the streamed reply.
+// Talks to the AI proxy (server/aiHandler.js): it sends the conversation to /api/ai and reads the
+// streamed reply. The proxy calls Claude with the user's own API key when Settings holds one, else
+// with the server's key (see utils/aiAccess.js).
 
 // One check at a time, shared: AI widgets that mount together (and the palette) ask once.
 let checking = null;
 function checkHealth() {
   checking ??= fetch('/api/ai/health', { headers: aiHeaders() })
     .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
-    .then(({ configured, model, locked }) => ({ status: locked ? 'locked' : configured ? 'connected' : 'not-configured', model }))
-    .catch(() => ({ status: 'offline', model: null }))
+    .then(({ configured, model, locked, sharedKey = false, ownKey = false }) => ({
+      status: locked ? 'locked' : configured ? 'connected' : 'not-configured',
+      model,
+      ownKey,
+      sharedKey,
+    }))
+    .catch(() => ({ status: 'offline', model: null, ownKey: false, sharedKey: false }))
     .finally(() => {
       checking = null;
     });
@@ -20,7 +26,9 @@ function checkHealth() {
 
 // Whether the proxy is running and has a key.
 //   status: 'checking' | 'connected' | 'not-configured' (no key in .env) | 'offline' (no proxy)
-//     | 'locked' (a hosted site, and this browser hasn't the access key: see utils/aiAccess.js)
+//     | 'locked' (a hosted site, and this browser has neither its own API key nor the access key)
+//   ownKey: connected with the user's own API key
+//   sharedKey: locked, and the site's owner offers their key to holders of the access key
 //   enabled: only checks while true (e.g. while Settings is open)
 export function useAIHealth(enabled = true) {
   const [health, setHealth] = useState({ status: 'checking', model: null });
