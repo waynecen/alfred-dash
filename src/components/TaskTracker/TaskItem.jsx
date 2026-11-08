@@ -155,7 +155,7 @@ function TaskItem({
             // Drag the whole row, not just the small handle.
             const row = event.currentTarget.closest('tr');
             if (row) event.dataTransfer.setDragImage(row, 0, 0);
-            onDragStart();
+            onDragStart?.();
           }}
           onDragEnd={onDragEnd}
         >
