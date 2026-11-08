@@ -18,7 +18,10 @@ function useFocusTrap(ref) {
     if (!container) return undefined;
     const previous = document.activeElement;
 
-    const focusable = () => [...container.querySelectorAll(FOCUSABLE)];
+    // Only what Tab can reach: not taken out of the order (tabindex -1, like a hidden file input),
+    // and not inside something hidden or inert.
+    const focusable = () =>
+      [...container.querySelectorAll(FOCUSABLE)].filter((el) => el.tabIndex >= 0 && !el.closest('[hidden], [inert]'));
     (container.querySelector('[data-autofocus]') ?? focusable()[0] ?? container).focus();
 
     function handleKeyDown(event) {

@@ -73,10 +73,10 @@ describe('SettingsDrawer', () => {
   it('keeps Tab inside the drawer', async () => {
     setup();
     const close = screen.getByRole('button', { name: 'Close settings' });
-    const reset = screen.getByRole('button', { name: 'Reset layout' });
     expect(close).toHaveFocus();
+    // The last control is Clear all data, not the hidden file input after it.
     await userEvent.tab({ shift: true });
-    expect(reset).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Clear all data…' })).toHaveFocus();
     await userEvent.tab();
     expect(close).toHaveFocus();
   });
