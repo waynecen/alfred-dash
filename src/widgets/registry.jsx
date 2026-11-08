@@ -26,7 +26,7 @@ export const WIDGETS = {
   summary: {
     title: 'Summary',
     category: 'Productivity',
-    defaultSize: { w: 4, h: 8 },
+    defaultSize: { w: 4, h: 6 },
     description: 'Open and done counts, what is overdue or due today, and the last week of progress',
     render: ({ counts, tasks }) => (
       <SummaryWidget

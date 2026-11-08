@@ -1,4 +1,3 @@
-import CompletionChart from './CompletionChart';
 import ProgressBar from '../ProgressBar/ProgressBar';
 import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
@@ -55,7 +54,12 @@ function SummaryWidget({
           {completed} of {total} done ({percent}%)
         </p>
       </div>
-      {tasks && <CompletionChart days={completionsByDay(tasks, today)} />}
+      {tasks && (
+        <dl className="summary-recent">
+          <dt className="label">Done, last 7 days</dt>
+          <dd>{completionsByDay(tasks, today).reduce((sum, day) => sum + day.count, 0)}</dd>
+        </dl>
+      )}
     </div>
   );
 }

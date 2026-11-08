@@ -196,3 +196,20 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* What got done lately, as one figure on a rule: the label on the left, the count on the right. */
+.summary-recent {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.summary-recent dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
