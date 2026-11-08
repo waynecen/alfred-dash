@@ -27,6 +27,19 @@ describe('useAI', () => {
     expect(JSON.parse(options.body)).toEqual({ ...hello, effort: 'low' });
   });
 
+  it('collects proposed changes, and asks for tools only when told to', async () => {
+    const call = { id: 'toolu_1', name: 'add_tasks', input: { tasks: [{ text: 'Milk' }] } };
+    const content = [{ type: 'tool_use', ...call }];
+    const fetchMock = vi.fn().mockResolvedValue(
+      sse(['status', { phase: 'proposing' }], ['tool_use', call], ['done', { stopReason: 'tool_use', model: 'm', content }])
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { result } = renderHook(() => useAI());
+    await act(() => result.current.send({ ...hello, tools: true }));
+    expect(result.current).toMatchObject({ status: 'done', toolCalls: [call], result: { content } });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).tools).toBe(true);
+  });
+
   it('reports a refusal', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(sse(['done', { stopReason: 'refusal', refusal: 'cyber' }])));
     const { result } = renderHook(() => useAI());
