@@ -24,28 +24,31 @@ Then open the address it prints. Everything works without an API key except the 
 
 ## Set up the AI
 
-The AI widgets talk to Claude through a small proxy ([server/aiHandler.js](server/aiHandler.js)) that runs in Node, so your Anthropic API key never reaches the browser.
+The AI widgets talk to Claude through a small proxy ([server/aiHandler.js](server/aiHandler.js)) that runs in Node. You need an Anthropic API key from the [Anthropic Console](https://console.anthropic.com/settings/keys), and there are two ways to give it:
 
-1. Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY` to a key from the [Anthropic Console](https://console.anthropic.com/settings/keys). `.env` is git-ignored.
-2. Run `npm run dev`. The dev server serves the proxy at `/api/ai/*`, on the same address as the page.
+- **In Settings (bring your own key).** Open **Settings → AI assistant** and paste it. It is kept in this browser only, sent to the proxy with each AI request and passed straight to Anthropic; the proxy never stores or logs it. Every request is billed to that key. This is how visitors to a hosted copy use the AI.
+- **In `.env` (on your computer).** Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`. `.env` is git-ignored and the key never reaches the browser.
+
+Then run `npm run dev`. The dev server serves the proxy at `/api/ai/*`, on the same address as the page. A key in Settings takes precedence over the one in `.env`.
 
 - **Model.** Claude Opus 5.5 by default; set `ANTHROPIC_MODEL` to use another. The browser can't choose the model, the token limit or the tools.
 - **What Claude can change.** A fixed set of actions defined on the server ([server/assistantTools.js](server/assistantTools.js)): add tasks, change or complete a task, add an event, tick off a habit, start a focus session, add to notes. Each proposal is checked before it reaches the page, and only your Apply carries it out.
 - **Refusal fallback.** If the model's safety checks wrongly decline a request, it is re-run on Anthropic's recommended fallback model (not for Haiku, which has none).
-- **Who can use it.** On your computer, only pages served from your computer. Hosted, only the site's own pages, and only with its access key (see below).
+- **Who pays.** Whoever's key a request carries. A hosted site only spends its own `ANTHROPIC_API_KEY` for people holding its access key (see below); everyone else uses their own.
+- **Who can use it.** Only the site's own pages (on your computer, pages served from your computer), never other websites.
 
 ## Deploy to Vercel
 
 The app deploys as a static site, with the AI proxy as one Vercel function ([api/ai/[...path].js](api/ai/[...path].js)). [vercel.json](vercel.json) already holds the settings.
 
 1. Push the repository to GitHub, then in Vercel choose **Add New → Project** and import it. Vercel reads the build settings from `vercel.json`.
-2. To use the AI, add these under **Settings → Environment Variables**, then redeploy:
+2. Deploy. That's all the AI needs: each visitor opens **Settings → AI assistant** and enters their own Anthropic API key, so they pay for their own use and you pay nothing.
+3. Optionally, to let yourself (or people you trust) use **your** key without entering it, add these under **Settings → Environment Variables** and redeploy:
    - `ANTHROPIC_API_KEY`: your Anthropic key.
-   - `AI_ACCESS_KEY`: a long random password of your own. The hosted proxy refuses everyone without it, so nobody else can spend your API credit. Without it set, the hosted AI simply stays off.
+   - `AI_ACCESS_KEY`: a long random password. Only someone who enters it in Settings uses your key. Without it, the hosted site never spends your key, even if `ANTHROPIC_API_KEY` is set.
    - `ANTHROPIC_MODEL` (optional).
-3. Open the site, go to **Settings → AI assistant**, and enter the access key. It is kept in that browser only.
 
-Without the API key the hosted dashboard still works; only the AI widgets say they aren't connected.
+Without any key the dashboard still works; only the AI widgets ask for one.
 
 ## Your data
 
@@ -55,7 +58,7 @@ Everything you add is saved in your browser (localStorage), so it stays private 
 - **Import backup** replaces what is in this browser with a backup, after asking.
 - **Clear all data** empties this browser, with Undo.
 
-The AI access key is not part of a backup.
+Your API key and the access key are not part of a backup.
 
 ## Keyboard shortcuts
 
