@@ -14,6 +14,7 @@ import { describeRecurrence } from '../data/tasks';
 //   weekStart: 1 for Monday, 0 for Sunday, for dates such as "next week" in a typed task
 //   focus: the focus timer ({ phase, running, paused }), with actions.focusTimer { toggle, stop }
 //   actions.openReview(): opens the weekly review
+//   aiReady: Claude can answer, so typing offers "Ask Claude" (actions.askClaude(text))
 //   habitsToday: [{ id, name }], the habits due today and not yet done, with
 //     actions.toggleHabitDay(id) to tick one off and actions.addHabit({ name }) for "habit …"
 export function buildCommands({
@@ -27,6 +28,7 @@ export function buildCommands({
   weekStart = 1,
   focus,
   habitsToday = [],
+  aiReady = false,
 }) {
   const commands = [];
   const otherBoards = boards.filter((board) => board.id !== activeBoardId);
@@ -200,6 +202,17 @@ export function buildCommands({
     });
   }
 
+  // Anything typed can go to Claude too. A question comes first; anything else stays a task first.
+  const ask = text && aiReady && actions.askClaude && {
+    id: 'ask-claude',
+    group: 'AI',
+    label: `Ask Claude: “${text}”`,
+    keywords: 'ai assistant question',
+    run: () => actions.askClaude(text),
+    always: true,
+  };
+  if (ask && text.endsWith('?')) commands.push(ask);
+
   if (text) {
     // Quick-add works here too: "Call bank fri !high" is a task due Friday.
     const task = parseQuickAdd(text, { weekStart });
@@ -222,6 +235,7 @@ export function buildCommands({
       always: true,
     });
   }
+  if (ask && !text.endsWith('?')) commands.push(ask);
 
   return commands;
 }
