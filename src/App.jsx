@@ -331,14 +331,9 @@ function App() {
   return (
     <main className="app">
       <header className="app-header">
-        <p className="app-header-index">
+        {/* The index line: the wordmark, the search bar in the centre, today's date. */}
+        <div className="app-header-index">
           <span>Dashboard</span>
-          <time dateTime={today}>
-            {parseISODate(today).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
-          </time>
-        </p>
-        <EditableTitle value={title} onChange={setTitle} />
-        <div className="app-header-actions">
           <button
             type="button"
             className="palette-button"
@@ -360,43 +355,20 @@ function App() {
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
+            <span className="palette-button-text">Search</span>
             <kbd aria-hidden="true">Ctrl K</kbd>
           </button>
+          <time dateTime={today}>
+            {parseISODate(today).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+          </time>
+        </div>
+        <EditableTitle value={title} onChange={setTitle} />
+        <div className="app-header-actions">
           <AddWidgetMenu
             widgets={WIDGET_OPTIONS}
             added={shownWidgetIds}
             onAdd={addWidget}
           />
-          <button
-            type="button"
-            className="icon-button"
-            onClick={toggleTheme}
-            aria-pressed={shownTheme === 'dark'}
-            aria-label={shownTheme === 'dark' ? 'Light mode' : 'Dark mode'}
-            title={shownTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {/* The icon shows the theme you are in: a sun for light, a moon for dark. */}
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              {shownTheme === 'dark' ? (
-                <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
-              ) : (
-                <>
-                  <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-                </>
-              )}
-            </svg>
-          </button>
           <button
             type="button"
             className="icon-button"

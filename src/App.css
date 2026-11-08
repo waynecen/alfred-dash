@@ -6,6 +6,7 @@
   --surface: #e5d5c3; /* Sand: inputs, hover and the selected row */
   --text: #2b2b2b; /* Inkstone */
   --muted: #535251; /* Graphite: labels and metadata (5.4:1 on Bone) */
+  --faint: #5e5c5a; /* hints such as shortcut keys: quieter than Graphite, still 4.6:1 on Bone */
   --border: #2b2b2b; /* the heavy hairline */
   --rule-soft: color-mix(in srgb, var(--text) 28%, var(--bg)); /* rows inside a widget */
   --accent: #2b2b2b; /* no chromatic accent: emphasis is ink */
@@ -29,6 +30,7 @@
   --surface: #2b2926;
   --text: #dbd7d3;
   --muted: #a29d97;
+  --faint: #8a857f; /* 4.6:1 on the dark page */
   --border: #9c968f;
   --accent: #dbd7d3;
   --accent-text: #1d1c1b;
@@ -89,8 +91,9 @@ h4 {
 
 /* The index line: the wordmark on the left, today's date on the right. */
 .app-header-index {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   gap: 1rem;
   grid-column: 1 / -1;
   margin: 0;
@@ -101,6 +104,10 @@ h4 {
   letter-spacing: 0.08em;
   line-height: 2;
   text-transform: uppercase;
+}
+
+.app-header-index time {
+  justify-self: end;
 }
 
 .app-header h1,
@@ -226,13 +233,36 @@ kbd {
   letter-spacing: 0.04em;
 }
 
+/* The search bar: a slim ruled field centred in the index line, set apart from the actions. */
 .palette-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  height: 2.5rem;
-  padding: 0 0.75rem;
+  width: clamp(12rem, 36vw, 26rem);
+  height: 1.75rem;
+  padding: 0 0.5rem;
   color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: none;
+}
+
+.palette-button svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.palette-button-text {
+  flex: 1;
+  text-align: left;
+}
+
+.palette-button kbd {
+  color: var(--faint);
+  font-size: 0.625rem;
 }
 
 /* Phones have no keyboard shortcut to show. */
@@ -343,8 +373,14 @@ textarea:focus-visible,
     justify-content: flex-start;
   }
 
-  .app-header-actions .palette-button {
-    flex: 1;
+  /* Phones: the search bar takes the middle and squeezes the wordmark and date. */
+  .app-header-index {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.5rem;
+  }
+
+  .palette-button {
+    width: 100%;
   }
 }
 
