@@ -447,15 +447,6 @@
   opacity: 0.4;
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
 /* Due date: a label that opens the date picker (DatePicker.css). */
 .due-date-button {
   padding: 0.2rem 0.3rem;
