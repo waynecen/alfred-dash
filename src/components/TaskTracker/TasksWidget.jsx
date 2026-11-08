@@ -3,7 +3,7 @@ import TaskForm from './TaskForm';
 import TaskFilter from './TaskFilter';
 import TaskList from './TaskList';
 import TaskFooter from './TaskFooter';
-import countTasks, { countDue, countTags } from '../../utils/countTasks';
+import countTasks, { countTags } from '../../utils/countTasks';
 import filterTasks from '../../utils/filterTasks';
 import sortTasks from '../../utils/sortTasks';
 import moveTask from '../../utils/moveTask';
@@ -13,7 +13,7 @@ import useSettings from '../../hooks/useSettings';
 import { plural } from '../../utils/text';
 import './TaskTracker.css';
 
-const NO_FILTER = { status: 'all', when: 'any', tag: '', query: '' };
+const NO_FILTER = { status: 'all', tag: '', query: '' };
 
 // The content of the Tasks widget. The card and title come from <Widget>.
 //   onCompleteMany, onUpdateMany, onDeleteMany: the same as their one-task versions, for the
@@ -31,7 +31,7 @@ function TasksWidget({
   onUpdateMany,
   onDeleteMany,
 }) {
-  // Due labels ("Today", "Tomorrow") and the due filters move on at midnight.
+  // Due labels ("Today", "Tomorrow") move on at midnight.
   const today = useToday();
   const [{ weekStart }] = useSettings();
   // The filter and sort are temporary UI state, so plain useState is enough (no need to save them).
@@ -117,7 +117,7 @@ function TasksWidget({
       {/* Counts come from ALL tasks, so they stay the same whichever filter is on. */}
       <TaskFilter
         filter={shownFilter}
-        counts={{ ...countTasks(tasks), ...countDue(tasks, today) }}
+        counts={countTasks(tasks)}
         tags={tags}
         onChange={(patch) => setFilter((current) => ({ ...current, ...patch }))}
       />
