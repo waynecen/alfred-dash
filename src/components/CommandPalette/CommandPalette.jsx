@@ -17,7 +17,7 @@ function CommandPalette({ getCommands, onClose }) {
   const optionId = (index) => `${listId}-option-${index}`;
 
   useFocusTrap(dialogRef);
-  useDismiss(dialogRef, onClose);
+  useDismiss(dialogRef, (reason) => onClose(reason));
 
   const results = matchCommands(getCommands(query), query);
   const current = Math.min(active, results.length - 1);
