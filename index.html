@@ -3,9 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A personal dashboard: tasks, calendar, habits, goals, focus and an AI assistant." />
+    <meta name="theme-color" content="#dbd7d3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1d1c1b" media="(prefers-color-scheme: dark)" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,700&display=swap" />
+    <!-- The font loads without holding up the first paint: the page shows in the fallback font,
+         then swaps (display=swap). Without scripts, the plain link below loads it instead. -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,700&display=swap"
+      onload="this.onload = null; this.rel = 'stylesheet'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,700&display=swap" />
+    </noscript>
     <title>Personal Dashboard</title>
   </head>
   <body>
