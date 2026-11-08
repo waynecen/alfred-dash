@@ -1,17 +1,21 @@
+import { lazy } from 'react';
 import SummaryWidget from '../components/SummaryWidget/SummaryWidget';
 import TasksWidget from '../components/TaskTracker/TasksWidget';
 import NotesWidget from '../components/NotesWidget/NotesWidget';
-import WeatherWidget from '../components/WeatherWidget/WeatherWidget';
-import DailyBriefWidget from '../components/DailyBriefWidget/DailyBriefWidget';
-import TaskAssistantWidget from '../components/TaskAssistantWidget/TaskAssistantWidget';
-import CalendarWidget from '../components/CalendarWidget/CalendarWidget';
-import FocusWidget from '../components/FocusWidget/FocusWidget';
-import ClockWidget from '../components/ClockWidget/ClockWidget';
-import TodayWidget from '../components/TodayWidget/TodayWidget';
-import HabitsWidget from '../components/HabitsWidget/HabitsWidget';
-import GoalsWidget from '../components/GoalsWidget/GoalsWidget';
-import AssistantWidget from '../components/AssistantWidget/AssistantWidget';
 import AIGate from '../components/AIGate/AIGate';
+
+// The widgets that open with a new dashboard (and Notes) load with the page; the rest only when
+// a board shows them, so a dashboard loads only what it uses.
+const WeatherWidget = lazy(() => import('../components/WeatherWidget/WeatherWidget'));
+const DailyBriefWidget = lazy(() => import('../components/DailyBriefWidget/DailyBriefWidget'));
+const TaskAssistantWidget = lazy(() => import('../components/TaskAssistantWidget/TaskAssistantWidget'));
+const CalendarWidget = lazy(() => import('../components/CalendarWidget/CalendarWidget'));
+const FocusWidget = lazy(() => import('../components/FocusWidget/FocusWidget'));
+const ClockWidget = lazy(() => import('../components/ClockWidget/ClockWidget'));
+const TodayWidget = lazy(() => import('../components/TodayWidget/TodayWidget'));
+const HabitsWidget = lazy(() => import('../components/HabitsWidget/HabitsWidget'));
+const GoalsWidget = lazy(() => import('../components/GoalsWidget/GoalsWidget'));
+const AssistantWidget = lazy(() => import('../components/AssistantWidget/AssistantWidget'));
 
 // Every widget the dashboard can show. To add a new one, add an entry here.
 //   title / description: shown on the card and in the Add widget list

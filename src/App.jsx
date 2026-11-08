@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import useToasts from './hooks/useToasts';
 import useTasks from './hooks/useTasks';
@@ -20,7 +20,6 @@ import AddWidgetMenu from './components/AddWidgetMenu/AddWidgetMenu';
 import CommandPalette from './components/CommandPalette/CommandPalette';
 import SettingsDrawer from './components/Settings/SettingsDrawer';
 import ShortcutsDialog from './components/ShortcutsDialog/ShortcutsDialog';
-import WeeklyReview from './components/WeeklyReview/WeeklyReview';
 import ToastRegion from './components/Toast/ToastRegion';
 import WidgetState from './components/WidgetState/WidgetState';
 import { WIDGETS, STARTER_LAYOUTS } from './widgets/registry';
@@ -31,6 +30,9 @@ import { parseISODate, startOfWeek } from './utils/dates';
 import { doneOn, habitsDueOn } from './data/habits';
 import { isReviewed, reviewWeek } from './data/reviews';
 import { formatClock } from './data/focus';
+
+// Loaded only when someone starts a review.
+const WeeklyReview = lazy(() => import('./components/WeeklyReview/WeeklyReview'));
 
 // What the Add widget list needs to know about each widget.
 const WIDGET_OPTIONS = Object.entries(WIDGETS).map(([id, widget]) => ({
@@ -468,22 +470,24 @@ function App() {
         )}
       </div>
       {reviewOpen && (
-        <WeeklyReview
-          tasks={tasks}
-          habits={habits}
-          habitLog={habitLog}
-          sessions={focus.sessions}
-          goals={goals}
-          reviews={reviews}
-          actions={{
-            rescheduleTask: taskActions.rescheduleTask,
-            updateTasks: taskActions.updateTasks,
-            toggleTask: taskActions.toggleTask,
-            notify,
-          }}
-          onSave={saveReview}
-          onClose={() => setReviewOpen(false)}
-        />
+        <Suspense fallback={null}>
+          <WeeklyReview
+            tasks={tasks}
+            habits={habits}
+            habitLog={habitLog}
+            sessions={focus.sessions}
+            goals={goals}
+            reviews={reviews}
+            actions={{
+              rescheduleTask: taskActions.rescheduleTask,
+              updateTasks: taskActions.updateTasks,
+              toggleTask: taskActions.toggleTask,
+              notify,
+            }}
+            onSave={saveReview}
+            onClose={() => setReviewOpen(false)}
+          />
+        </Suspense>
       )}
       {paletteOpen && <CommandPalette getCommands={getCommands} onClose={closePalette} />}
       {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}

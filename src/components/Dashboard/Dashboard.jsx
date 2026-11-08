@@ -1,5 +1,6 @@
-import { useRef } from 'react';
+import { Suspense, useRef } from 'react';
 import Widget from '../Widget/Widget';
+import WidgetState from '../WidgetState/WidgetState';
 import useGridInteraction from '../../hooks/useGridInteraction';
 import { ROW_HEIGHT, layoutFor, toSaved } from '../../utils/gridLayout';
 import './Dashboard.css';
@@ -50,7 +51,10 @@ function Dashboard({ ids, widgets, saved, context, onChange, onRemove, focusRequ
             onStretch={(dw, dh) => grid.stretch(item.id, dw, dh)}
             focusSignal={focusRequest?.id === item.id ? focusRequest.n : undefined}
           >
-            {widget.render(context)}
+            {/* A widget loaded on demand shows this in its own card until it arrives. */}
+            <Suspense fallback={<WidgetState status="loading" message="Loading…" />}>
+              {widget.render(context)}
+            </Suspense>
           </Widget>
         );
       })}
