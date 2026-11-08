@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAI } from '../../hooks/useAI';
 import WidgetState from '../WidgetState/WidgetState';
-import { formatOpenTasks } from '../../utils/buildTaskContext';
+import { formatOpenTasks } from '../../utils/dashboardContext';
 import parseTaskSuggestions from '../../utils/parseTaskSuggestions';
 import './TaskAssistantWidget.css';
 

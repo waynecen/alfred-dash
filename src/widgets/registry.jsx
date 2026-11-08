@@ -122,9 +122,11 @@ export const WIDGETS = {
   brief: {
     title: 'Daily Brief',
     category: 'AI',
-    description: 'A short plan for today from your tasks, notes and weather',
+    description: 'A short plan for today from your tasks, events, habits, notes and weather',
     defaultSize: { w: 4, h: 6 },
-    render: ({ tasks, notes }) => <DailyBriefWidget tasks={tasks} notes={notes} />,
+    render: ({ tasks, notes, events, habits, habitLog }) => (
+      <DailyBriefWidget tasks={tasks} notes={notes} events={events} habits={habits} habitLog={habitLog} />
+    ),
   },
   taskAssistant: {
     title: 'Task Assistant',
