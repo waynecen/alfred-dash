@@ -25,11 +25,11 @@ function SummaryWidget({
     <div className="summary-widget">
       <dl className="summary-stats">
         <div className="summary-stat">
-          <dt>Active</dt>
+          <dt className="label">Active</dt>
           <dd>{active}</dd>
         </div>
         <div className="summary-stat">
-          <dt>Completed</dt>
+          <dt className="label">Completed</dt>
           <dd>{completed}</dd>
         </div>
       </dl>
@@ -74,7 +74,7 @@ function DueFigures({ tasks, today }) {
     <dl className="summary-figures">
       {figures.map((figure) => (
         <div key={figure.label} className="summary-figure" data-urgent={figure.urgent || undefined}>
-          <dt>{figure.label}</dt>
+          <dt className="label">{figure.label}</dt>
           <dd>{figure.value}</dd>
         </div>
       ))}

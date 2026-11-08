@@ -40,7 +40,7 @@ function CompletionChart({
   return (
     <figure className="completion">
       <figcaption className="completion-head">
-        <span className="completion-title">{title}</span>
+        <span className="completion-title label">{title}</span>
         <span className="completion-readout" aria-live="polite">
           {readout}
         </span>

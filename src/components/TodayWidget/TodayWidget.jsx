@@ -97,14 +97,14 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
     <div className="today">
       <header className="today-head">
         <p className="today-date">
-          <span className="today-weekday">{date.toLocaleDateString(undefined, { weekday: 'long' })}</span>
+          <span className="today-weekday label">{date.toLocaleDateString(undefined, { weekday: 'long' })}</span>
           {date.toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}
         </p>
         <p className="today-summary">{summary.length ? summary.join(' · ') : 'Nothing scheduled'}</p>
       </header>
 
       <section className="today-section" aria-labelledby={`${id}-schedule`}>
-        <h4 id={`${id}-schedule`}>Schedule</h4>
+        <h4 className="label" id={`${id}-schedule`}>Schedule</h4>
         {schedule.length ? (
           <ul className="today-list">
             {schedule.map((event) => {
@@ -125,7 +125,7 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
       </section>
 
       <section className="today-section" aria-labelledby={`${id}-due`}>
-        <h4 id={`${id}-due`}>Due</h4>
+        <h4 className="label" id={`${id}-due`}>Due</h4>
         {overdue.length || dueToday.length ? (
           <ul className="today-list">
             {overdue.map((task) => renderTask(task, true))}
@@ -138,7 +138,7 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
 
       {keptHabits.length > 0 && (
         <section className="today-section" aria-labelledby={`${id}-habits`}>
-          <h4 id={`${id}-habits`}>Habits</h4>
+          <h4 className="label" id={`${id}-habits`}>Habits</h4>
           {habitsToday.length ? (
             <ul className="today-list">
               {habitsToday.map((habit) => {
@@ -168,7 +168,7 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
 
       {focus && (
         <section className="today-section today-focus" aria-labelledby={`${id}-focus`}>
-          <h4 id={`${id}-focus`}>Focus</h4>
+          <h4 className="label" id={`${id}-focus`}>Focus</h4>
           <p className="today-focus-line">
             {focus.phase === 'idle' ? (
               <span>

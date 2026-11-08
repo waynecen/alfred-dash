@@ -76,11 +76,6 @@
 
 .goal-meta {
   min-width: 0;
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .goal-meta.is-late {
@@ -137,14 +132,6 @@
 
 .goal-editor-wide {
   grid-column: 1 / -1;
-}
-
-.goal-editor-field label {
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .goal-editor input,

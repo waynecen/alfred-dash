@@ -47,7 +47,7 @@ function AddLine({ label, placeholder, value, onChange, onSubmit, canAdd = value
       </div>
       {children}
       {preview !== undefined && (
-        <p className="add-line-preview" aria-live="polite">
+        <p className="add-line-preview label" aria-live="polite">
           {preview}
         </p>
       )}

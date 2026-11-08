@@ -50,9 +50,4 @@
 .add-line-preview {
   min-height: 1rem;
   margin: 0;
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }

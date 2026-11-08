@@ -22,12 +22,7 @@
 }
 
 .today-weekday {
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
   line-height: 2;
-  text-transform: uppercase;
 }
 
 .today-summary {
@@ -38,11 +33,6 @@
 
 .today-section h4 {
   margin: 0 0 0.25rem;
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .today-empty {

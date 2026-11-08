@@ -82,7 +82,7 @@ function CommandPalette({ getCommands, onClose }) {
               onClick={() => run(command)}
             >
               <span>{command.label}</span>
-              <span className="palette-group">{command.group}</span>
+              <span className="palette-group label">{command.group}</span>
             </li>
           ))}
         </ul>

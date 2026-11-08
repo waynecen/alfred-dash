@@ -45,7 +45,7 @@ function TaskForm({ onAdd }) {
     <form className="task-form" onSubmit={handleSubmit}>
       <div className="task-form-row">
         <div className="task-form-field task-form-text">
-          <label htmlFor="new-task">New task</label>
+          <label htmlFor="new-task" className="label">New task</label>
           <input
             id="new-task"
             type="text"
@@ -56,7 +56,7 @@ function TaskForm({ onAdd }) {
           />
         </div>
         <div className="task-form-field">
-          <label htmlFor="new-task-priority">Priority</label>
+          <label htmlFor="new-task-priority" className="label">Priority</label>
           <select
             id="new-task-priority"
             value={priority}

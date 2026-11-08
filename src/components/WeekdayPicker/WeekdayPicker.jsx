@@ -29,7 +29,7 @@ function WeekdayPicker({ value = DAILY, onChange, weekStart = 1, label = 'Days i
           </button>
         ))}
       </div>
-      <span className="weekday-picker-summary" aria-live="polite">
+      <span className="weekday-picker-summary label" aria-live="polite">
         {describeSchedule(value, weekStart)}
       </span>
     </div>

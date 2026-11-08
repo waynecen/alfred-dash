@@ -56,7 +56,7 @@ function HabitHeatmap({ habits, log, today, weekStart }) {
   return (
     <figure className="habit-heatmap">
       <figcaption className="habit-heatmap-head">
-        <span className="habit-heatmap-title">Last {WEEKS} weeks</span>
+        <span className="habit-heatmap-title label">Last {WEEKS} weeks</span>
         <span className="habit-heatmap-readout" aria-live="polite">
           {readout}
         </span>

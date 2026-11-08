@@ -65,7 +65,7 @@ function Figure({ value, label }) {
   return (
     <p className="review-figure">
       <strong>{value}</strong>
-      <span>{label}</span>
+      <span className="label">{label}</span>
     </p>
   );
 }
@@ -182,7 +182,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
           {done.slice(0, SHOWN_DONE).map((task) => (
             <li key={task.id} className="review-row">
               <span className="review-row-title">{task.text}</span>
-              <span className="review-row-meta">{formatDay(toISODate(task.completedAt), { weekday: 'short' })}</span>
+              <span className="review-row-meta label">{formatDay(toISODate(task.completedAt), { weekday: 'short' })}</span>
             </li>
           ))}
         </ul>
@@ -210,7 +210,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
             {late.map((task) => (
               <li key={task.id} className="review-row">
                 <span className="review-row-title">{task.text}</span>
-                <span className="review-row-meta">{relativeDay(task.dueDate, parseISODate(today))}</span>
+                <span className="review-row-meta label">{relativeDay(task.dueDate, parseISODate(today))}</span>
                 <span className="review-row-actions">
                   <button type="button" onClick={() => moveOn(task, () => actions.rescheduleTask(task.id, tomorrow))} aria-label={`Move to tomorrow: ${task.text}`}>
                     Tomorrow
@@ -242,7 +242,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
           {habitRows.map(({ habit, due, done: hit, streak }) => (
             <li key={habit.id} className="review-row review-row-bar">
               <span className="review-row-title">{habit.name}</span>
-              <span className="review-row-meta">
+              <span className="review-row-meta label">
                 {hit} of {due} · {plural(streak, 'day')} in a row
               </span>
               <ProgressBar value={hit} max={Math.max(due, 1)} label={habit.name} valueText={`${hit} of ${due} days`} className="review-row-progress" />
@@ -286,7 +286,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
           {goalRows.map(({ goal, progress, reached, figure }) => (
             <li key={goal.id} className="review-row review-row-bar">
               <span className="review-row-title">{goal.title}</span>
-              <span className="review-row-meta">
+              <span className="review-row-meta label">
                 {reached ? 'Reached · ' : ''}
                 {figure}
                 {goal.dueDate && !reached ? ` · by ${formatDay(goal.dueDate, { day: 'numeric', month: 'short' })}` : ''}
@@ -303,7 +303,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
     // Reflect
     <>
       <div className="review-notes">
-        <label htmlFor={notesId}>Notes for the week</label>
+        <label htmlFor={notesId} className="label">Notes for the week</label>
         <textarea
           id={notesId}
           rows={5}
@@ -385,7 +385,7 @@ function WeeklyReview({ tasks, habits, habitLog, sessions, goals, reviews, actio
               Save review
             </button>
           )}
-          <span className="review-count">
+          <span className="review-count label">
             {step + 1} of {STEPS.length}
           </span>
         </footer>

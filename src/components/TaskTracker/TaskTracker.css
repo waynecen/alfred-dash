@@ -7,11 +7,6 @@
 .task-form label {
   display: block;
   margin-bottom: 0.25rem;
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 /* align-items: flex-end lines the controls up on one baseline under their labels.
@@ -565,11 +560,6 @@
 .task-details-field > label,
 .task-details-field > legend {
   padding: 0;
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 /* A legend ignores the fieldset's gap, so it brings its own. */
@@ -743,11 +733,6 @@
 
 .task-bulk-label {
   margin-right: 0.5rem;
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 /* Red only when about to act, as with the row's delete button. */

@@ -29,7 +29,7 @@ function TaskFooter({ selectedIds, completedIds, today, weekStart = 1, onComplet
             Complete
           </button>
           <span className="task-bulk-group" role="group" aria-label="Set due date">
-            <span className="task-bulk-label" aria-hidden="true">
+            <span className="task-bulk-label label" aria-hidden="true">
               Due
             </span>
             {dueChoices.map((choice) => (

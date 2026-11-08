@@ -69,7 +69,9 @@ function FocusWidget({ focus, actions, tasks }) {
       </div>
 
       <div className="focus-field">
-        <label htmlFor={`${id}-task`}>Working on</label>
+        <label htmlFor={`${id}-task`} className="label">
+          Working on
+        </label>
         <select
           id={`${id}-task`}
           value={task ? String(task.id) : ''}
@@ -85,7 +87,7 @@ function FocusWidget({ focus, actions, tasks }) {
       </div>
 
       <details className="focus-lengths">
-        <summary>Lengths</summary>
+        <summary className="label">Lengths</summary>
         <div className="focus-lengths-grid">
           {LENGTH_FIELDS.map((field) => (
             <label key={field.key} className="focus-length">

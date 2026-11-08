@@ -226,7 +226,7 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
           <li key={date} className="calendar-week-day" data-drop={dropDate === date || undefined} {...dayDropProps(date)}>
             <div className="calendar-week-head">
               {renderDayCell(date, { inGrid: false })}
-              <span className="calendar-week-name" aria-hidden="true">
+              <span className="calendar-week-name label" aria-hidden="true">
                 {formatDay(date, { weekday: 'short' })}
               </span>
             </div>
@@ -283,7 +283,7 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
       {view === 'month' ? renderMonth() : renderWeek()}
 
       <section className="calendar-agenda" aria-labelledby={`${inputId}-day`}>
-        <h4 id={`${inputId}-day`} className="calendar-agenda-heading">
+        <h4 id={`${inputId}-day`} className="calendar-agenda-heading label">
           {agendaHeading}
         </h4>
         {view === 'month' && renderItems(selected)}

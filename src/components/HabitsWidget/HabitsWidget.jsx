@@ -125,7 +125,7 @@ function HabitRow({ habit, done, days, today, weekStart, actions }) {
         <button ref={editButton} type="button" className="habit-name-button" onClick={() => setEditing(true)} title="Edit habit">
           {habit.name}
         </button>
-        {habit.schedule !== DAILY && <span className="habit-schedule">{describeSchedule(habit.schedule, weekStart)}</span>}
+        {habit.schedule !== DAILY && <span className="habit-schedule label">{describeSchedule(habit.schedule, weekStart)}</span>}
       </th>
       {days.map((day, index) => {
         const isDone = done.includes(day);
@@ -212,7 +212,7 @@ function ArchivedHabits({ habits, actions }) {
   const id = useId();
   return (
     <div className="habits-archived">
-      <button type="button" className="habits-archived-toggle" aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => setOpen(!open)}>
+      <button type="button" className="habits-archived-toggle label" aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => setOpen(!open)}>
         Archived ({habits.length})
       </button>
       {open && (

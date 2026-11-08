@@ -109,7 +109,7 @@ function AddWidgetMenu({ widgets, added, onAdd }) {
           {grouped
             ? categories.map((category) => (
                 <li key={category} className="add-widget-group">
-                  <span className="add-widget-heading" id={`${listId}-${category}`}>
+                  <span className="add-widget-heading label" id={`${listId}-${category}`}>
                     {category}
                   </span>
                   <ul aria-labelledby={`${listId}-${category}`}>

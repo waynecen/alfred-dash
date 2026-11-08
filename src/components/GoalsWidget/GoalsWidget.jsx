@@ -115,7 +115,7 @@ function GoalItem({ goal, progress, reached, today, actions }) {
       <ProgressBar value={progress.done} max={Math.max(progress.total, 1)} label={goal.title} valueText={figure} />
       {(meta.length > 0 || goal.kind === 'count') && (
         <div className="goal-foot">
-          <span className={late ? 'goal-meta is-late' : 'goal-meta'}>{meta.join(' · ')}</span>
+          <span className={late ? 'goal-meta label is-late' : 'goal-meta label'}>{meta.join(' · ')}</span>
           {goal.kind === 'count' && (
             <span className="goal-stepper">
               <button
@@ -173,32 +173,32 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
       }
     >
       <div className="goal-editor-field goal-editor-wide">
-        <label htmlFor={field('title')}>Goal</label>
+        <label className="label" htmlFor={field('title')}>Goal</label>
         <input id={field('title')} type="text" value={title} onChange={(event) => setTitle(event.target.value)} autoFocus autoComplete="off" />
       </div>
       {goal.kind === 'count' ? (
         <>
           <div className="goal-editor-field">
-            <label htmlFor={field('progress')}>Done</label>
+            <label className="label" htmlFor={field('progress')}>Done</label>
             <input id={field('progress')} type="number" min={0} step="any" value={progress} onChange={(event) => setProgress(event.target.value)} />
           </div>
           <div className="goal-editor-field">
-            <label htmlFor={field('target')}>Of</label>
+            <label className="label" htmlFor={field('target')}>Of</label>
             <input id={field('target')} type="number" min={1} step="any" value={target} onChange={(event) => setTarget(event.target.value)} />
           </div>
           <div className="goal-editor-field">
-            <label htmlFor={field('unit')}>Unit</label>
+            <label className="label" htmlFor={field('unit')}>Unit</label>
             <input id={field('unit')} type="text" value={unit} onChange={(event) => setUnit(event.target.value)} placeholder="books" autoComplete="off" />
           </div>
         </>
       ) : (
         <div className="goal-editor-field">
-          <label htmlFor={field('tag')}>Tasks tagged</label>
+          <label className="label" htmlFor={field('tag')}>Tasks tagged</label>
           <input id={field('tag')} type="text" value={tag} onChange={(event) => setTag(event.target.value)} autoComplete="off" />
         </div>
       )}
       <div className="goal-editor-field">
-        <label htmlFor={field('due')}>By</label>
+        <label className="label" htmlFor={field('due')}>By</label>
         <DatePicker
           value={dueDate}
           today={today}
