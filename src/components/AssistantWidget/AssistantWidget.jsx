@@ -80,9 +80,10 @@ function AssistantWidget({ data, actions, notify, request, onRequestHandled }) {
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
       send();
-    } else if (event.key === 'Escape' && ai.busy) {
+    } else if (event.key === 'Escape' && (ai.busy || draft)) {
       event.stopPropagation();
-      ai.stop();
+      if (ai.busy) ai.stop();
+      else setDraft('');
     }
   }
 

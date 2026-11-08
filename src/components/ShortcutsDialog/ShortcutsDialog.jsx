@@ -23,6 +23,8 @@ const IN_PLACE = [
   { keys: ['↑', '↓'], label: 'Move a task’s due date a day (on its date)' },
   { keys: ['←', '→'], label: 'Switch board (on the board tabs)' },
   { keys: ['F2'], label: 'Rename the board (on its tab)' },
+  { keys: ['Enter'], label: 'Send a message (in the Assistant); Shift+Enter starts a new line' },
+  { keys: ['Esc'], label: 'Stop Claude’s reply, or clear what you typed (in the Assistant)' },
 ];
 
 function ShortcutList({ items }) {
