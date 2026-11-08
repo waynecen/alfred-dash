@@ -13,7 +13,7 @@ describe('FocusWidget', () => {
     render(<FocusWidget focus={ready} actions={actions()} tasks={tasks} />);
     expect(screen.getByRole('timer', { name: 'Ready: 25 minutes left' })).toHaveTextContent('25:00');
     expect(screen.getByRole('img', { name: '1 of 4 sessions before a long break' })).toBeInTheDocument();
-    expect(screen.getByText('min focused today').previousSibling).toHaveTextContent('50');
+    expect(screen.getByText('min focused today')).toHaveTextContent('50 min focused today');
   });
 
   it('starts, and links the session to a task', async () => {
