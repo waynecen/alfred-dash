@@ -4,13 +4,6 @@ const STATUSES = [
   { value: 'completed', label: 'Completed' },
 ];
 
-// By due date. Pressing the chosen one again goes back to any date.
-const DUE = [
-  { value: 'overdue', label: 'Overdue' },
-  { value: 'today', label: 'Today' },
-  { value: 'upcoming', label: 'Upcoming' },
-];
-
 // One row of ruled buttons; the chosen one is filled with ink.
 function FilterGroup({ label, items, value, counts, onPick }) {
   return (
@@ -33,10 +26,10 @@ function FilterGroup({ label, items, value, counts, onPick }) {
 }
 
 // The controls above the task table.
-//   filter: { status, when, tag, query } (see utils/filterTasks.js)
-//   counts: { active, completed, overdue, today, upcoming }; "All" has no count
+//   filter: { status, tag, query } (see utils/filterTasks.js)
+//   counts: { active, completed }; "All" has no count
 //   tags: [{ tag, count }], every tag in use
-//   onChange: called with the parts that changed, e.g. { when: 'today' }
+//   onChange: called with the parts that changed, e.g. { status: 'active' }
 function TaskFilter({ filter, counts, tags = [], onChange }) {
   return (
     <div className="task-filters">
@@ -46,13 +39,6 @@ function TaskFilter({ filter, counts, tags = [], onChange }) {
         value={filter.status}
         counts={counts}
         onPick={(status) => onChange({ status })}
-      />
-      <FilterGroup
-        label="Filter by due date"
-        items={DUE}
-        value={filter.when}
-        counts={counts}
-        onPick={(when) => onChange({ when: when === filter.when ? 'any' : when })}
       />
       <div className="task-filter-find">
         {tags.length > 0 && (
