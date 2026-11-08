@@ -9,16 +9,17 @@ import {
   storageUsed,
   formatBytes,
 } from '../../data/backup';
+import { plural } from '../../utils/text';
 
 // What a backup holds, in a few words: "12 tasks, notes, 2 boards".
 function describe(data) {
   const parts = [];
-  if (Array.isArray(data.tasks)) parts.push(`${data.tasks.length} task${data.tasks.length === 1 ? '' : 's'}`);
+  if (Array.isArray(data.tasks)) parts.push(plural(data.tasks.length, 'task'));
   if (Array.isArray(data.events) && data.events.length > 0) {
-    parts.push(`${data.events.length} event${data.events.length === 1 ? '' : 's'}`);
+    parts.push(plural(data.events.length, 'event'));
   }
   if (data.notes) parts.push('notes');
-  if (Array.isArray(data.boards)) parts.push(`${data.boards.length} board${data.boards.length === 1 ? '' : 's'}`);
+  if (Array.isArray(data.boards)) parts.push(plural(data.boards.length, 'board'));
   return parts.length > 0 ? parts.join(', ') : 'no tasks or notes';
 }
 

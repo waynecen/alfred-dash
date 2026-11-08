@@ -1,4 +1,4 @@
-import { toISODate, parseISODate, addDays, addMonths, startOfWeek, isISODate } from './dates';
+import { toISODate, parseISODate, addDays, addMonths, startOfWeek, startOfNextWeek, isISODate } from './dates';
 
 // Reads the extras people type after a task, so one line can say everything:
 //   "Pay rent tomorrow !high #home every month"
@@ -97,7 +97,7 @@ const DATE_RULES = [
   [/\b(?:today|tonight)\b/, (m, t) => t],
   [/\b(?:tomorrow|tmrw?)\b/, (m, t) => addDays(t, 1)],
   [new RegExp(`\\bnext\\s+${WEEKDAY}\\b`), (m, t, ws) => addDays(startOfWeek(t, ws), 7 + ((weekdayIndex(m[1]) - ws + 7) % 7))],
-  [/\bnext\s+week\b/, (m, t, ws) => addDays(startOfWeek(t, ws), 7)],
+  [/\bnext\s+week\b/, (m, t, ws) => startOfNextWeek(t, ws)],
   [/\bnext\s+month\b/, (m, t) => `${addMonths(t, 1).slice(0, 8)}01`],
   [new RegExp(`\\bin\\s+(\\d{1,3})\\s+${UNIT}\\b`), (m, t) => inUnits(t, Number(m[1]), m[2])],
   [/\b(\d{4}-\d{2}-\d{2})\b/, (m) => (isISODate(m[1]) ? m[1] : null)],

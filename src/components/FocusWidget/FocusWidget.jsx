@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { formatClock } from '../../data/focus';
+import { plural } from '../../utils/text';
 import './FocusWidget.css';
 
 const LENGTH_FIELDS = [
@@ -14,7 +15,7 @@ function spoken(ms) {
   const total = Math.ceil(ms / 1000);
   const m = Math.floor(total / 60);
   const s = total % 60;
-  return [m && `${m} minute${m === 1 ? '' : 's'}`, s && `${s} second${s === 1 ? '' : 's'}`].filter(Boolean).join(' ') || '0 seconds';
+  return [m && plural(m, 'minute'), s && plural(s, 'second')].filter(Boolean).join(' ') || '0 seconds';
 }
 
 // The Focus widget: a big countdown set in the display size, what phase it is, and the controls.

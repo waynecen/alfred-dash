@@ -1,4 +1,4 @@
-import { addDays, startOfWeek } from '../../utils/dates';
+import { addDays, startOfNextWeek } from '../../utils/dates';
 
 // Under the table. With nothing selected: Clear completed, and how to select. With tasks
 // selected: what can be done to all of them at once. Every action offers Undo in its toast.
@@ -7,12 +7,10 @@ import { addDays, startOfWeek } from '../../utils/dates';
 //   today: 'YYYY-MM-DD'    weekStart: 1 for Monday, 0 for Sunday, for "Next week"
 function TaskFooter({ selectedIds, completedIds, today, weekStart = 1, onComplete, onSetDue, onDelete, onClearCompleted, onClearSelection }) {
   const count = selectedIds.length;
-  // The first day of next week.
-  const nextWeek = addDays(startOfWeek(today, weekStart), 7);
   const dueChoices = [
     { label: 'Today', value: today },
     { label: 'Tomorrow', value: addDays(today, 1) },
-    { label: 'Next week', value: nextWeek },
+    { label: 'Next week', value: startOfNextWeek(today, weekStart) },
     { label: 'No date', value: null },
   ];
 

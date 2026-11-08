@@ -4,7 +4,8 @@ import useSettings from '../../hooks/useSettings';
 import { hourCycle } from '../../data/settings';
 import { describeEventTime, eventsOn } from '../../data/events';
 import { TASK_DRAG_TYPE } from '../../data/tasks';
-import { addDays, addMonths, parseISODate, relativeDay, startOfWeek } from '../../utils/dates';
+import { addDays, addMonths, formatDay, parseISODate, relativeDay, startOfWeek } from '../../utils/dates';
+import { plural } from '../../utils/text';
 import { firstOfMonth, monthWeeks, stepFor } from '../../utils/monthGrid';
 import parseQuickAdd from '../../utils/parseQuickAdd';
 import './CalendarWidget.css';
@@ -12,8 +13,6 @@ import './CalendarWidget.css';
 // What a task being dragged from the Tasks widget carries, so a day can take it.
 export { TASK_DRAG_TYPE };
 
-const label = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
-const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 // A month (or a week) of local events, with the tasks due on each day beside them. Pick a day to
 // see and add to it; drop a task from the Tasks widget on a day to make it due then.
@@ -51,7 +50,7 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
   const openDueCount = (date) => dueOn(date).filter((task) => !task.completed).length;
 
   function describeDay(date) {
-    const parts = [label(date, { weekday: 'long', day: 'numeric', month: 'long' })];
+    const parts = [formatDay(date, { weekday: 'long', day: 'numeric', month: 'long' })];
     if (date === today) parts.push('today');
     const nEvents = eventsOn(events, date).length;
     const nTasks = openDueCount(date);
@@ -149,13 +148,13 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
       <div
         className="calendar-grid"
         role="grid"
-        aria-label={label(month, { month: 'long', year: 'numeric' })}
+        aria-label={formatDay(month, { month: 'long', year: 'numeric' })}
         onKeyDown={handleGridKey}
       >
         <div role="row" className="calendar-row calendar-weekdays">
           {weekdays.map((date) => (
-            <span key={date} role="columnheader" className="calendar-weekday" aria-label={label(date, { weekday: 'long' })}>
-              {label(date, { weekday: 'narrow' })}
+            <span key={date} role="columnheader" className="calendar-weekday" aria-label={formatDay(date, { weekday: 'long' })}>
+              {formatDay(date, { weekday: 'narrow' })}
             </span>
           ))}
         </div>
@@ -220,7 +219,7 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
     return (
       <ol
         className="calendar-week"
-        aria-label={`Week of ${label(start, { day: 'numeric', month: 'long' })}`}
+        aria-label={`Week of ${formatDay(start, { day: 'numeric', month: 'long' })}`}
         onKeyDown={handleGridKey}
       >
         {days.map((date) => (
@@ -229,7 +228,7 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
             <div className="calendar-week-head">
               {renderDayCell(date, { inGrid: false })}
               <span className="calendar-week-name" aria-hidden="true">
-                {label(date, { weekday: 'short' })}
+                {formatDay(date, { weekday: 'short' })}
               </span>
             </div>
             {renderItems(date, { compact: true })}
@@ -245,11 +244,11 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
   };
   const heading =
     view === 'week'
-      ? `${label(startOfWeek(selected, weekStart), { day: 'numeric', month: 'short' })} – ${label(addDays(startOfWeek(selected, weekStart), 6), { day: 'numeric', month: 'short', year: 'numeric' })}`
-      : label(month, { month: 'long', year: 'numeric' });
+      ? `${formatDay(startOfWeek(selected, weekStart), { day: 'numeric', month: 'short' })} – ${formatDay(addDays(startOfWeek(selected, weekStart), 6), { day: 'numeric', month: 'short', year: 'numeric' })}`
+      : formatDay(month, { month: 'long', year: 'numeric' });
   // "Today · Sat 7 Nov", or just "Fri 20 Nov" for any other day.
   const near = relativeDay(selected, parseISODate(today));
-  const full = label(selected, { weekday: 'short', day: 'numeric', month: 'short' });
+  const full = formatDay(selected, { weekday: 'short', day: 'numeric', month: 'short' });
   const agendaHeading = ['Today', 'Tomorrow', 'Yesterday'].includes(near) ? `${near} · ${full}` : full;
 
   return (

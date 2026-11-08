@@ -10,6 +10,7 @@ import moveTask from '../../utils/moveTask';
 import groupTasks, { countSteps } from '../../utils/groupTasks';
 import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
+import { plural } from '../../utils/text';
 import './TaskTracker.css';
 
 const NO_FILTER = { status: 'all', when: 'any', tag: '', query: '' };
@@ -152,7 +153,7 @@ function TasksWidget({
           onComplete={bulk(onCompleteMany)}
           onSetDue={bulk((ids, dueDate) => onUpdateMany(ids, { dueDate }))}
           onDelete={bulk(onDeleteMany)}
-          onClearCompleted={(ids) => onDeleteMany(ids, `${ids.length} completed task${ids.length === 1 ? '' : 's'}`)}
+          onClearCompleted={(ids) => onDeleteMany(ids, plural(ids.length, 'completed task'))}
           onClearSelection={clearSelection}
         />
       )}

@@ -39,6 +39,10 @@ export function addMonths(iso, n) {
   return toISODate(target);
 }
 
+// A day written out in the user's language: formatDay('2026-11-13', { weekday: 'short' }) is
+// 'Fri'. options are toLocaleDateString's.
+export const formatDay = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
+
 // Whole days from a to b: daysBetween('2026-11-07', '2026-11-10') is 3.
 export function daysBetween(a, b) {
   // Noon avoids an hour lost or gained to daylight saving rounding the wrong way.
@@ -56,6 +60,9 @@ export function startOfWeek(iso, weekStart = 1) {
   const day = parseISODate(iso).getDay(); // 0 is Sunday
   return addDays(iso, -((day - weekStart + 7) % 7));
 }
+
+// The first day of the week after the one that holds iso: what "next week" means.
+export const startOfNextWeek = (iso, weekStart = 1) => addDays(startOfWeek(iso, weekStart), 7);
 
 // A short, human label for a day, as seen from now:
 // 'Today', 'Tomorrow', 'Yesterday', a weekday within the next week ('Fri'), otherwise a date

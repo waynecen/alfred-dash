@@ -8,6 +8,7 @@ import { isScheduled } from '../../data/habits';
 import { habitStreaks } from '../../utils/streaks';
 import { parseISODate, relativeDay, toISODate } from '../../utils/dates';
 import parseQuickAdd from '../../utils/parseQuickAdd';
+import { plural } from '../../utils/text';
 import './TodayWidget.css';
 
 // The clock time now, as 'HH:MM', updated each minute, to tell past events from coming ones.
@@ -72,10 +73,10 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
 
   const date = parseISODate(today);
   const summary = [
-    schedule.length ? `${schedule.length} event${schedule.length === 1 ? '' : 's'}` : null,
+    schedule.length ? plural(schedule.length, 'event') : null,
     openToday ? `${openToday} due` : null,
     overdue.length ? `${overdue.length} overdue` : null,
-    habitsLeft ? `${habitsLeft} habit${habitsLeft === 1 ? '' : 's'} to go` : null,
+    habitsLeft ? `${plural(habitsLeft, 'habit')} to go` : null,
   ].filter(Boolean);
 
   const renderTask = (task, late) => (

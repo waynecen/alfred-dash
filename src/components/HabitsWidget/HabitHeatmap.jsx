@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { addDays, parseISODate, startOfWeek } from '../../utils/dates';
+import { addDays, formatDay, startOfWeek } from '../../utils/dates';
 import { dayTally } from '../../utils/streaks';
 import { weekOrder, weekdayName } from '../../data/habits';
 
 const WEEKS = 12;
 const LEVELS = [0, 1, 2, 3, 4];
-const dayLabel = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
 
 // How full a day was, for its shade: null when nothing was due, 0 when nothing due was done, then
 // 1 to 4 in quarters up to everything done.
@@ -38,7 +37,7 @@ function HabitHeatmap({ habits, log, today, weekStart }) {
   let readout = all.due ? `${Math.round((all.done / all.due) * 100)}% done in ${WEEKS} weeks` : 'Nothing due yet';
   if (active) {
     const tally = tallies.get(active);
-    const when = dayLabel(active, { weekday: 'short', day: 'numeric', month: 'short' });
+    const when = formatDay(active, { weekday: 'short', day: 'numeric', month: 'short' });
     readout = `${when} · ${tally.due ? `${tally.done} of ${tally.due} done` : 'nothing due'}`;
   }
 
@@ -79,7 +78,7 @@ function HabitHeatmap({ habits, log, today, weekStart }) {
           const starts = w === 0 || month !== weeks[w - 1][0].slice(5, 7);
           return (
             <span key={week[0]} className="habit-heatmap-month" aria-hidden="true">
-              {starts ? dayLabel(week[0], { month: 'short' }) : ''}
+              {starts ? formatDay(week[0], { month: 'short' }) : ''}
             </span>
           );
         })}
@@ -118,7 +117,7 @@ function HabitHeatmap({ habits, log, today, weekStart }) {
             const total = sum(week);
             return (
               <tr key={week[0]}>
-                <th scope="row">Week of {dayLabel(week[0], { day: 'numeric', month: 'long' })}</th>
+                <th scope="row">Week of {formatDay(week[0], { day: 'numeric', month: 'long' })}</th>
                 <td>{total.due ? `${total.done} of ${total.due} done` : 'Nothing due'}</td>
               </tr>
             );

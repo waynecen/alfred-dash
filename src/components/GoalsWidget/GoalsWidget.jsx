@@ -6,21 +6,22 @@ import ProgressBar from '../ProgressBar/ProgressBar';
 import WidgetState from '../WidgetState/WidgetState';
 import { describeProgress, goalProgress, isReached, parseGoal } from '../../data/goals';
 import { parseTags } from '../../data/tasks';
-import { daysBetween, parseISODate } from '../../utils/dates';
+import { daysBetween, formatDay, parseISODate } from '../../utils/dates';
+import { plural } from '../../utils/text';
 import './GoalsWidget.css';
 
-const dayLabel = (iso, options = { day: 'numeric', month: 'short' }) => parseISODate(iso).toLocaleDateString(undefined, options);
+const SHORT_DATE = { day: 'numeric', month: 'short' };
 
 // When a goal is due, and how long is left: 'By 31 Dec · 54 days left', 'By 6 Nov · 1 day late'.
 // A goal already reached just keeps its date.
 function describeDue(dueDate, today, reached) {
   if (!dueDate) return null;
-  const by = `By ${dayLabel(dueDate)}`;
+  const by = `By ${formatDay(dueDate, SHORT_DATE)}`;
   if (reached) return by;
   const left = daysBetween(today, dueDate);
-  if (left > 0) return `${by} · ${left} day${left === 1 ? '' : 's'} left`;
+  if (left > 0) return `${by} · ${plural(left, 'day')} left`;
   if (left === 0) return `${by} · due today`;
-  return `${by} · ${-left} day${left === -1 ? '' : 's'} late`;
+  return `${by} · ${plural(-left, 'day')} late`;
 }
 
 // The goals, each with how far it has come as a figure and a bar, the ones still to reach first
@@ -48,7 +49,7 @@ function GoalsWidget({ goals, tasks, actions }) {
       {rows.length ? (
         <>
           <p className="goals-summary">
-            {rows.length} goal{rows.length === 1 ? '' : 's'} · {reached} reached
+            {plural(rows.length, 'goal')} · {reached} reached
           </p>
           <ul className="goals-list">
             {rows.map((row) => (
@@ -207,7 +208,7 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
           title={`Date to reach “${goal.title}” by`}
           buttonProps={{ id: field('due'), className: 'goal-editor-date' }}
         >
-          {dueDate ? dayLabel(dueDate, { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date'}
+          {dueDate ? formatDay(dueDate, { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date'}
         </DatePicker>
       </div>
       <div className="goal-editor-actions">
@@ -243,7 +244,7 @@ function AddGoal({ onAdd, today, weekStart }) {
   let preview = '';
   if (parsed?.title) {
     preview = parsed.kind === 'tasks' ? `Tasks tagged #${parsed.tag}` : `Count to ${parsed.target}${parsed.unit ? ` ${parsed.unit}` : ''}`;
-    if (parsed.dueDate) preview += ` · by ${dayLabel(parsed.dueDate)}`;
+    if (parsed.dueDate) preview += ` · by ${formatDay(parsed.dueDate, SHORT_DATE)}`;
   }
 
   return (

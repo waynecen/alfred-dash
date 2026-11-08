@@ -2,6 +2,8 @@ import useLocalStorage from './useLocalStorage';
 import { createTask, describeNext, nextTaskFields } from '../data/tasks';
 import insertAt from '../utils/insertAt';
 import { toISODate } from '../utils/dates';
+import { plural } from '../utils/text';
+import nextId from '../utils/nextId';
 
 // The task list, saved in the browser, and everything that changes it. Every change is a
 // functional update, so changes made in the same moment (by a widget, the AI, a timer) never
@@ -20,8 +22,8 @@ function useTasks(notify) {
     const now = Date.now();
     setTasks((current) => {
       // Ids are timestamps; step past any already taken so a batch never repeats one.
-      let nextId = Math.max(now, ...current.map((task) => task.id + 1));
-      return [...current, ...items.map((item) => createTask(item, nextId++, now))];
+      let id = nextId(current, now);
+      return [...current, ...items.map((item) => createTask(item, id++, now))];
     });
   }
 
@@ -43,7 +45,7 @@ function useTasks(notify) {
     setTasks((current) => {
       added = [];
       ticked = [];
-      let nextId = Math.max(now, ...current.map((t) => t.id + 1));
+      let id = nextId(current, now);
       const list = [];
       for (const task of current) {
         if (!wanted.has(task.id) || task.completed) {
@@ -53,7 +55,7 @@ function useTasks(notify) {
         ticked.push(task.id);
         list.push({ ...task, completed: true, completedAt: now });
         if (task.recurrence) {
-          const next = createTask(nextTaskFields(task, today), nextId++, now);
+          const next = createTask(nextTaskFields(task, today), id++, now);
           added.push({ id: next.id, dueDate: next.dueDate });
           list.push(next);
         }
@@ -191,7 +193,5 @@ function useTasks(notify) {
     },
   };
 }
-
-const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 export default useTasks;

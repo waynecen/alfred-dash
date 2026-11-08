@@ -6,10 +6,8 @@ import WidgetState from '../WidgetState/WidgetState';
 import HabitHeatmap from './HabitHeatmap';
 import { DAILY, describeSchedule, isScheduled } from '../../data/habits';
 import { dayTally, habitStreaks } from '../../utils/streaks';
-import { addDays, parseISODate, toISODate } from '../../utils/dates';
+import { addDays, formatDay, toISODate } from '../../utils/dates';
 import './HabitsWidget.css';
-
-const dayLabel = (iso, options) => parseISODate(iso).toLocaleDateString(undefined, options);
 
 // The habits, each with the last seven days to tick off and its streak, then a line to add one.
 // On a wide widget the last twelve weeks show under them as a heatmap.
@@ -43,9 +41,9 @@ function HabitsWidget({ habits, log, actions }) {
                     key={day}
                     scope="col"
                     className={day === today ? 'habits-col-day is-today' : 'habits-col-day'}
-                    aria-label={day === today ? 'Today' : dayLabel(day, { weekday: 'long', day: 'numeric', month: 'long' })}
+                    aria-label={day === today ? 'Today' : formatDay(day, { weekday: 'long', day: 'numeric', month: 'long' })}
                   >
-                    {dayLabel(day, { weekday: 'narrow' })}
+                    {formatDay(day, { weekday: 'narrow' })}
                   </th>
                 ))}
                 <th scope="col" className="habits-col-streak">
@@ -143,7 +141,7 @@ function HabitRow({ habit, done, days, today, weekStart, actions }) {
               type="button"
               className={`habit-check ${state}`}
               aria-pressed={isDone}
-              aria-label={`${habit.name}, ${day === today ? 'today' : dayLabel(day, { weekday: 'long', day: 'numeric', month: 'long' })}${due ? '' : ', not due'}`}
+              aria-label={`${habit.name}, ${day === today ? 'today' : formatDay(day, { weekday: 'long', day: 'numeric', month: 'long' })}${due ? '' : ', not due'}`}
               tabIndex={day === today ? 0 : -1}
               onClick={() => actions.toggleHabitDay(habit.id, day)}
               onKeyDown={(event) => handleKeyDown(event, index)}
