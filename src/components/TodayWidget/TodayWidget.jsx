@@ -9,6 +9,7 @@ import { habitStreaks } from '../../utils/streaks';
 import { parseISODate, relativeDay } from '../../utils/dates';
 import parseQuickAdd from '../../utils/parseQuickAdd';
 import { plural } from '../../utils/text';
+import AddLine from '../AddLine/AddLine';
 import './TodayWidget.css';
 
 // The clock time now, as 'HH:MM', updated each minute, to tell past events from coming ones.
@@ -58,9 +59,7 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
 
   const line = draft.trim() ? readLine(draft, today, weekStart) : null;
 
-  function handleAdd(event) {
-    event.preventDefault();
-    if (!line) return;
+  function handleAdd() {
     const { kind, parsed, date } = line;
     if (kind === 'event') {
       actions.addEvent({ title: parsed.text, date, start: parsed.time, end: parsed.endTime });
@@ -188,28 +187,22 @@ function TodayWidget({ tasks, events, focus, habits = [], habitLog = {}, actions
         </section>
       )}
 
-      <form className="today-add" onSubmit={handleAdd}>
-        <label htmlFor={`${id}-add`} className="visually-hidden">
-          Add a task or an event
-        </label>
-        <input
-          id={`${id}-add`}
-          type="text"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Add for today: “Call bank” or “Lunch 1pm”"
-          autoComplete="off"
-        />
-        <button type="submit" disabled={!line}>
-          Add
-        </button>
-      </form>
-      <p className="today-add-preview" aria-live="polite">
-        {line &&
-          `${line.kind === 'event' ? 'Event' : 'Task'} · ${relativeDay(line.date, date)}${
-            line.kind === 'event' ? ` · ${describeEventTime({ start: line.parsed.time, end: line.parsed.endTime }, hour)}` : ''
-          }`}
-      </p>
+      <AddLine
+        className="today-add"
+        label="Add a task or an event"
+        placeholder="Add for today: “Call bank” or “Lunch 1pm”"
+        value={draft}
+        onChange={setDraft}
+        onSubmit={handleAdd}
+        canAdd={Boolean(line)}
+        preview={
+          line
+            ? `${line.kind === 'event' ? 'Event' : 'Task'} · ${relativeDay(line.date, date)}${
+                line.kind === 'event' ? ` · ${describeEventTime({ start: line.parsed.time, end: line.parsed.endTime }, hour)}` : ''
+              }`
+            : ''
+        }
+      />
     </div>
   );
 }

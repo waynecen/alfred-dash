@@ -3,6 +3,8 @@ import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
 import DatePicker from '../DatePicker/DatePicker';
 import ProgressBar from '../ProgressBar/ProgressBar';
+import AddLine from '../AddLine/AddLine';
+import EditorActions from '../EditorActions/EditorActions';
 import WidgetState from '../WidgetState/WidgetState';
 import { describeProgress, goalProgress, isReached, parseGoal } from '../../data/goals';
 import { parseTags } from '../../data/tasks';
@@ -211,18 +213,11 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
           {dueDate ? formatDay(dueDate, { day: 'numeric', month: 'short', year: 'numeric' }) : 'No date'}
         </DatePicker>
       </div>
-      <div className="goal-editor-actions">
-        <button type="submit" className="goal-editor-save">
-          Save
-        </button>
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
-        <span className="goal-editor-spacer" />
-        <button type="button" className="goal-editor-delete" onClick={onDelete}>
+      <EditorActions onCancel={onCancel}>
+        <button type="button" className="editor-quiet editor-danger" onClick={onDelete}>
           Delete
         </button>
-      </div>
+      </EditorActions>
     </form>
   );
 }
@@ -231,15 +226,7 @@ function GoalEditor({ goal, today, onSave, onCancel, onDelete }) {
 // follow those tasks, and a date sets when it is due.
 function AddGoal({ onAdd, today, weekStart }) {
   const [draft, setDraft] = useState('');
-  const id = useId();
   const parsed = draft.trim() ? parseGoal(draft, { now: parseISODate(today), weekStart }) : null;
-
-  function handleSubmit(event) {
-    event.preventDefault();
-    if (!parsed?.title) return;
-    onAdd(parsed);
-    setDraft('');
-  }
 
   let preview = '';
   if (parsed?.title) {
@@ -248,27 +235,18 @@ function AddGoal({ onAdd, today, weekStart }) {
   }
 
   return (
-    <>
-      <form className="goals-add" onSubmit={handleSubmit}>
-        <label htmlFor={id} className="visually-hidden">
-          New goal
-        </label>
-        <input
-          id={id}
-          type="text"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="New goal, e.g. “Read 12 books by dec 31”"
-          autoComplete="off"
-        />
-        <button type="submit" disabled={!parsed?.title}>
-          Add
-        </button>
-      </form>
-      <p className="goals-add-preview" aria-live="polite">
-        {preview}
-      </p>
-    </>
+    <AddLine
+      label="New goal"
+      placeholder="New goal, e.g. “Read 12 books by dec 31”"
+      value={draft}
+      onChange={setDraft}
+      onSubmit={() => {
+        onAdd(parsed);
+        setDraft('');
+      }}
+      canAdd={Boolean(parsed?.title)}
+      preview={preview}
+    />
   );
 }
 

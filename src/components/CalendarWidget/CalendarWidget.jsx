@@ -8,6 +8,7 @@ import { addDays, addMonths, formatDay, parseISODate, relativeDay, startOfWeek }
 import { plural } from '../../utils/text';
 import { firstOfMonth, monthWeeks, stepFor } from '../../utils/monthGrid';
 import parseQuickAdd from '../../utils/parseQuickAdd';
+import AddLine from '../AddLine/AddLine';
 import './CalendarWidget.css';
 
 // What a task being dragged from the Tasks widget carries, so a day can take it.
@@ -88,9 +89,7 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
   const parsed = parseQuickAdd(draft, { times: true, weekStart, now: parseISODate(today) });
   const draftDate = parsed.dueDate ?? selected;
 
-  function handleAdd(event) {
-    event.preventDefault();
-    if (!draft.trim()) return;
+  function handleAdd() {
     onAddEvent({ title: parsed.text, date: draftDate, start: parsed.time, end: parsed.endTime });
     setDraft('');
     if (draftDate !== selected) select(draftDate);
@@ -288,27 +287,17 @@ function CalendarWidget({ events, tasks, onAddEvent, onDeleteEvent, onSetTaskDue
           {agendaHeading}
         </h4>
         {view === 'month' && renderItems(selected)}
-        <form className="calendar-add" onSubmit={handleAdd}>
-          <label htmlFor={inputId} className="visually-hidden">
-            Add an event
-          </label>
-          <input
-            id={inputId}
-            type="text"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={`Add an event, e.g. “Dentist 3pm” or “Lunch fri noon”`}
-            autoComplete="off"
-          />
-          <button type="submit" disabled={!draft.trim()}>
-            Add
-          </button>
-        </form>
-        {/* What the line will add, before it is added. */}
-        <p className="calendar-add-preview" aria-live="polite">
-          {draft.trim() &&
-            `${parsed.text} · ${relativeDay(draftDate, parseISODate(today))}${parsed.time ? ` · ${describeEventTime({ start: parsed.time, end: parsed.endTime }, hour)}` : ' · All day'}`}
-        </p>
+        <AddLine
+          label="Add an event"
+          placeholder="Add an event, e.g. “Dentist 3pm” or “Lunch fri noon”"
+          value={draft}
+          onChange={setDraft}
+          onSubmit={handleAdd}
+          preview={
+            draft.trim() &&
+            `${parsed.text} · ${relativeDay(draftDate, parseISODate(today))}${parsed.time ? ` · ${describeEventTime({ start: parsed.time, end: parsed.endTime }, hour)}` : ' · All day'}`
+          }
+        />
       </section>
     </div>
   );

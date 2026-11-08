@@ -188,93 +188,10 @@
   font-size: 0.85rem;
 }
 
-.habit-editor-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.habit-editor-actions button,
 .habits-archived-list button {
   padding: 0.3rem 0.7rem;
   font-size: 0.75rem;
   font-weight: 700;
-}
-
-.habit-editor-save {
-  background: var(--text);
-  color: var(--bg);
-}
-
-.habit-editor-spacer {
-  flex: 1;
-}
-
-.habit-editor-quiet {
-  border-color: transparent;
-  color: var(--muted);
-}
-
-.habit-editor-quiet:hover {
-  background: transparent;
-  border-color: var(--border);
-  color: var(--text);
-}
-
-.habit-editor-delete:hover,
-.habit-editor-delete:focus-visible {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: var(--bg);
-}
-
-/* Add a habit: one ruled line and its button, sharing an edge, as in the Calendar and Today. */
-.habits-add {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.habits-add-line {
-  display: flex;
-}
-
-.habits-add input {
-  flex: 1;
-  min-width: 0;
-  height: 2.25rem;
-  padding: 0 0.6rem;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.85rem;
-}
-
-.habits-add input::placeholder {
-  color: var(--muted);
-}
-
-.habits-add-line button {
-  height: 2.25rem;
-  margin-left: -1px;
-  background: var(--text);
-  border-color: var(--text);
-  color: var(--bg);
-  font-weight: 700;
-}
-
-.habits-add-line button:hover {
-  background: transparent;
-  color: var(--text);
-}
-
-.habits-add-line button:disabled {
-  background: transparent;
-  border-color: var(--border);
-  color: var(--muted);
-  cursor: default;
 }
 
 .habits-archived-toggle {
@@ -437,13 +354,4 @@
 
 .habit-heatmap-legend span:last-child {
   margin-left: 0.3rem;
-}
-
-.habit-heatmap .visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }

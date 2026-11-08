@@ -2,6 +2,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import useToday from '../../hooks/useToday';
 import useSettings from '../../hooks/useSettings';
 import WeekdayPicker from '../WeekdayPicker/WeekdayPicker';
+import AddLine from '../AddLine/AddLine';
+import EditorActions from '../EditorActions/EditorActions';
 import WidgetState from '../WidgetState/WidgetState';
 import HabitHeatmap from './HabitHeatmap';
 import { DAILY, describeSchedule, isScheduled } from '../../data/habits';
@@ -184,21 +186,14 @@ function HabitEditor({ habit, weekStart, onSave, onCancel, onArchive, onDelete }
       </label>
       <input id={id} type="text" value={name} onChange={(event) => setName(event.target.value)} autoFocus autoComplete="off" />
       <WeekdayPicker value={schedule} onChange={setSchedule} weekStart={weekStart} />
-      <div className="habit-editor-actions">
-        <button type="submit" className="habit-editor-save">
-          Save
-        </button>
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
-        <span className="habit-editor-spacer" />
-        <button type="button" className="habit-editor-quiet" onClick={onArchive}>
+      <EditorActions onCancel={onCancel}>
+        <button type="button" className="editor-quiet" onClick={onArchive}>
           Archive
         </button>
-        <button type="button" className="habit-editor-quiet habit-editor-delete" onClick={onDelete}>
+        <button type="button" className="editor-quiet editor-danger" onClick={onDelete}>
           Delete
         </button>
-      </div>
+      </EditorActions>
     </form>
   );
 }
@@ -207,36 +202,17 @@ function HabitEditor({ habit, weekStart, onSave, onCancel, onArchive, onDelete }
 function AddHabit({ onAdd, weekStart }) {
   const [draft, setDraft] = useState('');
   const [schedule, setSchedule] = useState(DAILY);
-  const id = useId();
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    if (!draft.trim()) return;
+  function handleSubmit() {
     onAdd({ name: draft.trim(), schedule });
     setDraft('');
     setSchedule(DAILY);
   }
 
   return (
-    <form className="habits-add" onSubmit={handleSubmit}>
-      <div className="habits-add-line">
-        <label htmlFor={id} className="visually-hidden">
-          New habit
-        </label>
-        <input
-          id={id}
-          type="text"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="New habit, e.g. “Read 20 minutes”"
-          autoComplete="off"
-        />
-        <button type="submit" disabled={!draft.trim()}>
-          Add
-        </button>
-      </div>
+    <AddLine label="New habit" placeholder="New habit, e.g. “Read 20 minutes”" value={draft} onChange={setDraft} onSubmit={handleSubmit}>
       {draft.trim() && <WeekdayPicker value={schedule} onChange={setSchedule} weekStart={weekStart} label="Days the new habit is due" />}
-    </form>
+    </AddLine>
   );
 }
 
@@ -257,7 +233,7 @@ function ArchivedHabits({ habits, actions }) {
               <button type="button" onClick={() => actions.archiveHabit(habit.id, false)} aria-label={`Restore habit: ${habit.name}`}>
                 Restore
               </button>
-              <button type="button" className="habit-editor-delete" onClick={() => actions.deleteHabit(habit.id)} aria-label={`Delete habit: ${habit.name}`}>
+              <button type="button" className="editor-danger" onClick={() => actions.deleteHabit(habit.id)} aria-label={`Delete habit: ${habit.name}`}>
                 Delete
               </button>
             </li>

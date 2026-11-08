@@ -1,0 +1,58 @@
+/* A ruled line and its Add button, sharing an edge; the button is solid ink until there is
+   nothing to add. Under them, what the line will make, as a label tag. */
+.add-line {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.add-line-row {
+  display: flex;
+}
+
+.add-line-row input {
+  flex: 1;
+  min-width: 0;
+  height: 2.25rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.add-line-row input::placeholder {
+  color: var(--muted);
+}
+
+.add-line-row button {
+  height: 2.25rem;
+  margin-left: -1px;
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.add-line-row button:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+.add-line-row button:disabled {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+  cursor: default;
+}
+
+.add-line-preview {
+  min-height: 1rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
